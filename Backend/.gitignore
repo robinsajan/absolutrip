@@ -1,0 +1,7 @@
+/env
+/trip
+/venv
+.env.*
+.env
+/tests
+*.db
