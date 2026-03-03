@@ -23,6 +23,8 @@ class StayOption(db.Model):
     check_out_date = db.Column(db.Date, nullable=True)
     category = db.Column(db.String(50), default='stay')
     is_finalized = db.Column(db.Boolean, default=False)
+    is_per_person = db.Column(db.Boolean, default=False)
+    is_per_night = db.Column(db.Boolean, default=False)
 
     trip = db.relationship('Trip', back_populates='options')
     added_by_user = db.relationship('User', back_populates='added_options')
@@ -47,7 +49,9 @@ class StayOption(db.Model):
             'check_in_date': self.check_in_date.isoformat() if self.check_in_date else None,
             'check_out_date': self.check_out_date.isoformat() if self.check_out_date else None,
             'category': self.category,
-            'is_finalized': self.is_finalized
+            'is_finalized': self.is_finalized,
+            'is_per_person': self.is_per_person,
+            'is_per_night': self.is_per_night
         }
         if include_votes:
             data['votes'] = [v.to_dict() for v in self.votes]

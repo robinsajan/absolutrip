@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { expenses } from '@/lib/api/endpoints';
-import type { Expense, Budget, SettlementData } from '@/types';
+import type { Expense, Budget, SettlementData, PersonalSettlementData } from '@/types';
 
 export function useExpenses(tripId: number | null) {
   const { data, error, isLoading, mutate } = useSWR<{ expenses: Expense[] }>(

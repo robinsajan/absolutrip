@@ -10,7 +10,16 @@ import {
   MessageCircle,
   Globe,
   Mail,
+  Menu,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const features = [
   {
@@ -58,15 +67,17 @@ export function LandingPage() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background">
       <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-12 lg:py-6">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
-              <Map className="h-6 w-6" />
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-secondary-foreground shadow-sm">
+              <Map className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold tracking-tight text-foreground lg:text-2xl">
               AbsoluTrip
             </span>
           </Link>
-          <div className="flex items-center gap-2">
+
+          {/* Desktop Navigation */}
+          <div className="hidden items-center gap-2 sm:flex">
             <Link
               href="/login"
               className="rounded-full px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
@@ -75,10 +86,37 @@ export function LandingPage() {
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-secondary px-6 py-3 text-sm font-bold text-secondary-foreground transition-all hover:opacity-90 hover:shadow-lg active:scale-95"
+              className="rounded-full bg-secondary px-6 py-3 text-sm font-bold text-secondary-foreground transition-all hover:shadow-lg active:scale-95"
             >
               Sign Up
             </Link>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex sm:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-xl">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="flex flex-col gap-8 pt-12">
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-2xl font-bold">AbsoluTrip</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-6">
+                  <Link href="#features" className="text-lg font-medium hover:text-primary">Features</Link>
+                  <Link href="/login" className="text-lg font-medium hover:text-primary">Login</Link>
+                  <Link href="/register" className="text-lg font-medium hover:text-primary">Sign Up</Link>
+                </nav>
+                <Link
+                  href="/register"
+                  className="mt-auto rounded-xl bg-secondary py-4 text-center text-lg font-bold text-secondary-foreground"
+                >
+                  Start Planning Now
+                </Link>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
@@ -92,11 +130,11 @@ export function LandingPage() {
                   <Sparkles className="h-4 w-4" />
                   Group Travel Reimagined
                 </div>
-                <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
+                <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
                   Plan your next group adventure{" "}
                   <span className="text-primary">without the stress.</span>
                 </h1>
-                <p className="max-w-xl text-base leading-relaxed text-muted-foreground lg:text-lg xl:text-xl">
+                <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg xl:text-xl">
                   AbsoluTrip helps you coordinate itineraries, vote on stays, and settle expenses
                   seamlessly in one place—built for modern explorers.
                 </p>

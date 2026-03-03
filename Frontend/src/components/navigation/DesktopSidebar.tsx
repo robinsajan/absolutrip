@@ -46,96 +46,123 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
   };
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-card lg:flex">
-      <div className="border-b border-border p-4">
+    <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-primary/10 bg-white dark:bg-slate-900 lg:flex shrink-0">
+      <div className="p-6 flex flex-col h-full">
+        {/* All Trips Back Button */}
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-2 mb-3 rounded-xl"
+          className="-ml-2 mb-6 rounded-lg text-slate-500 hover:text-primary transition-colors"
           onClick={() => router.push("/trips")}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <span className="material-symbols-outlined mr-2 text-sm">arrow_back</span>
           All Trips
         </Button>
-        {trip && (
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
-              <Map className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">{trip.name}</h2>
-              <button
-                onClick={copyInviteCode}
-                className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+
+        {/* Brand */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="size-10 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined">travel_explore</span>
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold font-serif text-primary leading-tight">AbsoluTrip</h1>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Manage Trip</p>
+          </div>
+        </div>
+
+        {/* Main Nav */}
+        <nav className="flex flex-col gap-1 grow overflow-y-auto pr-2 scrollbar-hide">
+          {/* Explore */}
+          <Link
+            href={`/trip/${tripId}/explore`}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium",
+              pathname.includes("/explore")
+                ? "bg-primary/10 text-primary font-bold shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary"
+            )}
+          >
+            <span className="material-symbols-outlined">explore</span>
+            <span>Explore</span>
+          </Link>
+
+          {/* Budget Group */}
+          <div className="flex flex-col gap-1 mt-1">
+            <Link
+              href={`/trip/${tripId}/budget`}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium",
+                pathname.includes("/budget")
+                  ? "bg-primary/10 text-primary font-bold shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary"
+              )}
+            >
+              <span className="material-symbols-outlined">payments</span>
+              <span>Budget</span>
+            </Link>
+            <div className="pl-6 flex flex-col gap-1">
+              <Link
+                href={`/trip/${tripId}/ledger`}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors rounded-md",
+                  pathname.includes("/ledger")
+                    ? "text-primary font-bold bg-primary/5"
+                    : "text-slate-500 hover:text-primary"
+                )}
               >
-                <Copy className="h-3 w-3" />
-                {trip.invite_code}
-              </button>
+                <span className="material-symbols-outlined text-sm">receipt_long</span>
+                Ledger
+              </Link>
+              <Link
+                href={`/trip/${tripId}/settle`}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors rounded-md",
+                  pathname.includes("/settle")
+                    ? "text-primary font-bold bg-primary/5"
+                    : "text-slate-500 hover:text-primary"
+                )}
+              >
+                <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
+                Settle
+              </Link>
             </div>
           </div>
-        )}
-      </div>
 
-      <nav className="flex-1 p-2">
-        <ul className="space-y-1">
-          {tabs.map((tab) => {
-            const isActive = pathname.includes(`/trip/${tripId}/${tab.href}`);
-            const Icon = tab.icon;
+          {/* Members */}
+          <Link
+            href={`/trip/${tripId}/members`}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium relative",
+              pathname.includes("/members")
+                ? "bg-primary/10 text-primary font-bold shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary"
+            )}
+          >
+            <span className="material-symbols-outlined">group</span>
+            <span>Members</span>
+            {pendingCount > 0 && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 size-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900">
+                {pendingCount}
+              </span>
+            )}
+          </Link>
+        </nav>
 
-            return (
-              <li key={tab.href}>
-                <Link
-                  href={`/trip/${tripId}/${tab.href}`}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">{tab.name}</p>
-                    <p
-                      className={cn(
-                        "text-xs",
-                        isActive ? "text-primary-foreground/80" : "text-muted-foreground"
-                      )}
-                    >
-                      {tab.description}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      <Separator />
-
-      <div className="space-y-1 p-2">
-        <Link
-          href={`/trip/${tripId}/members`}
-          className="flex items-center justify-between rounded-xl px-3 py-2 transition-colors hover:bg-accent"
-        >
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5" />
-            <span className="font-medium">Members</span>
-          </div>
-          {pendingCount > 0 && (
-            <Badge variant="destructive" className="h-5 px-1.5">
-              {pendingCount}
-            </Badge>
-          )}
-        </Link>
-        <Link
-          href={`/trip/${tripId}/settings`}
-          className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-accent"
-        >
-          <Settings className="h-5 w-5" />
-          <span className="font-medium">Settings</span>
-        </Link>
+        {/* Bottom Nav */}
+        <div className="border-t border-primary/10 pt-4 flex flex-col gap-1">
+          <Link
+            href={`/trip/${tripId}/settings`}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium",
+              pathname.includes("/settings")
+                ? "bg-primary/10 text-primary font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary"
+            )}
+          >
+            <span className="material-symbols-outlined">settings</span>
+            <span>Settings</span>
+          </Link>
+        </div>
       </div>
     </aside>
   );

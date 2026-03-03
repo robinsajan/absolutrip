@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { Info, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -34,17 +35,32 @@ export function ScenarioPlanner({
   selectedOptionId,
   onSelectOption,
 }: ScenarioPlannerProps) {
-  
+
   const selectedOption = useMemo(() => {
     return options.find((o) => o.option.id === selectedOptionId);
   }, [options, selectedOptionId]);
 
+  const calculateOptionPrice = useCallback((ro: RankedOption) => {
+    let price = ro.option.price || 0;
+    if (ro.option.is_per_person) {
+      price *= Math.max(memberCount, 1);
+    }
+    if (ro.option.is_per_night && ro.option.check_in_date && ro.option.check_out_date) {
+      try {
+        const nights = Math.max(differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)), 1);
+        price *= nights;
+      } catch (e) {
+        // fallback to 1 night
+      }
+    }
+    return price;
+  }, [memberCount]);
+
   useEffect(() => {
-    const optionPrice = selectedOption?.option.price || 0;
-    const total = currentExpenses + optionPrice;
+    const total = currentExpenses + (selectedOption ? calculateOptionPrice(selectedOption) : 0);
     const perPerson = memberCount > 0 ? total / memberCount : total;
     onScenarioChange(total, perPerson);
-  }, [selectedOptionId, selectedOption, memberCount, currentExpenses, onScenarioChange]);
+  }, [selectedOptionId, selectedOption, memberCount, currentExpenses, onScenarioChange, calculateOptionPrice]);
 
   if (options.length === 0) {
     return null;
@@ -79,24 +95,24 @@ export function ScenarioPlanner({
           const { option } = rankedOption;
           const isSelected = selectedOptionId === option.id;
           const isFinalized = option.is_finalized;
-          const perPerson = memberCount > 0 ? option.price / memberCount : option.price;
+
+          const totalPrice = calculateOptionPrice(rankedOption);
+          const perPersonPrice = memberCount > 0 ? totalPrice / memberCount : totalPrice;
 
           return (
             <div
               key={option.id}
               onClick={() => onSelectOption(option.id)}
-              className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                isSelected 
-                  ? "border-primary bg-primary/5" 
-                  : isFinalized 
-                    ? "border-green-500 bg-green-50 hover:bg-green-100" 
-                    : "border-muted hover:border-muted-foreground/50 hover:bg-muted/50"
-              }`}
+              className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                ? "border-primary bg-primary/5"
+                : isFinalized
+                  ? "border-green-500 bg-green-50 hover:bg-green-100"
+                  : "border-muted hover:border-muted-foreground/50 hover:bg-muted/50"
+                }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
-                }`}>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
                   {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
                 <Label className="cursor-pointer">
@@ -115,21 +131,21 @@ export function ScenarioPlanner({
                 </Label>
               </div>
               <div className="text-right">
-                <p className={`font-medium ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
-                  ${option.price.toFixed(2)}
+                <p className={`font-bold ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
+                  ${perPersonPrice.toFixed(2)}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  ${perPerson.toFixed(2)}/person
+                <p className="text-[10px] text-muted-foreground">
+                  Group: ${totalPrice.toFixed(0)}
                 </p>
               </div>
             </div>
           );
         })}
-        
+
         {selectedOption && (
           <div className="pt-3 border-t flex items-center justify-between">
-            <span className="text-sm font-medium">Selected stay</span>
-            <span className="font-bold text-primary">${selectedOption.option.price.toFixed(2)}</span>
+            <span className="text-sm font-medium">Selected stay (/ Person)</span>
+            <span className="font-bold text-primary">${(calculateOptionPrice(selectedOption) / Math.max(memberCount, 1)).toFixed(2)}</span>
           </div>
         )}
       </CardContent>

@@ -113,34 +113,33 @@ export default function MembersPage() {
             {pendingRequests.map((request: JoinRequest) => (
               <div
                 key={request.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-200"
+                className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white rounded-xl border border-amber-200 gap-4"
               >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{getInitials(request.user_name)}</AvatarFallback>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="bg-amber-100 text-amber-700">{getInitials(request.user_name)}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-medium">{request.user_name}</p>
-                    <p className="text-xs text-muted-foreground">{request.user_email}</p>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 truncate">{request.user_name}</p>
+                    <p className="text-xs text-slate-500 truncate">{request.user_email}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="text-green-600 border-green-600 hover:bg-green-50"
+                    className="flex-1 sm:flex-none h-9 bg-green-600 hover:bg-green-700 text-white font-bold"
                     onClick={() => handleApprove(request.id)}
                   >
-                    <Check className="h-4 w-4 mr-1" />
+                    <Check className="h-4 w-4 mr-1.5" />
                     Approve
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    variant="ghost"
+                    className="flex-1 sm:flex-none h-9 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold"
                     onClick={() => handleReject(request.id)}
                   >
-                    <X className="h-4 w-4 mr-1" />
+                    <X className="h-4 w-4 mr-1.5" />
                     Reject
                   </Button>
                 </div>

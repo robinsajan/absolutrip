@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import useSWR from "swr";
-import { Plus, LogOut, Users, Clock, Map, DollarSign, Calendar, Globe, Plane, X } from "lucide-react";
+import { LogOut, Search, Plus, Users, Map as MapIcon, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -21,95 +19,82 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useTrips, useAuth } from "@/lib/hooks";
-import { trips as tripsApi, expenses as expensesApi } from "@/lib/api/endpoints";
+import { trips as tripsApi } from "@/lib/api/endpoints";
 import type { Trip } from "@/types";
 
-function useTripSpent(tripId: number | null) {
-  const { data } = useSWR(
-    tripId ? `expenses-${tripId}` : null,
-    () => (tripId ? expensesApi.list(tripId) : null)
-  );
-  const total =
-    data?.expenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
-  return total;
-}
-
-function CurrentTripCard({ trip }: { trip: Trip }) {
-  const spent = useTripSpent(trip.id);
-  const memberCount = trip.members?.filter((m) => m.status === "approved").length ?? trip.members?.length ?? 0;
-  const peopleLabel = memberCount === 1 ? "1 Person" : `${memberCount} People`;
+function TripCard({ trip }: { trip: Trip }) {
+  const isUpcoming = new Date(trip.start_date) > new Date();
 
   return (
-    <Link href={`/trip/${trip.id}/explore`}>
-      <Card className="group relative h-[400px] overflow-hidden rounded-2xl border-0 shadow-xl transition-all hover:shadow-2xl sm:h-[450px]">
-        <Image
-          src="https://tse4.mm.bing.net/th/id/OIP.D0OkZGTEV2heHtku9rouRgHaE8?rs=1&pid=ImgDetMain&o=7&rm=3"
-          alt={trip.name}
-          fill
-          className="object-cover transition-transform group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 800px"
-          unoptimized
-        />
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-widest text-white/90">
-            Current Trip
-          </p>
-          <h2
-            className="mt-2 text-4xl font-bold tracking-tight text-white sm:text-5xl"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            {trip.name.toUpperCase()}
-          </h2>
-          <p className="mt-3 text-base text-white/95">
-            {format(new Date(trip.start_date), "MMM d")} -{" "}
-            {format(new Date(trip.end_date), "MMM d, yyyy")}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/95">
-            <span className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
-              {peopleLabel}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <DollarSign className="h-4 w-4" />
-              ${Math.round(spent)} Spent
-            </span>
-          </div>
+    <div className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow border border-slate-100 dark:border-slate-800">
+      <div className="relative h-56 w-full overflow-hidden">
+        <div
+          className="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105"
+          style={{ backgroundImage: `url("https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop")` }}
+        ></div>
+        <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary uppercase">
+          {isUpcoming ? "Upcoming" : "Past"}
         </div>
-      </Card>
-    </Link>
-  );
-}
-
-function PastTripCard({ trip }: { trip: Trip }) {
-  const spent = useTripSpent(trip.id);
-  const memberCount = trip.members?.filter((m) => m.status === "approved").length ?? trip.members?.length ?? 0;
-  const peopleLabel = memberCount === 1 ? "1 Person" : `${memberCount} People`;
-
-  return (
-    <Link href={`/trip/${trip.id}/explore`}>
-      <Card className="rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
-        <CardContent className="p-4 sm:p-5">
-          <h3 className="font-bold tracking-tight text-foreground">
-            {trip.name.toUpperCase()}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {format(new Date(trip.start_date), "MMM d")} -{" "}
-            {format(new Date(trip.end_date), "MMM d, yyyy")}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              {peopleLabel}
-            </span>
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3.5 w-3.5" />
-              ${Math.round(spent)} Spent
+      </div>
+      <div className="p-6 flex flex-col gap-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 serif-title leading-tight">{trip.name}</h3>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mt-1">
+              <span className="material-symbols-outlined text-sm">calendar_month</span>
+              <span className="text-sm">
+                {format(new Date(trip.start_date), "MMM dd")} - {format(new Date(trip.end_date), "MMM dd, yyyy")}
+              </span>
+            </div>
+            {trip.google_maps_url && (
+              <div className="flex items-center gap-2 text-primary mt-1">
+                <span className="material-symbols-outlined text-sm">location_on</span>
+                <a
+                  href={trip.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold hover:underline truncate max-w-[200px]"
+                >
+                  View on Maps
+                </a>
+              </div>
+            )}
+          </div>
+          <button className="size-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors">
+            <span className="material-symbols-outlined">more_horiz</span>
+          </button>
+        </div>
+        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {trip.members?.slice(0, 3).map((m, i) => (
+                <div
+                  key={m.id}
+                  className="size-8 rounded-full border-2 border-white dark:border-slate-900 bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary"
+                  title={m.user_name}
+                >
+                  {m.user_name?.trim().charAt(0).toUpperCase() || "?"}
+                </div>
+              ))}
+              {(trip.members?.length ?? 0) > 3 && (
+                <div className="size-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                  +{(trip.members?.length ?? 0) - 3}
+                </div>
+              )}
+            </div>
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              {trip.members?.length || 0} Member{trip.members?.length !== 1 ? 's' : ''}
             </span>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+          <Link
+            href={`/trip/${trip.id}/explore`}
+            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-all"
+          >
+            Manage Trip
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -120,13 +105,15 @@ export default function TripsPage() {
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
-  
+
   // New Trip Dialog state
   const [newTripDialogOpen, setNewTripDialogOpen] = useState(false);
   const [tripName, setTripName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const { data: myRequestsData } = useSWR("my-join-requests", () =>
     tripsApi.getMyRequests()
@@ -157,9 +144,8 @@ export default function TripsPage() {
         setJoinDialogOpen(false);
         setJoinCode("");
       }
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Invalid invite code");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Invalid invite code");
     } finally {
       setIsJoining(false);
     }
@@ -186,6 +172,7 @@ export default function TripsPage() {
         name: tripName.trim(),
         start_date: startDate,
         end_date: endDate,
+        google_maps_url: googleMapsUrl.trim(),
       });
       toast.success("Trip created!");
       mutate();
@@ -193,240 +180,280 @@ export default function TripsPage() {
       setTripName("");
       setStartDate("");
       setEndDate("");
+      setGoogleMapsUrl("");
       router.push(`/trip/${result.trip.id}/explore`);
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Failed to create trip");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to create trip");
     } finally {
       setIsCreating(false);
     }
   };
 
-  const sortedTrips = [...(trips ?? [])].sort(
-    (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  );
-  const currentTrip = sortedTrips[0] ?? null;
-  const pastTrips = sortedTrips.slice(1);
+  const allCurrent = (trips ?? []).filter(t => new Date(t.end_date) >= new Date()).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  const allPast = (trips ?? []).filter(t => new Date(t.end_date) < new Date()).sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+
+  let currentTrips = allCurrent;
+  let pastTrips = allPast;
+
+  if (!showAll) {
+    currentTrips = allCurrent.slice(0, 2);
+    const remainingSlots = Math.max(0, 2 - currentTrips.length);
+    pastTrips = allPast.slice(0, remainingSlots);
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-md lg:px-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            AbsoluTrip
-          </h1>
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-muted-foreground sm:text-base">
-              Hi, {user?.name ?? "Guest"}
-            </p>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="rounded-xl"
-              aria-label="Log out"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 lg:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
-          <Dialog open={newTripDialogOpen} onOpenChange={setNewTripDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full rounded-xl bg-secondary px-6 py-3 font-semibold text-secondary-foreground shadow-lg hover:bg-secondary/90 sm:inline-flex sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                New Trip
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg rounded-2xl border border-border bg-card p-0 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border px-8 py-6">
-                <div>
-                  <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
-                    Create New Trip
-                  </DialogTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Fill in the details for your next adventure.
-                  </p>
+    <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-sans">
+      <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div className="layout-container flex h-full grow flex-col">
+          {/* Navigation */}
+          <header className="flex items-center justify-between border-b border-solid border-primary/10 px-6 md:px-20 py-4 bg-white dark:bg-background-dark">
+            <div className="flex items-center gap-4 md:gap-12">
+              <Link href="/" className="flex items-center gap-2 md:gap-3 text-primary">
+                <div className="size-7 md:size-8 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl md:text-3xl">map</span>
                 </div>
-              </div>
-              <form onSubmit={handleCreateTrip} className="space-y-6 p-8">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="tripName"
-                    className="text-base font-semibold text-foreground"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
-                    Trip Name
-                  </Label>
-                  <Input
-                    id="tripName"
-                    placeholder="e.g. European Summer Escapade"
-                    value={tripName}
-                    onChange={(e) => setTripName(e.target.value)}
-                    className="rounded-xl border-border bg-muted/50 px-4 py-3 focus:border-primary focus:ring-primary"
-                    disabled={isCreating}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="startDate"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      Start Date
-                    </Label>
-                    <div className="relative">
-                      <Calendar className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="rounded-xl border-border bg-muted/50 py-3 pl-11 pr-4 focus:border-primary focus:ring-primary"
-                        disabled={isCreating}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="endDate"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      End Date
-                    </Label>
-                    <div className="relative">
-                      <Calendar className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        min={startDate}
-                        className="rounded-xl border-border bg-muted/50 py-3 pl-11 pr-4 focus:border-primary focus:ring-primary"
-                        disabled={isCreating}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <Button
-                    type="submit"
-                    disabled={isCreating}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary py-4 text-lg font-bold text-secondary-foreground shadow-lg shadow-secondary/20 transition-all hover:bg-secondary/90"
-                  >
-                    <span>{isCreating ? "Creating..." : "Create Trip"}</span>
-                    <Plane className="h-5 w-5" />
-                  </Button>
-                  <p className="mt-4 text-center text-xs text-muted-foreground">
-                    By creating a trip, you agree to our Terms of Service.
-                  </p>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full rounded-xl border-2 font-medium sm:inline-flex sm:w-auto"
-              >
-                Join Trip
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl">
-              <DialogHeader>
-                <DialogTitle>Join a Trip</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <Input
-                  placeholder="Enter invite code"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleJoinTrip()}
-                  className="rounded-xl"
-                />
-                <Button
-                  className="w-full rounded-xl font-semibold"
-                  onClick={handleJoinTrip}
-                  disabled={isJoining}
+                <h2 className="text-slate-900 dark:text-slate-100 text-xl md:text-2xl font-bold leading-tight tracking-[-0.015em] serif-title">AbsoluTrip</h2>
+              </Link>
+              <nav className="hidden md:flex items-center gap-8">
+                <a className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-semibold leading-normal flex items-center gap-2" href="#">
+                  <span className="material-symbols-outlined text-lg">explore</span> Explore
+                </a>
+                <a className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-semibold leading-normal flex items-center gap-2" href="#">
+                  <span className="material-symbols-outlined text-lg">settings</span> Settings
+                </a>
+                <button
+                  onClick={handleLogout}
+                  className="text-slate-600 dark:text-slate-400 hover:text-destructive transition-colors text-sm font-semibold leading-normal flex items-center gap-2"
                 >
-                  {isJoining ? "Joining..." : "Request to Join"}
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Your request will be sent to the trip admin for approval
+                  <span className="material-symbols-outlined text-lg">logout</span> Logout
+                </button>
+              </nav>
+            </div>
+            <div className="flex flex-1 justify-end gap-3 md:gap-6 items-center">
+              <label className="hidden lg:flex flex-col min-w-40 h-10 max-w-64">
+                <div className="flex w-full flex-1 items-stretch rounded-lg h-full overflow-hidden border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-400 flex bg-white dark:bg-slate-900 items-center justify-center pl-4">
+                    <span className="material-symbols-outlined text-xl">search</span>
+                  </div>
+                  <input className="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-900 focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 px-3 text-sm" placeholder="Search destinations..." />
+                </div>
+              </label>
+              <div className="flex items-center justify-center aspect-square rounded-full size-9 md:size-10 border-2 border-primary/20 bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-400">
+                {(user?.name || "Guest").charAt(0).toUpperCase()}
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 px-6 md:px-20 py-10 max-w-[1200px] mx-auto w-full">
+            {/* Welcome Section */}
+            <section className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-slate-900 dark:text-slate-100 text-4xl font-bold leading-tight tracking-tight serif-title">
+                  Welcome back, {user?.name?.split(' ')[0] || "Traveler"}
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-lg">
+                  {currentTrips.length > 0
+                    ? `You have ${currentTrips.length} trip${currentTrips.length > 1 ? 's' : ''} coming up. Ready for your next adventure?`
+                    : "Ready to plan your next adventure?"}
                 </p>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <div className="flex flex-wrap gap-3">
+                <Dialog open={newTripDialogOpen} onOpenChange={setNewTripDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 min-w-[140px] cursor-pointer justify-center rounded-xl h-12 px-6 bg-primary text-white text-base font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                      <span className="material-symbols-outlined">add</span>
+                      <span>Create New Trip</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg rounded-2xl border-none bg-white dark:bg-slate-900 p-0 shadow-2xl overflow-hidden">
+                    <div className="bg-primary px-8 py-6 text-white">
+                      <DialogTitle className="text-2xl font-bold serif-title">Start a New Journey</DialogTitle>
+                      <p className="text-white/80 text-sm mt-1">Fill in the details for your group adventure.</p>
+                    </div>
+                    <form onSubmit={handleCreateTrip} className="p-8 space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="tripName" className="text-sm font-bold text-slate-700 dark:text-slate-300">TRIP NAME</Label>
+                        <Input
+                          id="tripName"
+                          placeholder="e.g. Tokyo Summer 2024"
+                          value={tripName}
+                          onChange={(e) => setTripName(e.target.value)}
+                          className="h-12 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="startDate" className="text-sm font-bold text-slate-700 dark:text-slate-300">START DATE</Label>
+                          <Input
+                            id="startDate"
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="h-12 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="endDate" className="text-sm font-bold text-slate-700 dark:text-slate-300">END DATE</Label>
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            min={startDate}
+                            className="h-12 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="googleMapsUrl" className="text-sm font-bold text-slate-700 dark:text-slate-300">GOOGLE MAPS LINK (OPTIONAL)</Label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">link</span>
+                          <Input
+                            id="googleMapsUrl"
+                            placeholder="Paste link from Google Maps"
+                            value={googleMapsUrl}
+                            onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                            className="h-12 pl-10 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isCreating}
+                        className="w-full h-14 bg-primary text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                      >
+                        {isCreating ? "Creating..." : "Create Trip"}
+                        <span className="material-symbols-outlined">send</span>
+                      </button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
 
-        {pendingRequests.length > 0 && (
-          <Card className="rounded-2xl border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
-            <CardContent className="p-4">
-              <h3 className="mb-3 flex items-center gap-2 font-medium text-amber-800 dark:text-amber-200">
-                <Clock className="h-4 w-4" />
-                Pending Requests
-              </h3>
-              <div className="space-y-2">
-                {pendingRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-2 dark:border-amber-800 dark:bg-amber-950/20"
-                  >
-                    <span className="font-medium">{request.trip_name}</span>
-                    <Badge
-                      variant="outline"
-                      className="border-amber-500 text-amber-700 dark:text-amber-400"
-                    >
-                      Awaiting approval
-                    </Badge>
-                  </div>
-                ))}
+                <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 min-w-[140px] cursor-pointer justify-center rounded-xl h-12 px-6 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary text-base font-bold hover:bg-primary/20 transition-all">
+                      <span className="material-symbols-outlined">group_add</span>
+                      <span>Join a Trip</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-2xl dark:bg-slate-900 border-none">
+                    <DialogHeader>
+                      <DialogTitle className="serif-title text-2xl">Join a Trip</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">INVITE CODE</Label>
+                        <Input
+                          placeholder="Enter 16-character code"
+                          value={joinCode}
+                          onChange={(e) => setJoinCode(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleJoinTrip()}
+                          className="h-12 rounded-xl text-center font-mono text-lg tracking-widest"
+                        />
+                      </div>
+                      <button
+                        className="w-full h-12 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all"
+                        onClick={handleJoinTrip}
+                        disabled={isJoining}
+                      >
+                        {isJoining ? "Joining..." : "Request Access"}
+                      </button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : trips.length === 0 ? (
-          <Card className="rounded-2xl border border-border">
-            <CardContent className="py-16 text-center">
-              <p className="text-muted-foreground">No trips yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create a new trip or join an existing one
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <section>
-              <CurrentTripCard trip={currentTrip!} />
             </section>
 
-            {pastTrips.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-center text-xl font-bold tracking-tight text-foreground">
-                  Past Trips
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {pastTrips.map((trip) => (
-                    <PastTripCard key={trip.id} trip={trip} />
-                  ))}
+            {pendingRequests.length > 0 && (
+              <section className="mb-12">
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+                  <h3 className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-200 mb-4">
+                    <span className="material-symbols-outlined">pending_actions</span>
+                    Pending Join Requests
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {pendingRequests.map((request) => (
+                      <div key={request.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-amber-100 dark:border-amber-900 flex justify-between items-center">
+                        <span className="font-bold">{request.trip_name}</span>
+                        <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-none">Awaiting approval</Badge>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
             )}
-          </>
-        )}
-      </main>
+
+            {/* My Trips Section */}
+            <section>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-slate-900 dark:text-slate-100 text-2xl font-bold serif-title">My Trips</h2>
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="text-primary font-semibold text-sm hover:underline flex items-center gap-1"
+                >
+                  {showAll ? "Show upcoming" : "View all trips"}
+                  <span className="material-symbols-outlined text-sm">
+                    {showAll ? "expand_less" : "chevron_right"}
+                  </span>
+                </button>
+              </div>
+
+              {isLoading ? (
+                <div className="py-20 flex justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                </div>
+              ) : (trips?.length ?? 0) === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800">
+                  <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">travel_explore</span>
+                  <h3 className="text-xl font-bold mb-2">No trips planned yet</h3>
+                  <p className="text-slate-500 mb-8 max-w-sm mx-auto">Start by creating a new trip or ask a friend for an invite code.</p>
+                  <button
+                    onClick={() => setNewTripDialogOpen(true)}
+                    className="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/20"
+                  >
+                    Create Your First Trip
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {currentTrips.map(trip => (
+                    <TripCard key={trip.id} trip={trip} />
+                  ))}
+                  {pastTrips.map(trip => (
+                    <TripCard key={trip.id} trip={trip} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Quick Tips / Discovery */}
+            <section className="mt-20 bg-primary/5 dark:bg-primary/20 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-10 border border-primary/10 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+              <div className="flex-1 relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-4">
+                  <span className="material-symbols-outlined text-sm">lightbulb</span> AI Suggestion
+                </div>
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100 serif-title mb-4">Discover hidden gems</h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg leading-relaxed">
+                  Our AI-powered engine suggests unique experiences based on your past trips and preferences. Explore what's trending in your destinations.
+                </p>
+                <button className="text-primary font-bold flex items-center gap-2 hover:gap-3 transition-all group">
+                  Explore Recommendations
+                  <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+              </div>
+              <div className="w-full md:w-2/5 aspect-[4/3] bg-cover bg-center rounded-3xl shadow-2xl relative z-10" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop")` }}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-3xl"></div>
+              </div>
+            </section>
+          </main>
+
+          {/* Footer */}
+          <footer className="px-6 md:px-20 py-10 mt-10 border-t border-slate-200 dark:border-slate-800 text-center text-slate-500 text-sm">
+            <p>© {new Date().getFullYear()} AbsoluTrip. All rights reserved. Your journey begins here.</p>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }

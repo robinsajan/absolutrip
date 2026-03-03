@@ -63,6 +63,7 @@ def create_trip():
         name=name,
         start_date=start_date,
         end_date=end_date,
+        google_maps_url=data.get('google_maps_url'),
         created_by=current_user.id
     )
     db.session.add(trip)
@@ -94,7 +95,7 @@ def create_trip():
 })
 def list_trips():
     memberships = TripMember.query.filter_by(user_id=current_user.id, status='approved').all()
-    trips = [m.trip.to_dict() for m in memberships]
+    trips = [m.trip.to_dict(include_members=True) for m in memberships]
 
     return jsonify({'trips': trips}), 200
 
@@ -172,6 +173,9 @@ def update_trip(trip_id, trip, membership):
                 return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
         else:
             trip.end_date = None
+
+    if 'google_maps_url' in data:
+        trip.google_maps_url = data['google_maps_url']
 
     db.session.commit()
 

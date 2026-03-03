@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { MobileTabBar, DesktopSidebar, TripHeader } from "@/components/navigation";
 import { useTrip } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
@@ -13,6 +13,7 @@ export default function TripLayout({
 }) {
   const params = useParams();
   const tripId = params.tripId as string;
+  const pathname = usePathname();
   const { trip, isLoading } = useTrip(Number(tripId));
   const setActiveTrip = useAppStore((state) => state.setActiveTrip);
 
@@ -38,7 +39,7 @@ export default function TripLayout({
       <DesktopSidebar tripId={tripId} trip={trip} />
       
       <div className="flex-1 flex flex-col min-h-screen">
-        <TripHeader trip={trip} />
+        {!pathname.includes("/ledger") && !pathname.includes("/settle") && <TripHeader trip={trip} />}
         
         <main className="flex-1 pb-20 lg:pb-0">
           {children}

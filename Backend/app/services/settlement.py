@@ -116,28 +116,55 @@ class SettlementService:
         return settlements
 
     @staticmethod
+    def get_who_should_pay_next(trip_id):
+        """Identify who should pay next to balance the group."""
+        balances = SettlementService.calculate_balance_details(trip_id)
+        if not balances:
+            return None
+        
+        # Person with the lowest (most negative) balance owes the most
+        sorted_members = sorted(balances.values(), key=lambda x: x['balance'])
+        debtor = sorted_members[0]
+        
+        if debtor['balance'] >= -0.01:
+            return None # Everyone is roughly settled or owed
+            
+        return {
+            'user_id': debtor['user_id'],
+            'user_name': debtor['user_name'],
+            'amount_owed': abs(debtor['balance']),
+            'suggestion': f"Hey {debtor['user_name']}, you owe the group ${abs(debtor['balance']):.2f}. You should pay for the next expense to get back to zero."
+        }
+
+    @staticmethod
     def get_budget_summary(trip_id):
-        expenses = Expense.query.filter_by(trip_id=trip_id).all()
+        # Only include real expenses, not internal settlements
+        expenses = Expense.query.filter(
+            Expense.trip_id == trip_id,
+            Expense.category != 'settlement'
+        ).all()
+        
         members = TripMember.query.filter_by(trip_id=trip_id).all()
 
-        total = sum(float(e.amount) for e in expenses)
+        total = sum(Decimal(str(e.amount)) for e in expenses)
         member_count = len(members)
-        per_person = total / member_count if member_count > 0 else 0
+        per_person = (total / member_count) if member_count > 0 else Decimal('0.00')
 
-        by_category = defaultdict(float)
+        by_category = defaultdict(Decimal)
         for expense in expenses:
             category = expense.category or 'uncategorized'
-            by_category[category] += float(expense.amount)
+            by_category[category] += Decimal(str(expense.amount))
 
-        by_payer = defaultdict(float)
+        by_payer = defaultdict(Decimal)
         for expense in expenses:
-            by_payer[expense.payer.name] += float(expense.amount)
+            by_payer[expense.payer.name] += Decimal(str(expense.amount))
 
         return {
-            'total_expenses': round(total, 2),
+            'total_expenses': round(float(total), 2),
             'member_count': member_count,
-            'per_person_average': round(per_person, 2),
+            'per_person_average': round(float(per_person), 2),
             'expense_count': len(expenses),
-            'by_category': dict(by_category),
-            'by_payer': dict(by_payer)
+            'by_category': {k: round(float(v), 2) for k, v in by_category.items()},
+            'by_payer': {k: round(float(v), 2) for k, v in by_payer.items()},
+            'who_should_pay_next': SettlementService.get_who_should_pay_next(trip_id)
         }

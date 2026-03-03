@@ -13,6 +13,8 @@ class Trip(db.Model):
     invite_code = db.Column(db.String(32), unique=True, nullable=False, index=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    google_maps_url = db.Column(db.String(500), nullable=True)
+    default_currency = db.Column(db.String(3), default='USD')
 
     creator = db.relationship('User', back_populates='created_trips')
     members = db.relationship('TripMember', back_populates='trip', lazy='dynamic',
@@ -35,10 +37,11 @@ class Trip(db.Model):
             'end_date': self.end_date.isoformat() if self.end_date else None,
             'invite_code': self.invite_code,
             'created_by': self.created_by,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'google_maps_url': self.google_maps_url
         }
         if include_members:
-            data['members'] = [m.to_dict() for m in self.members]
+            data['members'] = [m.to_dict() for m in self.members.filter_by(status='approved').all()]
         return data
 
 

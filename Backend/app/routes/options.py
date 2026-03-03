@@ -41,7 +41,9 @@ def get_upload_folder():
                     'title': {'type': 'string', 'example': 'Beachfront Hotel'},
                     'link': {'type': 'string', 'example': 'https://booking.com/hotel123'},
                     'price': {'type': 'number', 'example': 150.00},
-                    'notes': {'type': 'string', 'example': 'Great reviews, has pool'}
+                    'notes': {'type': 'string', 'example': 'Great reviews, has pool'},
+                    'is_per_person': {'type': 'boolean', 'example': False},
+                    'is_per_night': {'type': 'boolean', 'example': False}
                 }
             }
         }
@@ -92,7 +94,9 @@ def create_option(trip_id, trip, membership):
         added_by=current_user.id,
         check_in_date=check_in_date,
         check_out_date=check_out_date,
-        category=data.get('category', 'stay')
+        category=data.get('category', 'stay'),
+        is_per_person=data.get('is_per_person', False),
+        is_per_night=data.get('is_per_night', False)
     )
     db.session.add(option)
     db.session.flush()
@@ -162,7 +166,9 @@ def list_options(trip_id, trip, membership):
                     'title': {'type': 'string'},
                     'link': {'type': 'string'},
                     'price': {'type': 'number'},
-                    'notes': {'type': 'string'}
+                    'notes': {'type': 'string'},
+                    'is_per_person': {'type': 'boolean'},
+                    'is_per_night': {'type': 'boolean'}
                 }
             }
         }
@@ -219,6 +225,12 @@ def update_option(option_id, option, membership):
 
     if 'category' in data:
         option.category = data['category']
+
+    if 'is_per_person' in data:
+        option.is_per_person = data['is_per_person']
+
+    if 'is_per_night' in data:
+        option.is_per_night = data['is_per_night']
 
     if option.link and option.link != old_link:
         option.image_url = None

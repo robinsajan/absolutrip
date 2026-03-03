@@ -4,8 +4,16 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Map } from "lucide-react";
+import { Map, Menu } from "lucide-react";
 import { useAuth } from "@/lib/hooks";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function AuthLayout({
   children,
@@ -40,43 +48,35 @@ export default function AuthLayout({
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background font-sans text-foreground antialiased">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-6 lg:px-12">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-12">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
-              <Map className="h-6 w-6" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-secondary-foreground shadow-sm">
+              <Map className="h-5 w-5" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-foreground">
+            <span className="text-xl font-bold tracking-tight text-foreground lg:text-2xl">
               AbsoluTrip
             </span>
           </Link>
+
+          {/* Desktop Navigation */}
           {!(isLogin || isRegister) && (
-            <div className="flex items-center gap-10">
-              <nav className="hidden md:flex items-center gap-8">
-                <Link
-                  href="#"
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Demo
-                </Link>
-                <Link
-                  href="/login"
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Login
-                </Link>
-              </nav>
-              <div className="flex items-center">
-                <Link
-                  href="/register"
-                  className="rounded-full bg-secondary px-8 py-3 text-sm font-bold text-secondary-foreground transition-all hover:bg-secondary/90 hover:shadow-lg active:scale-95"
-                >
-                  Sign Up
-                </Link>
-              </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-full px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-full bg-secondary px-6 py-3 text-sm font-bold text-secondary-foreground transition-all hover:bg-secondary/90 hover:shadow-lg active:scale-95"
+              >
+                Sign Up
+              </Link>
             </div>
           )}
           {isLogin && (
-            <div className="flex items-center">
+            <div className="hidden sm:flex items-center">
               <Link
                 href="/register"
                 className="rounded-full bg-secondary px-8 py-3 text-sm font-bold text-secondary-foreground transition-all hover:bg-secondary/90 hover:shadow-lg active:scale-95"
@@ -85,6 +85,37 @@ export default function AuthLayout({
               </Link>
             </div>
           )}
+          {isRegister && (
+            <div className="hidden sm:flex items-center">
+              <Link
+                href="/login"
+                className="rounded-full px-8 py-3 text-sm font-bold text-foreground transition-all hover:bg-accent border border-border"
+              >
+                Login
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Navigation */}
+          <div className="flex sm:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-xl">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="flex flex-col gap-8 pt-12">
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-2xl font-bold">AbsoluTrip</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-6">
+                  <Link href="/" className="text-lg font-medium hover:text-primary">Home</Link>
+                  <Link href="/login" className="text-lg font-medium hover:text-primary">Login</Link>
+                  <Link href="/register" className="text-lg font-medium hover:text-primary">Sign Up</Link>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 

@@ -18,20 +18,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { expenses as expensesApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
 import type { Settlement } from "@/types";
 
 interface SettlementCardProps {
   settlement: Settlement;
   type: "pay" | "receive";
+  tripId?: number;
+  onSettled?: () => void;
 }
 
 export function SettlementCard({
   settlement,
   type,
+  tripId,
+  onSettled,
 }: SettlementCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
 
   const otherPerson = type === "pay" ? settlement.to_user_name : settlement.from_user_name;
 
@@ -49,6 +55,26 @@ export function SettlementCard({
     setCopied(true);
     toast.success("Amount copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSettle = async () => {
+    if (!tripId) return;
+
+    try {
+      setIsSettling(true);
+      await expensesApi.settle(tripId, {
+        amount: settlement.amount,
+        from_user_id: settlement.from_user_id,
+        to_user_id: settlement.to_user_id,
+      });
+      toast.success("Settlement recorded!");
+      setShowDetails(false);
+      onSettled?.();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to settle");
+    } finally {
+      setIsSettling(false);
+    }
   };
 
   return (
@@ -185,8 +211,13 @@ export function SettlementCard({
             </div>
 
             {type === "pay" && (
-              <Button className="w-full" size="lg" onClick={() => setShowDetails(false)}>
-                Mark as Settled
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleSettle}
+                disabled={isSettling}
+              >
+                {isSettling ? "Recording..." : "Mark as Settled"}
               </Button>
             )}
           </div>

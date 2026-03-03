@@ -2,6 +2,8 @@ import useSWR from 'swr';
 import { options } from '@/lib/api/endpoints';
 import type { StayOption, RankedOption } from '@/types';
 
+const EMPTY_ARRAY: any[] = [];
+
 export function useOptions(tripId: number | null, sort?: 'created_at' | 'price' | 'votes') {
   const { data, error, isLoading, mutate } = useSWR<{ options: StayOption[] }>(
     tripId ? `/trips/${tripId}/options?sort=${sort || 'created_at'}` : null,
@@ -9,7 +11,7 @@ export function useOptions(tripId: number | null, sort?: 'created_at' | 'price' 
   );
 
   return {
-    options: data?.options ?? [],
+    options: data?.options ?? (EMPTY_ARRAY as StayOption[]),
     isLoading,
     isError: error,
     mutate,
@@ -23,7 +25,7 @@ export function useRankedOptions(tripId: number | null) {
   );
 
   return {
-    rankedOptions: data?.ranked_options ?? [],
+    rankedOptions: data?.ranked_options ?? (EMPTY_ARRAY as RankedOption[]),
     isLoading,
     isError: error,
     mutate,
