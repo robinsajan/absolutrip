@@ -312,20 +312,15 @@ def upload_option_image(option_id, option, membership):
     if not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp'}), 400
 
-    if option.image_path:
-        try:
-            old_file = os.path.join(get_upload_folder(), option.image_path)
-            if os.path.exists(old_file):
-                os.remove(old_file)
-        except Exception:
-            pass
-
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
     filepath = os.path.join(get_upload_folder(), filename)
     file.save(filepath)
 
-    option.image_path = filename
+    if option.image_path:
+        option.image_path = f"{option.image_path},{filename}"
+    else:
+        option.image_path = filename
     db.session.commit()
 
     return jsonify({

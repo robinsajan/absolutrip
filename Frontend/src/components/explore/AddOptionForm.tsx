@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { OptionCategory } from "@/types";
+import { DateRange } from "react-day-picker";
 
 interface AddOptionFormProps {
   onSubmit: (data: {
@@ -49,11 +50,10 @@ interface AddOptionFormProps {
   onCancel?: () => void;
 }
 
-const CATEGORIES: { value: OptionCategory; label: string; icon: React.ReactNode }[] = [
+const CATEGORIES: { value: OptionCategory | "other"; label: string; icon: React.ReactNode }[] = [
   { value: "stay", label: "Stay", icon: <Home className="h-4 w-4" /> },
   { value: "activity", label: "Activity", icon: <Ticket className="h-4 w-4" /> },
-  { value: "food", label: "Food", icon: <Utensils className="h-4 w-4" /> },
-  { value: "transport", label: "Transport", icon: <Car className="h-4 w-4" /> },
+  { value: "other", label: "Other", icon: <Plus className="h-4 w-4" /> },
 ];
 
 export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndDate, defaultDate, initialData, onCancel }: AddOptionFormProps) {
@@ -62,15 +62,16 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   const [link, setLink] = useState(initialData?.link || "");
   const [price, setPrice] = useState("");
   const [notes, setNotes] = useState(initialData?.notes || "");
-  const [checkInDate, setCheckInDate] = useState<Date | undefined>(
-    defaultDate ? parseISO(defaultDate) : undefined
-  );
-  const [checkOutDate, setCheckOutDate] = useState<Date | undefined>();
-  const [category, setCategory] = useState<OptionCategory>("stay");
+  const [dateSelection, setDateSelection] = useState<DateRange | undefined>({
+    from: defaultDate ? parseISO(defaultDate) : undefined,
+    to: undefined,
+  });
+
+  const [category, setCategory] = useState<OptionCategory | "other">("stay");
   const [isPerPerson, setIsPerPerson] = useState(false);
   const [isPerNight, setIsPerNight] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.image_url ? [initialData.image_url] : []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tripDateRange = useMemo(() => {
@@ -95,37 +96,37 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
     setLink("");
     setPrice("");
     setNotes("");
-    setCheckInDate(defaultDate ? parseISO(defaultDate) : undefined);
-    setCheckOutDate(undefined);
+    setDateSelection({
+      from: defaultDate ? parseISO(defaultDate) : undefined,
+      to: undefined,
+    });
     setCategory("stay");
     setIsPerPerson(false);
     setIsPerNight(false);
-    setImageFile(null);
-    setImagePreview(null);
+    setImageFiles([]);
+    setImagePreviews([]);
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image must be less than 5MB");
-        return;
-      }
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length) {
+      const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+      if (validFiles.length < files.length) toast.error("Some images skipped (must be <5MB)");
+      setImageFiles(prev => [...prev, ...validFiles]);
+      validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,18 +149,21 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
         link: link.trim(),
         price: Number(price),
         notes: notes.trim() || undefined,
-        check_in_date: checkInDate ? format(checkInDate, "yyyy-MM-dd") : undefined,
-        check_out_date: checkOutDate ? format(checkOutDate, "yyyy-MM-dd") : undefined,
-        category,
+        check_in_date: dateSelection?.from ? format(dateSelection.from, "yyyy-MM-dd") : undefined,
+        check_out_date: dateSelection?.to ? format(dateSelection.to, "yyyy-MM-dd") : undefined,
+        category: category === "other" ? undefined : category,
         is_per_person: isPerPerson,
         is_per_night: isPerNight,
       });
 
-      if (imageFile && onImageUpload && result?.option?.id) {
-        try {
-          await onImageUpload(result.option.id, imageFile);
-        } catch {
-          toast.error("Option created but image upload failed");
+      if (imageFiles.length > 0 && onImageUpload && result?.option?.id) {
+        for (const file of imageFiles) {
+          try {
+            await onImageUpload(result.option.id, file);
+          } catch {
+            toast.error("Option created but some images failed to upload");
+            break;
+          }
         }
       }
 
@@ -176,7 +180,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
 
   return (
     <div className="max-w-md mx-auto px-4">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Category Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-foreground">Category</Label>
@@ -209,7 +213,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isLoading}
-            className="rounded-lg border-border bg-background px-4 py-3"
+            className="rounded-lg border-border bg-background px-4 py-2"
           />
         </div>
 
@@ -225,146 +229,120 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             value={link}
             onChange={(e) => setLink(e.target.value)}
             disabled={isLoading}
-            className="rounded-lg border-border bg-background px-4 py-3"
+            className="rounded-lg border-border bg-background px-4 py-2"
           />
           <p className="text-xs text-muted-foreground">
             Will try to fetch title & image from link
           </p>
         </div>
 
-        {/* Dates */}
+        {/* Dates component upgraded to DateRange */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-foreground">Dates</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start rounded-lg border-border bg-background px-4 py-3 text-left font-normal",
-                      !checkInDate && "text-muted-foreground"
-                    )}
-                    disabled={isLoading}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {checkInDate ? format(checkInDate, "MMM d") : "Check-in (Select)"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={checkInDate}
-                    onSelect={setCheckInDate}
-                    disabled={isDateDisabled}
-                    defaultMonth={tripDateRange?.start}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-1">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start rounded-lg border-border bg-background px-4 py-3 text-left font-normal",
-                      !checkOutDate && "text-muted-foreground"
-                    )}
-                    disabled={isLoading}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {checkOutDate ? format(checkOutDate, "MMM d") : "Check-out (Select)"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={checkOutDate}
-                    onSelect={setCheckOutDate}
-                    disabled={(date) => {
-                      if (isDateDisabled(date)) return true;
-                      if (checkInDate && date < checkInDate) return true;
-                      return false;
-                    }}
-                    defaultMonth={checkInDate || tripDateRange?.start}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  "w-full justify-start rounded-lg border-border bg-background px-4 py-2 text-left font-normal",
+                  !dateSelection?.from && "text-muted-foreground"
+                )}
+                disabled={isLoading}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {category === "stay" ? (
+                  dateSelection?.from ? (
+                    dateSelection.to ? (
+                      <>
+                        {format(dateSelection.from, "MMM d")} - {format(dateSelection.to, "MMM d")}
+                      </>
+                    ) : (
+                      format(dateSelection.from, "MMM d")
+                    )
+                  ) : (
+                    "Select dates"
+                  )
+                ) : (
+                  dateSelection?.from ? format(dateSelection.from, "MMM d") : "Select date"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              {category === "stay" ? (
+                <CalendarComponent
+                  mode="range"
+                  selected={dateSelection}
+                  onSelect={setDateSelection}
+                  disabled={isDateDisabled}
+                  defaultMonth={dateSelection?.from || tripDateRange?.start}
+                  initialFocus
+                  numberOfMonths={1}
+                />
+              ) : (
+                <CalendarComponent
+                  mode="single"
+                  selected={dateSelection?.from}
+                  onSelect={(val: any) => setDateSelection(val ? { from: val, to: undefined } : undefined)}
+                  disabled={isDateDisabled}
+                  defaultMonth={dateSelection?.from || tripDateRange?.start}
+                  initialFocus
+                  numberOfMonths={1}
+                />
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Image Upload - Preview Card */}
-        {imagePreview && (
-          <div className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
-            <div className="aspect-video w-full">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="absolute bottom-4 left-4 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground">
-              Stitch - Design with AI
-            </div>
-            <div className="space-y-1 p-4">
-              <h3 className="font-bold text-foreground">{title || "Title Title"}</h3>
-              <p className="text-2xl font-bold text-foreground">
-                ${price || "12,450.00"}
-              </p>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-0.5">
-                  ★★★★★
-                </span>
-                <span>{notes || "10 votons"}</span>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white"
-              onClick={removeImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        {/* Images Selection */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-foreground">Images</Label>
 
-        {/* Image Upload Button */}
-        {!imagePreview && (
-          <div className="space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-lg border-dashed border-border py-8"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-            >
-              <Upload className="mr-2 h-5 w-5" />
-              Upload Image
-            </Button>
-          </div>
-        )}
+          {imagePreviews.length > 0 && (
+            <div className="grid grid-cols-2 gap-2">
+              {imagePreviews.map((preview, idx) => (
+                <div key={idx} className="relative aspect-video rounded-xl border border-border">
+                  <img src={preview} alt={`Preview ${idx + 1}`} className="h-full w-full object-cover rounded-xl" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/80 hover:bg-white text-xs"
+                    onClick={() => removeImage(idx)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+            multiple
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-lg border-dashed border-border py-4 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Photo(s)
+          </Button>
+        </div>
 
         {/* Price */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="price" className="text-sm font-semibold text-foreground">
-              Price {isPerPerson && isPerNight ? "(per person / night)" : isPerPerson ? "(per person)" : isPerNight ? "(per night)" : "(Total)"}
-            </Label>
+        <div className="space-y-2">
+          <Label htmlFor="price" className="text-sm font-semibold text-foreground">
+            Price {category !== "stay" ? (isPerPerson ? "(per person)" : "(Total)") : (isPerPerson && isPerNight ? "(per person / night)" : isPerPerson ? "(per person)" : isPerNight ? "(per night)" : "(Total)")}
+          </Label>
+          <div className="flex items-center gap-4">
             <Input
               id="price"
               type="number"
@@ -374,38 +352,29 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               disabled={isLoading}
-              className="rounded-lg border-border bg-background px-4 py-3"
+              className="rounded-lg border-border bg-background px-4 py-2 w-1/2"
             />
-          </div>
-
-          <div className="flex flex-wrap gap-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isPerPerson"
-                checked={isPerPerson}
-                onCheckedChange={(checked) => setIsPerPerson(!!checked)}
-                disabled={isLoading}
-              />
-              <Label
-                htmlFor="isPerPerson"
-                className="text-sm font-medium leading-none cursor-pointer select-none"
-              >
-                Per Person
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isPerNight"
-                checked={isPerNight}
-                onCheckedChange={(checked) => setIsPerNight(!!checked)}
-                disabled={isLoading}
-              />
-              <Label
-                htmlFor="isPerNight"
-                className="text-sm font-medium leading-none cursor-pointer select-none"
-              >
-                Per Night
-              </Label>
+            <div className="flex items-center gap-4 text-sm font-medium">
+              <div className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox
+                  id="isPerPerson"
+                  checked={isPerPerson}
+                  onCheckedChange={(checked) => setIsPerPerson(!!checked)}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="isPerPerson" className="cursor-pointer">Per Person</Label>
+              </div>
+              {category === "stay" && (
+                <div className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    id="isPerNight"
+                    checked={isPerNight}
+                    onCheckedChange={(checked) => setIsPerNight(!!checked)}
+                    disabled={isLoading}
+                  />
+                  <Label htmlFor="isPerNight" className="cursor-pointer">Per Night</Label>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -421,16 +390,16 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={isLoading}
-            className="rounded-lg border-border bg-background px-4 py-3"
+            className="rounded-lg border-border bg-background px-4 py-2"
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
-            className="flex-1 rounded-lg py-3 font-semibold"
+            className="flex-1 rounded-lg py-2 font-semibold"
             onClick={() => {
               resetForm();
               if (onCancel) onCancel();
@@ -441,7 +410,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
           </Button>
           <Button
             type="submit"
-            className="flex-1 rounded-lg bg-primary py-3 font-semibold text-primary-foreground hover:bg-primary/90"
+            className="flex-1 rounded-lg bg-primary py-2 font-semibold text-primary-foreground hover:bg-primary/90"
             disabled={isLoading}
           >
             {isLoading ? "Creating..." : "Create Option"}

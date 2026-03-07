@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
 import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
 import { options as optionsApi, votes as votesApi } from "@/lib/api/endpoints";
@@ -18,6 +18,47 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+
+function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!imageUrls || imageUrls.length === 0) {
+    return <img alt={alt} className="w-full h-full object-cover font-sans cursor-pointer group-hover:scale-105 transition-transform duration-700" src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop" />;
+  }
+
+  const nextImg = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % imageUrls.length);
+  };
+
+  const prevImg = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+  };
+
+  return (
+    <div className="relative w-full h-full group">
+      <img alt={alt} className="w-full h-full object-cover font-sans group-hover:scale-105 transition-transform duration-700" src={imageUrls[currentIndex]} />
+      {imageUrls.length > 1 && (
+        <>
+          <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 z-10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-sm">chevron_left</span>
+          </button>
+          <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 z-10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-sm">chevron_right</span>
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+            {imageUrls.map((_, i) => (
+              <div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i === currentIndex ? "bg-white scale-110" : "bg-white/50")} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ExplorePage() {
   const params = useParams();
@@ -33,6 +74,7 @@ export default function ExplorePage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -84,6 +126,18 @@ export default function ExplorePage() {
       mutate();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to remove selection");
+    }
+  };
+
+  const handleDelete = async (optionId: number) => {
+    try {
+      if (confirm("Are you sure you want to delete this option?")) {
+        await optionsApi.delete(optionId);
+        toast.success("Option deleted");
+        mutate();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to delete option");
     }
   };
 
@@ -143,8 +197,185 @@ export default function ExplorePage() {
       return sum + basePrice;
     }, 0);
   }, [likedOptions, members]);
+  // Compute available dates
+  const tripDates = useMemo(() => {
+    if (!activeTrip?.start_date || !activeTrip?.end_date) return [];
+    try {
+      return eachDayOfInterval({
+        start: parseISO(activeTrip.start_date),
+        end: parseISO(activeTrip.end_date)
+      });
+    } catch {
+      return [];
+    }
+  }, [activeTrip]);
+
+  const stays = useMemo(() => {
+    let list = (rankedOptions || []).filter(ro => ro.option.category === 'stay');
+    if (selectedDate) {
+      list = list.filter(ro => {
+        if (!ro.option.check_in_date || !ro.option.check_out_date) return false;
+        const start = parseISO(ro.option.check_in_date);
+        const end = parseISO(ro.option.check_out_date);
+        // Match if selected date falls between checkin (inclusive) and checkout (exclusive)
+        return selectedDate >= start && selectedDate < end;
+      });
+    }
+    return list;
+  }, [rankedOptions, selectedDate]);
+
+  const activities = useMemo(() => {
+    let list = (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
+    if (selectedDate) {
+      list = list.filter(ro => {
+        if (!ro.option.check_in_date) return false;
+        return isSameDay(parseISO(ro.option.check_in_date), selectedDate);
+      });
+    }
+    return list;
+  }, [rankedOptions, selectedDate]);
 
   if (!mounted) return null;
+
+  const renderOptionCard = (ro: RankedOption) => {
+    const userVote = ro.voters.find(v => v.user_id === user?.id);
+    const hasVoted = !!userVote && userVote.score > 0;
+    const isFinalized = ro.option.is_finalized;
+    const isStay = ro.option.category === "stay";
+
+    // Image logic
+    let imageUrls = ["https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop"];
+    if (ro.option.image_path) {
+      imageUrls = ro.option.image_path.split(',').map((u: string) => `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${u.trim()}`);
+    } else if (ro.option.image_url) {
+      imageUrls = ro.option.image_url.split(',').map((u: string) => u.trim());
+    }
+
+    const nights = ro.option.check_in_date && ro.option.check_out_date
+      ? Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))
+      : 1;
+
+    const groupTotal = (ro.option.is_per_person ? ro.option.price * (members?.length || 1) : ro.option.price) * (ro.option.is_per_night ? nights : 1);
+    const ppPerDay = (ro.option.is_per_person ? ro.option.price : ro.option.price / (members?.length || 1)) / (ro.option.is_per_night ? 1 : nights);
+
+    return (
+      <div key={ro.option.id} className={cn(
+        "group bg-white dark:bg-gray-900 rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1",
+        hasVoted ? "border-primary shadow-xl shadow-primary/5" : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg"
+      )}>
+        <div className="relative h-48 overflow-hidden rounded-t-[2rem]">
+          <ImageCarousel imageUrls={imageUrls} alt={ro.option.title} />
+
+          {/* Floating Labels */}
+          <div className="absolute top-4 left-4 flex gap-1.5 z-20">
+            <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
+              {ro.option.category || "activity"}
+            </div>
+            {isFinalized && (
+              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
+                Selected
+              </div>
+            )}
+          </div>
+
+          {/* Small Heart Vote Button */}
+          <button
+            onClick={() => handleVote(ro.option.id, hasVoted ? 0 : 1)}
+            className={cn(
+              "absolute top-4 right-4 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-20",
+              hasVoted ? "bg-primary text-white" : "bg-black/20 text-white hover:bg-black/40"
+            )}
+          >
+            <span className={cn("material-symbols-outlined text-base", hasVoted && "material-symbols-filled")}>favorite</span>
+            {ro.vote_count > 0 && (
+              <span className="absolute -bottom-1 -right-1 bg-white text-black text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-sm">
+                {ro.vote_count}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="p-4 flex flex-col min-h-[280px]">
+          <div className="flex justify-between items-start mb-1 gap-2">
+            <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">{ro.option.title}</h3>
+            <div className="flex items-center gap-1 shrink-0">
+              {ro.option.link && (
+                <a href={ro.option.link} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors">
+                  <span className="material-symbols-outlined text-lg">north_east</span>
+                </a>
+              )}
+              {(isOwner || ro.option.added_by === user?.id) && (
+                <button onClick={() => handleDelete(ro.option.id)} className="text-red-400 hover:text-red-600 transition-colors ml-1">
+                  <span className="material-symbols-outlined text-lg">delete</span>
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-xs mb-3 font-bold line-clamp-2 leading-relaxed">
+            {ro.option.notes || ro.option.link_description || "Explore this amazing possibility."}
+          </p>
+
+          <div className="mt-auto">
+            {ro.option.check_in_date && (
+              <div className="flex items-center gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                <span className="material-symbols-outlined text-sm text-primary">calendar_today</span>
+                <span className="text-[11px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300">
+                  {isStay ? (
+                    <>
+                      {ro.option.check_in_date ? format(parseISO(ro.option.check_in_date), "MMM d") : "?"} — {ro.option.check_out_date ? format(parseISO(ro.option.check_out_date), "MMM d") : "?"}
+                      {ro.option.check_in_date && ro.option.check_out_date && (
+                        <span className="ml-1.5 text-primary">
+                          ({Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))}n)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    format(parseISO(ro.option.check_in_date), "MMM d, yyyy")
+                  )}
+                </span>
+              </div>
+            )}
+
+            <div className="mb-3 pt-3 border-t border-gray-50 dark:border-gray-800">
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-[8px] uppercase font-black text-gray-400 tracking-widest mb-0.5">Group Total</p>
+                  <p className="text-lg font-bold text-gray-800 dark:text-gray-200 leading-none">
+                    ${Math.round(groupTotal).toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] uppercase font-black text-primary/70 tracking-widest mb-0.5">PP / Day</p>
+                  <p className="text-xl font-black text-primary leading-none">
+                    ${Math.round(ppPerDay).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Select/Finalize Button */}
+            <button
+              onClick={() => isFinalized ? handleUnfinalize(ro.option.id) : (isOwner ? handleFinalize(ro.option.id) : null)}
+              disabled={!isOwner && !isFinalized}
+              className={cn(
+                "w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-sm text-xs uppercase tracking-tight",
+                isFinalized
+                  ? "bg-green-500 text-white shadow-green-500/10 hover:opacity-90"
+                  : isOwner
+                    ? "bg-black dark:bg-white text-white dark:text-black hover:opacity-90 shadow-black/5"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed hidden"
+              )}
+            >
+              <span className="material-symbols-outlined text-base">
+                {isFinalized ? "check_circle" : "sell"}
+              </span>
+              {isFinalized ? "Selected" : "Select for Trip"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 min-h-screen">
@@ -201,18 +432,48 @@ export default function ExplorePage() {
               </div>
 
               {/* Budget Summary Mini-Box */}
-              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+              {/* <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
                 <p className="text-slate-500 text-[8px] font-black uppercase tracking-widest mb-1">Estimated Cost / Person</p>
                 <h2 className="text-4xl font-black text-black dark:text-white tracking-tight">${Math.round(totalLikedCostPerPerson).toLocaleString()}</h2>
                 <div className="mt-4 flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase">
                   <span className="material-symbols-outlined text-sm material-symbols-filled text-primary">favorite</span>
                   {likedOptions.length} liked
                 </div>
-              </div>
+              </div> */}
             </section>
           </div>
 
           <div className="lg:col-span-3">
+            {/* Date Filter Strip */}
+            {tripDates.length > 0 && (
+              <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-4 scrollbar-hide px-2">
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className={cn(
+                    "whitespace-nowrap px-6 py-3 md:px-8 md:py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all duration-300",
+                    !selectedDate ? "bg-black text-[#ccff00] dark:bg-white dark:text-black shadow-xl scale-105" : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                  )}
+                >
+                  All Dates
+                </button>
+                {tripDates.map((date, idx) => {
+                  const isSelected = selectedDate && isSameDay(date, selectedDate);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedDate(date)}
+                      className={cn(
+                        "whitespace-nowrap px-6 py-3 md:px-8 md:py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all duration-300",
+                        isSelected ? "bg-black text-[#ccff00] dark:bg-white dark:text-black shadow-xl scale-105" : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                      )}
+                    >
+                      {format(date, "MMM d")}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {isLoading ? (
               <div className="py-20 flex flex-col items-center justify-center gap-4">
                 <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
@@ -226,150 +487,39 @@ export default function ExplorePage() {
                 <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>
                 <p className="text-gray-500 font-medium max-w-sm mx-auto mb-10 text-lg">Help your group decide! Add stays, restaurants, or things to do using the Magic Link above.</p>
               </div>
+            ) : (stays.length === 0 && activities.length === 0) && (rankedOptions?.length || 0) > 0 ? (
+              <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300">
+                  <span className="material-symbols-outlined text-5xl outline-icon">calendar_month</span>
+                </div>
+                <h3 className="text-3xl font-extrabold mb-4">No options for this date</h3>
+                <p className="text-gray-500 font-medium max-w-sm mx-auto mb-10 text-lg">Try selecting a different date or adding options for {selectedDate && format(selectedDate, "MMM d")}.</p>
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className="bg-brand-purple text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all font-sans"
+                >
+                  Clear filter
+                </button>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {rankedOptions.map((ro) => {
-                  const userVote = ro.voters.find(v => v.user_id === user?.id);
-                  const hasVoted = !!userVote && userVote.score > 0;
-                  const isFinalized = ro.option.is_finalized;
-                  const isStay = ro.option.category === "stay";
-
-                  // Image logic
-                  let imageUrl = "https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop";
-                  if (ro.option.image_path) {
-                    imageUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${ro.option.image_path}`;
-                  } else if (ro.option.image_url) {
-                    imageUrl = ro.option.image_url;
-                  }
-
-                  const costPerPerson = ro.option.is_per_person
-                    ? ro.option.price
-                    : (members?.length ? ro.option.price / members.length : ro.option.price);
-
-                  return (
-                    <div key={ro.option.id} className={cn(
-                      "group bg-white dark:bg-gray-900 rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1",
-                      hasVoted ? "border-primary shadow-xl shadow-primary/5" : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg"
-                    )}>
-                      <div className="relative h-48 overflow-hidden">
-                        <img alt={ro.option.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 font-sans" src={imageUrl} />
-
-                        {/* Floating Labels */}
-                        <div className="absolute top-4 left-4 flex gap-1.5">
-                          <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
-                            {ro.option.category || "activity"}
-                          </div>
-                          {isFinalized && (
-                            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
-                              Selected
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Small Heart Vote Button */}
-                        <button
-                          onClick={() => handleVote(ro.option.id, hasVoted ? 0 : 1)}
-                          className={cn(
-                            "absolute top-4 right-4 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-20",
-                            hasVoted ? "bg-primary text-white" : "bg-black/20 text-white hover:bg-black/40"
-                          )}
-                        >
-                          <span className={cn("material-symbols-outlined text-base", hasVoted && "material-symbols-filled")}>favorite</span>
-                          {ro.vote_count > 0 && (
-                            <span className="absolute -bottom-1 -right-1 bg-white text-black text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-sm">
-                              {ro.vote_count}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="p-5 flex flex-col min-h-[400px]">
-                        <div className="flex justify-between items-start mb-1">
-                          <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">{ro.option.title}</h3>
-                          {ro.option.link && (
-                            <a href={ro.option.link} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors">
-                              <span className="material-symbols-outlined text-lg">north_east</span>
-                            </a>
-                          )}
-                        </div>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs mb-4 font-bold line-clamp-2">
-                          {ro.option.notes || ro.option.link_description || "Explore this amazing possibility."}
-                        </p>
-
-                        <div className="mt-auto">
-                          {isStay && (ro.option.check_in_date || ro.option.check_out_date) && (
-                            <div className="flex items-center gap-1.5 mb-4 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                              <span className="material-symbols-outlined text-xs text-slate-400">calendar_today</span>
-                              <span className="text-[9px] font-black uppercase tracking-tight text-slate-500">
-                                {ro.option.check_in_date ? format(parseISO(ro.option.check_in_date), "MMM d") : "?"} — {ro.option.check_out_date ? format(parseISO(ro.option.check_out_date), "MMM d") : "?"}
-                                {ro.option.check_in_date && ro.option.check_out_date && (
-                                  <span className="ml-1.5 text-primary">
-                                    ({Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))}n)
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="mb-4 pt-4 border-t border-gray-50 dark:border-gray-800">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <p className="text-[7px] uppercase font-black text-gray-400 tracking-widest">Rate</p>
-                                <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
-                                  ${Math.round(ro.option.price).toLocaleString()}
-                                  <span className="text-[8px] font-normal lowercase ml-1 opacity-50">
-                                    {ro.option.is_per_person ? 'pp' : 'total'} {ro.option.is_per_night ? '/n' : ''}
-                                  </span>
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-[7px] uppercase font-black text-gray-400 tracking-widest">PP Total</p>
-                                <p className="text-lg font-black text-primary">
-                                  ${Math.round(costPerPerson).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-
-                            {isStay && (
-                              <div className="bg-primary/5 dark:bg-primary/10 p-3 rounded-xl border border-primary/10">
-                                <div className="flex justify-between items-center text-[10px] font-black text-primary">
-                                  <span className="uppercase tracking-tighter opacity-70 italic text-[7px]">Group Stay</span>
-                                  <span>
-                                    ${Math.round(
-                                      (ro.option.is_per_person ? ro.option.price * (members?.length || 1) : ro.option.price) *
-                                      (ro.option.is_per_night && ro.option.check_in_date && ro.option.check_out_date
-                                        ? Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))
-                                        : 1)
-                                    ).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Select/Finalize Button */}
-                          <button
-                            onClick={() => isFinalized ? handleUnfinalize(ro.option.id) : (isOwner ? handleFinalize(ro.option.id) : null)}
-                            disabled={!isOwner && !isFinalized}
-                            className={cn(
-                              "w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-xs uppercase tracking-tight",
-                              isFinalized
-                                ? "bg-green-500 text-white shadow-green-500/10 hover:opacity-90"
-                                : isOwner
-                                  ? "bg-black dark:bg-white text-white dark:text-black hover:opacity-90 shadow-black/5"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
-                            )}
-                          >
-                            <span className="material-symbols-outlined text-base">
-                              {isFinalized ? "check_circle" : "sell"}
-                            </span>
-                            {isFinalized ? "Selected" : isOwner ? "Select for Trip" : "Wait..."}
-                          </button>
-                        </div>
-                      </div>
+              <div className="space-y-12">
+                {stays.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest pl-2">Stays</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {stays.map(renderOptionCard)}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+
+                {activities.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest pl-2">Activities, Food  & More</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {activities.map(renderOptionCard)}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
