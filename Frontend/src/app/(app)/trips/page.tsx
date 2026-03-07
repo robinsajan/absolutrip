@@ -19,50 +19,75 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function TripCard({ trip }: { trip: Trip }) {
-  const isPast = new Date(trip.end_date) < new Date();
-  const status = isPast ? "past" : "planning";
+  const now = new Date();
+  const start = new Date(trip.start_date);
+  const end = new Date(trip.end_date);
+
+  const isPast = now > end;
+  const isPresent = now >= start && now <= end;
+
+  const status = isPast ? "past" : isPresent ? "active" : "upcoming";
   const statusColor = isPast
     ? "bg-slate-100 dark:bg-slate-800 text-slate-500"
-    : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-200";
+    : isPresent
+      ? "bg-green-500 text-white"
+      : "bg-white text-[#1877F2]";
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden group border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all h-full flex flex-col">
-      <div className="relative h-60 overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] overflow-hidden group border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all h-full flex flex-col">
+      <div className="relative h-56 overflow-hidden">
         <img
           alt={trip.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           src={trip.image_url || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop"}
         />
-        <div className={`absolute top-5 right-5 ${statusColor} px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm`}>
+        <div className={`absolute top-4 right-4 ${statusColor} px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm`}>
           {status}
         </div>
       </div>
-      <div className="p-10 flex flex-col flex-1">
-        <div className="mb-8">
-          <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2 line-clamp-1">{trip.name}</h3>
-          <p className="text-slate-500 font-medium text-sm flex items-center gap-1.5 focus:outline-none">
-            <span className="material-symbols-outlined text-base outline-icon">location_on</span>
-            {trip.google_maps_url ? "View Location" : "TBD"}
-          </p>
+      <div className="p-6 flex flex-col flex-1">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2 gap-2">
+            <h3 className="text-2xl font-bold tracking-tight line-clamp-1">{trip.name}</h3>
+            <div className="flex items-center gap-2 shrink-0">
+              {trip.google_maps_url && (
+                <a href={trip.google_maps_url} target="_blank" rel="noreferrer" className="flex items-center text-[#1877F2] hover:text-blue-600 transition-colors" title="View Location">
+                  <span className="material-symbols-outlined text-[20px]">location_on</span>
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center text-slate-500 text-sm">
+
+            <span>{format(new Date(trip.start_date), "MMM dd")} - {format(new Date(trip.end_date), "MMM dd, yyyy")}</span>
+          </div>
         </div>
-        <div className="mt-auto flex items-center justify-between pt-8 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              {trip.members?.length || 0} member{(trip.members?.length || 0) !== 1 ? 's' : ''}
-            </span>
-            <span className="text-sm font-bold text-slate-600 dark:text-slate-400">
-              {format(new Date(trip.start_date), "MMM dd")} - {format(new Date(trip.end_date), "MMM dd")}
+
+        <div className="mt-auto pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {(trip.members?.slice(0, 3) || []).map((m, i) => (
+                <div key={i} className="w-8 h-8 rounded-full bg-[#eef5fd] dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[#1877F2] dark:text-blue-400 text-xs font-bold">
+                  {(m.user_name || m.user_email || "J").charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {(!trip.members || trip.members.length === 0) && (
+                <div className="w-8 h-8 rounded-full bg-[#eef5fd] dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[#1877F2] dark:text-blue-400 text-xs font-bold">
+                  J
+                </div>
+              )}
+            </div>
+            <span className="text-sm font-medium text-slate-400">
+              {trip.members?.length || 1} Member{(trip.members?.length || 1) !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="text-right">
-            <Link
-              href={`/trip/${trip.id}/explore`}
-              className="text-primary font-black text-sm flex items-center justify-end gap-1.5 group-hover:gap-2.5 transition-all uppercase tracking-tight"
-            >
-              open
-              <span className="material-symbols-outlined text-lg outline-icon">arrow_forward</span>
-            </Link>
-          </div>
+          <Link
+            href={`/trip/${trip.id}/explore`}
+            className="text-[#1877F2] font-black text-sm flex items-center gap-1 group-hover:gap-2 transition-all  tracking-tight"
+          >
+            View Trip
+            <span className="material-symbols-outlined text-lg outline-icon">arrow_forward</span>
+          </Link>
         </div>
       </div>
     </div>
@@ -182,9 +207,9 @@ export default function TripsPage() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic">my trips</h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">
-              {isLoading ? "loading your adventures..." : `${trips?.length || 0} trips in records`}
+            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic">Welcome back, {user?.name}!</h1>
+            <p className="text-slate-500 font-bold  tracking-widest text-s">
+              {isLoading ? "loading your adventures..." : `You have ${trips?.length || 0} trips coming up. Ready for your next adventure?`}
             </p>
           </div>
           <div className="flex gap-3">
@@ -214,7 +239,7 @@ export default function TripsPage() {
                     disabled={isJoining}
                     className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
                   >
-                    {isJoining ? "joining..." : "request access"}
+                    {isJoining ? "joining..." : "Request access"}
                   </button>
                 </div>
               </DialogContent>

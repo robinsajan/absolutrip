@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store";
 import { useTrips } from "@/lib/hooks";
-import { trips as tripsApi } from "@/lib/api/endpoints";
+import { trips as tripsApi, options as optionsApi } from "@/lib/api/endpoints";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,90 @@ export default function SettingsPage() {
   const params = useParams();
   const router = useRouter();
   const tripId = Number(params.tripId);
-  const { user, activeTrip } = useAppStore();
+  const { user, activeTrip, setActiveTrip } = useAppStore();
   const { mutate: mutateTrips } = useTrips();
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmName, setConfirmName] = useState("");
+
+  const [editName, setEditName] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    if (activeTrip) {
+      setEditName(activeTrip.name || "");
+      setEditLocation(activeTrip.google_maps_url || "");
+
+      // format dates (YYYY-MM-DD)
+      const parseDate = (d: string) => {
+        if (!d) return "";
+        return new Date(d).toISOString().split("T")[0];
+      };
+
+      setEditStart(parseDate(activeTrip.start_date));
+      setEditEnd(parseDate(activeTrip.end_date));
+    }
+  }, [activeTrip]);
+
+  const handleUpdateTrip = async () => {
+    if (!editName || !editStart || !editEnd) {
+      toast.error("Please fill out name and dates");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      // Check if dates are changed
+      const originalStart = activeTrip?.start_date ? new Date(activeTrip.start_date).toISOString().split("T")[0] : "";
+      const originalEnd = activeTrip?.end_date ? new Date(activeTrip.end_date).toISOString().split("T")[0] : "";
+
+      if (editStart !== originalStart || editEnd !== originalEnd) {
+        // Fetch all stays / options
+        const { options } = await optionsApi.list(tripId);
+
+        // Find stays that fall completely outside the new dates, or whose dates are outside the bounds
+        const newStart = new Date(editStart);
+        const newEnd = new Date(editEnd);
+
+        const invalidStay = options.find((opt) => {
+          if (opt.category === 'stay' || (opt.check_in_date && opt.check_out_date)) {
+            const stayStart = opt.check_in_date ? new Date(opt.check_in_date) : null;
+            const stayEnd = opt.check_out_date ? new Date(opt.check_out_date) : null;
+
+            if (stayStart && stayStart < newStart) return true;
+            if (stayEnd && stayEnd > newEnd) return true;
+          }
+          return false;
+        });
+
+        if (invalidStay) {
+          toast.error("This change can't be done. You need to update the stay dates first that exist outside this new range.");
+          setIsUpdating(false);
+          return;
+        }
+      }
+
+      await tripsApi.update(tripId, {
+        name: editName,
+        google_maps_url: editLocation,
+        start_date: editStart,
+        end_date: editEnd,
+      });
+
+      toast.success("Trip updated successfully!");
+      // Refetch logic or active trip setting
+      const res = await tripsApi.get(tripId);
+      setActiveTrip(res.trip);
+      mutateTrips();
+
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to update trip");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const isOwner = activeTrip?.created_by === user?.id;
 
@@ -90,6 +170,67 @@ export default function SettingsPage() {
         </h2>
         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Control your trip parameters</p>
       </div>
+
+      {isOwner && (
+        <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="p-10 pb-4">
+            <CardTitle className="text-xl font-extrabold flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">edit</span>
+              Edit Trip Info
+            </CardTitle>
+            <CardDescription className="font-bold text-xs uppercase tracking-tight text-slate-400">Update destination and dates</CardDescription>
+          </CardHeader>
+          <CardContent className="p-10 pt-4 space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Name</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
+                  placeholder="E.g. Summer Vacation"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Location Map URL</Label>
+                <Input
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
+                  placeholder="https://maps.google.com/..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={editStart}
+                    onChange={(e) => setEditStart(e.target.value)}
+                    className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold [color-scheme:dark]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">End Date</Label>
+                  <Input
+                    type="date"
+                    value={editEnd}
+                    onChange={(e) => setEditEnd(e.target.value)}
+                    className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+            </div>
+            <Button
+              onClick={handleUpdateTrip}
+              disabled={isUpdating}
+              className="w-full py-7 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20"
+            >
+              {isUpdating ? "Saving..." : "Save Changes"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
         <CardHeader className="p-10 pb-4">
