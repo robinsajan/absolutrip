@@ -5,3 +5,7 @@
 .env
 /tests
 *.db
+/uploads
+*/__pycache__/*
+*/__pycache__
+/tripsync.db
