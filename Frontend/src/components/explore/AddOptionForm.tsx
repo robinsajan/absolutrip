@@ -40,6 +40,12 @@ interface AddOptionFormProps {
   tripStartDate?: string;
   tripEndDate?: string;
   defaultDate?: string;
+  initialData?: {
+    title?: string;
+    link?: string;
+    image_url?: string;
+    notes?: string;
+  };
   onCancel?: () => void;
 }
 
@@ -50,12 +56,12 @@ const CATEGORIES: { value: OptionCategory; label: string; icon: React.ReactNode 
   { value: "transport", label: "Transport", icon: <Car className="h-4 w-4" /> },
 ];
 
-export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndDate, defaultDate, onCancel }: AddOptionFormProps) {
+export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndDate, defaultDate, initialData, onCancel }: AddOptionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [title, setTitle] = useState("");
-  const [link, setLink] = useState("");
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [link, setLink] = useState(initialData?.link || "");
   const [price, setPrice] = useState("");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(initialData?.notes || "");
   const [checkInDate, setCheckInDate] = useState<Date | undefined>(
     defaultDate ? parseISO(defaultDate) : undefined
   );
@@ -64,7 +70,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   const [isPerPerson, setIsPerPerson] = useState(false);
   const [isPerNight, setIsPerNight] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tripDateRange = useMemo(() => {

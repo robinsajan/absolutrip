@@ -43,7 +43,7 @@ export default function SettingsPage() {
   const shareInviteLink = async () => {
     if (!activeTrip) return;
     const inviteUrl = `${window.location.origin}/trips/join?code=${activeTrip.invite_code}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -82,90 +82,108 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-4">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <Settings className="h-5 w-5" />
-        Trip Settings
-      </h2>
+    <div className="p-4 max-w-2xl mx-auto space-y-12 pb-24">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 lowercase italic serif-title">
+          <span className="material-symbols-outlined text-primary text-3xl">settings</span>
+          Trip Settings
+        </h2>
+        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Control your trip parameters</p>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Invite Members</CardTitle>
-          <CardDescription>Share the invite code or link with others to join this trip</CardDescription>
+      <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="p-10 pb-4">
+          <CardTitle className="text-xl font-extrabold">Invite Crew</CardTitle>
+          <CardDescription className="font-bold text-xs uppercase tracking-tight text-slate-400">Share with the squad</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-10 pt-4 space-y-8">
           <div>
-            <Label className="text-sm text-muted-foreground">Invite Code</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Invite Code</Label>
+            <div className="flex items-center gap-3 mt-3">
+              <code className="flex-1 px-6 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-mono text-xl font-bold border border-slate-100 dark:border-slate-800 tracking-widest text-primary">
                 {activeTrip?.invite_code}
               </code>
-              <Button variant="outline" size="icon" onClick={copyInviteCode}>
-                <Copy className="h-4 w-4" />
+              <Button size="icon" className="size-14 rounded-2xl bg-primary hover:scale-105 active:scale-95 transition-all text-white shadow-xl shadow-primary/20" onClick={copyInviteCode}>
+                <span className="material-symbols-outlined">content_copy</span>
               </Button>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={shareInviteLink}>
-            <Share2 className="h-4 w-4 mr-2" />
+          <Button variant="outline" className="w-full py-7 rounded-2xl border-2 border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm" onClick={shareInviteLink}>
+            <span className="material-symbols-outlined mr-2">share</span>
             Share Invite Link
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Note: New members will need admin approval before they can access the trip.
-          </p>
+          <div className="flex items-center gap-2 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+            <span className="material-symbols-outlined text-sm text-primary">info</span>
+            <p className="text-[10px] font-bold text-primary/70 uppercase tracking-tight">
+              Admins must approve new members before they can access trip data.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       {isOwner && (
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="text-base text-red-600">Danger Zone</CardTitle>
-            <CardDescription>Irreversible actions that affect the entire trip</CardDescription>
+        <Card className="border-none shadow-2xl shadow-red-500/5 bg-red-50/20 dark:bg-red-950/20 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-red-100/50 dark:border-red-900/50">
+          <CardHeader className="p-10 pb-4">
+            <CardTitle className="text-xl font-extrabold text-red-600">Danger Zone</CardTitle>
+            <CardDescription className="font-bold text-xs uppercase tracking-tight text-red-600/50">Final & Irreversible</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-10 pt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Trip
+                <Button className="w-full py-8 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-red-600/20 transition-all hover:-translate-y-1">
+                  <span className="material-symbols-outlined mr-2">delete_forever</span>
+                  Delete this Trip
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Trip</AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-3">
-                    <p>
-                      This action cannot be undone. This will permanently delete the trip
-                      <strong> &quot;{activeTrip?.name}&quot;</strong> and all associated data including:
-                    </p>
-                    <ul className="list-disc list-inside text-sm space-y-1">
-                      <li>All stay options and votes</li>
-                      <li>All expenses and splits</li>
-                      <li>All member data</li>
-                    </ul>
-                    <div className="pt-2">
-                      <Label htmlFor="confirm-name">
-                        Type <strong>{activeTrip?.name}</strong> to confirm
-                      </Label>
-                      <Input
-                        id="confirm-name"
-                        value={confirmName}
-                        onChange={(e) => setConfirmName(e.target.value)}
-                        placeholder="Enter trip name"
-                        className="mt-2"
-                      />
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setConfirmName("")}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteTrip}
-                    disabled={confirmName !== activeTrip?.name || isDeleting}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    {isDeleting ? "Deleting..." : "Delete Trip"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
+              <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+                <div className="p-10">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-3xl font-black tracking-tight">Wait! Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-6 pt-4">
+                      <p className="text-slate-500 font-medium">
+                        Deleting <strong>&quot;{activeTrip?.name}&quot;</strong> will permanently remove all data for everyone. This cannot be undone.
+                      </p>
+
+                      <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                        <ul className="space-y-3">
+                          {[
+                            "All stay options and community votes",
+                            "Entire expense ledger and balances",
+                            "All member and invitation data"
+                          ].map((item, i) => (
+                            <li key={i} className="flex items-center gap-3 text-xs font-bold text-slate-400">
+                              <span className="material-symbols-outlined text-red-500 text-sm">cancel</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="pt-4 space-y-3">
+                        <Label htmlFor="confirm-name" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
+                          Type <span className="text-black dark:text-white">{activeTrip?.name}</span> below to confirm
+                        </Label>
+                        <Input
+                          id="confirm-name"
+                          value={confirmName}
+                          onChange={(e) => setConfirmName(e.target.value)}
+                          placeholder="Type trip name here"
+                          className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-red-600 focus:ring-4 focus:ring-red-600/5 transition-all font-bold"
+                        />
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="pt-10 flex flex-col md:flex-row gap-3">
+                    <AlertDialogCancel onClick={() => setConfirmName("")} className="py-7 rounded-2xl border-none font-black text-xs uppercase tracking-widest hover:bg-slate-100">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteTrip}
+                      disabled={confirmName !== activeTrip?.name || isDeleting}
+                      className="bg-red-600 hover:bg-red-700 text-white py-7 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-600/20 disabled:opacity-30 flex-grow"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete Forever"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </div>
               </AlertDialogContent>
             </AlertDialog>
           </CardContent>

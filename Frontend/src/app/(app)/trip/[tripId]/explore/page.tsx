@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { format, parseISO, eachDayOfInterval, isWithinInterval } from "date-fns";
-import Image from "next/image";
-import { useRankedOptions, useTripMembers, useAuth } from "@/lib/hooks";
+import { format, parseISO, differenceInDays } from "date-fns";
+import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
 import { options as optionsApi, votes as votesApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Heart, Plus, Grid3x3, TrendingUp, Calendar, CheckCircle2, ChevronLeft, ChevronRight, Trash2, Star, ThumbsUp, ShoppingCart, CheckCircle, MapPin } from "lucide-react";
-import type { RankedOption, OptionCategory, TripMember } from "@/types";
+import type { RankedOption, TripMember, OptionCategory } from "@/types";
 import { AddOptionForm } from "@/components/explore";
 import {
   Dialog,
@@ -21,21 +17,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type SortOption = "votes" | "price" | "created_at";
-type ViewMode = "grid" | "date";
+import { Label } from "@/components/ui/label";
 
 export default function ExplorePage() {
   const params = useParams();
+  const router = useRouter();
   const tripId = Number(params.tripId);
-  const { user } = useAuth();
-  const { activeTrip } = useAppStore();
+  const { user, logout } = useAuth();
+  const { trip: activeTrip } = useTrip(tripId);
   const { rankedOptions, isLoading, mutate } = useRankedOptions(tripId);
   const { members } = useTripMembers(tripId);
-  const [sortBy, setSortBy] = useState<SortOption>("votes");
-  const [viewMode, setViewMode] = useState<ViewMode>("date");
   const { showAddOption, setShowAddOption } = useAppStore();
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const [extractUrl, setExtractUrl] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractedData, setExtractedData] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isOwner = useMemo(() => {
     if (!user || !members) return false;
@@ -43,94 +44,21 @@ export default function ExplorePage() {
     return membership?.role === "owner";
   }, [user, members]);
 
-  const tripDates = useMemo(() => {
-    if (!activeTrip?.start_date || !activeTrip?.end_date) return [];
-    try {
-      return eachDayOfInterval({
-        start: parseISO(activeTrip.start_date),
-        end: parseISO(activeTrip.end_date),
-      });
-    } catch {
-      return [];
-    }
-  }, [activeTrip?.start_date, activeTrip?.end_date]);
-
-  const sortedOptions = [...rankedOptions].sort((a, b) => {
-    switch (sortBy) {
-      case "votes":
-        return b.total_score - a.total_score || b.vote_count - a.vote_count;
-      case "price":
-        return a.option.price - b.option.price;
-      case "created_at":
-        return (
-          new Date(b.option.created_at).getTime() -
-          new Date(a.option.created_at).getTime()
-        );
-      default:
-        return 0;
-    }
-  });
-
-  const filteredOptions = useMemo(() => {
-    if (viewMode !== "date" || !selectedDate) return sortedOptions;
-    const selected = parseISO(selectedDate);
-
-    return sortedOptions.filter((ro) => {
-      if (!ro.option.check_in_date) return false;
-      const start = parseISO(ro.option.check_in_date);
-
-      // If there's a check_out_date, check if selectedDate is within the range
-      if (ro.option.check_out_date) {
-        const end = parseISO(ro.option.check_out_date);
-        return isWithinInterval(selected, { start, end });
-      }
-
-      // Otherwise, just match the check_in_date
-      return ro.option.check_in_date === selectedDate;
-    });
-  }, [sortedOptions, viewMode, selectedDate]);
-
-  const optionsByDate = useMemo(() => {
-    const grouped: Record<string, RankedOption[]> = {};
-    const noDate: RankedOption[] = [];
-
-    sortedOptions.forEach((ro) => {
-      if (ro.option.check_in_date) {
-        if (!grouped[ro.option.check_in_date]) {
-          grouped[ro.option.check_in_date] = [];
-        }
-        grouped[ro.option.check_in_date].push(ro);
-      } else {
-        noDate.push(ro);
-      }
-    });
-
-    return { grouped, noDate };
-  }, [sortedOptions]);
-
   const handleVote = async (optionId: number, score: number) => {
     try {
       await votesApi.cast(optionId, score);
       mutate();
-      toast.success(score > 0 ? "Vote added!" : "Vote removed!");
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Failed to vote");
+      toast.success(score > 0 ? "Voted!" : "Vote removed");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to vote");
     }
   };
 
-  const handleAddOption = async (data: {
-    title: string;
-    link: string;
-    price: number;
-    notes?: string;
-    check_in_date?: string;
-    check_out_date?: string;
-    category?: OptionCategory;
-  }) => {
+  const handleAddOption = async (data: any) => {
     const result = await optionsApi.create(tripId, data);
     mutate();
     setShowAddOption(false);
+    setExtractedData(null);
     return result;
   };
 
@@ -142,349 +70,329 @@ export default function ExplorePage() {
   const handleFinalize = async (optionId: number) => {
     try {
       await optionsApi.finalize(optionId);
-      toast.success("Option selected!");
+      toast.success("Option selected! ✨");
       mutate();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Failed to select option");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to select option");
     }
   };
 
   const handleUnfinalize = async (optionId: number) => {
     try {
       await optionsApi.unfinalize(optionId);
-      toast.success("Option unselected!");
+      toast.success("Selection removed");
       mutate();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Failed to unselect option");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to remove selection");
     }
   };
 
-  const handleDeleteOption = async (optionId: number) => {
+  const handleExtract = async () => {
+    if (!extractUrl.trim()) {
+      toast.error("Please paste a link first");
+      return;
+    }
+    setIsExtracting(true);
     try {
-      await optionsApi.delete(optionId);
-      toast.success("Option deleted");
-      mutate();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || "Failed to delete option");
+      const metadata = await optionsApi.extract(extractUrl.trim());
+      setExtractedData({
+        title: metadata.link_title,
+        link: extractUrl.trim(),
+        image_url: metadata.image_url,
+        notes: metadata.link_description
+      });
+      setShowAddOption(true);
+      toast.success("Magic! Link details extracted ✨");
+      setExtractUrl("");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Could not extract details from this link");
+    } finally {
+      setIsExtracting(false);
     }
   };
 
-  const goToPreviousDate = () => {
-    if (!selectedDate || tripDates.length === 0) return;
-    const currentIndex = tripDates.findIndex(
-      (d) => format(d, "yyyy-MM-dd") === selectedDate
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
+
+  // Calculate estimated per-person cost (liked options)
+  const likedOptions = useMemo(() => {
+    if (!user || !rankedOptions) return [];
+    return rankedOptions.filter(ro =>
+      ro.voters.some(v => v.user_id === user.id && v.score > 0)
     );
-    if (currentIndex > 0) {
-      setSelectedDate(format(tripDates[currentIndex - 1], "yyyy-MM-dd"));
-    }
-  };
+  }, [user, rankedOptions]);
 
-  const goToNextDate = () => {
-    if (!selectedDate || tripDates.length === 0) return;
-    const currentIndex = tripDates.findIndex(
-      (d) => format(d, "yyyy-MM-dd") === selectedDate
-    );
-    if (currentIndex < tripDates.length - 1) {
-      setSelectedDate(format(tripDates[currentIndex + 1], "yyyy-MM-dd"));
-    }
-  };
+  const totalLikedCostPerPerson = useMemo(() => {
+    if (!members?.length) return 0;
+    return likedOptions.reduce((sum, ro) => {
+      const { price, is_per_person, is_per_night, check_in_date, check_out_date } = ro.option;
 
-  const getUserVote = (rankedOption: RankedOption) => {
-    if (!user) return null;
-    return rankedOption.voters.find((v: { user_id: number; user_name: string; score: number }) => v.user_id === user.id);
-  };
+      let basePrice = is_per_person ? price : price / members.length;
 
-  const renderOptionCard = (rankedOption: RankedOption) => {
-    const userVote = getUserVote(rankedOption);
-    const hasVoted = !!userVote;
-    const canDelete = user && rankedOption.option.added_by === user.id;
+      if (is_per_night && check_in_date && check_out_date) {
+        try {
+          const nights = Math.max(1, differenceInDays(parseISO(check_out_date), parseISO(check_in_date)));
+          basePrice *= nights;
+        } catch (e) {
+          // Fallback to 1 night if dates are invalid
+        }
+      }
 
-    // Use uploaded image first (image_path), then external URL (image_url), then fallback
-    let imageUrl = "/static/image.png";
-    if (rankedOption.option.image_path) {
-      imageUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${rankedOption.option.image_path}`;
-    } else if (rankedOption.option.image_url) {
-      imageUrl = rankedOption.option.image_url;
-    }
+      return sum + basePrice;
+    }, 0);
+  }, [likedOptions, members]);
 
-    const isStay = rankedOption.option.category === "stay";
-
-    return (
-      <div
-        key={rankedOption.option.id}
-        className="group bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-primary/5 hover:shadow-xl transition-all flex flex-col h-full"
-      >
-        <div className="relative h-48 overflow-hidden shrink-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-            style={{ backgroundImage: `url('${imageUrl}')` }}
-          />
-          {rankedOption.option.is_finalized && (
-            <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm">
-              Selected
-            </div>
-          )}
-          {canDelete && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                if (window.confirm("Are you sure you want to delete this option?")) {
-                  handleDeleteOption(rankedOption.option.id);
-                }
-              }}
-              className="absolute bottom-3 right-3 size-8 bg-red-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-            >
-              <Trash2 className="size-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="p-5 flex flex-col grow">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h4 className="font-bold text-lg text-slate-900 dark:text-white leading-tight font-serif truncate">
-              {rankedOption.option.title}
-            </h4>
-          </div>
-          <p className="text-slate-500 text-sm mb-4 flex items-center gap-1">
-            <MapPin className="size-3" />
-            {isStay ? "Hotel & Area" : "Experience Location"}
-          </p>
-
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex flex-col">
-              {rankedOption.option.check_in_date && (
-                <span className="text-[10px] text-primary font-bold uppercase mb-1 flex items-center gap-1">
-                  <Calendar className="size-3" />
-                  {(() => {
-                    const getDayNum = (dateStr: string) => {
-                      const idx = tripDates.findIndex(d => format(d, "yyyy-MM-dd") === dateStr);
-                      return idx !== -1 ? `Day ${idx + 1}` : format(parseISO(dateStr), "MMM d");
-                    };
-
-                    const startLabel = getDayNum(rankedOption.option.check_in_date);
-                    if (rankedOption.option.check_out_date) {
-                      const endLabel = getDayNum(rankedOption.option.check_out_date);
-                      return `${startLabel} - ${endLabel}`;
-                    }
-                    return startLabel;
-                  })()}
-                </span>
-              )}
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">
-                {(() => {
-                  let label = isStay ? "Starting from" : "Per person";
-                  if (rankedOption.option.is_per_person && rankedOption.option.is_per_night) label = "Per person / night";
-                  else if (rankedOption.option.is_per_person) label = "Per person";
-                  else if (rankedOption.option.is_per_night) label = "Per night";
-                  return label;
-                })()}
-              </span>
-              <span className="text-primary font-bold text-xl">
-                ${rankedOption.option.price.toLocaleString()}
-                {rankedOption.option.is_per_night && <span className="text-xs font-normal text-slate-400">/night</span>}
-                {rankedOption.option.is_per_person && !rankedOption.option.is_per_night && <span className="text-xs font-normal text-slate-400">/person</span>}
-              </span>
-            </div>
-
-            <button
-              onClick={() => handleVote(rankedOption.option.id, hasVoted ? 0 : 1)}
-              className={cn(
-                "transition-all px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2",
-                hasVoted
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "bg-primary/10 text-primary hover:bg-primary hover:text-white"
-              )}
-            >
-              <ThumbsUp className={cn("size-4", hasVoted && "fill-current")} />
-              {hasVoted ? "Voted" : "Vote"}
-              {rankedOption.vote_count > 0 && <span>• {rankedOption.vote_count}</span>}
-            </button>
-          </div>
-
-          {isOwner && !rankedOption.option.is_finalized && (
-            <button
-              onClick={() => handleFinalize(rankedOption.option.id)}
-              className="mt-3 w-full py-2 border border-green-500/20 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg text-xs font-bold transition-colors"
-            >
-              Finalize Choice
-            </button>
-          )}
-          {isOwner && rankedOption.option.is_finalized && (
-            <button
-              onClick={() => handleUnfinalize(rankedOption.option.id)}
-              className="mt-3 w-full py-2 border border-red-500/20 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-xs font-bold transition-colors"
-            >
-              Remove Selection
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
+  if (!mounted) return null;
 
   return (
-    <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      {/* Search Header (Mobile only, Desktop is in TripHeader) */}
-      <div className="flex md:hidden items-center gap-3 mb-6">
-        <div className="relative flex-1">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-          <input
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm shadow-sm"
-            placeholder="Search experiences..."
-            type="text"
-          />
+    <div className="bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 min-h-screen">
+
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-extrabold text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">comparison hub</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-2 font-bold uppercase tracking-widest text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
+              {activeTrip?.name || "Trip"} • {members?.length || 0} members
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowAddOption(true)}
+            className="bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5 self-start animate-in fade-in slide-in-from-right-4 duration-700"
+          >
+            <span className="material-symbols-outlined text-xl">add</span>
+            add option
+          </button>
         </div>
-        <button
-          onClick={() => setShowAddOption(true)}
-          className="size-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/20"
-        >
-          <span className="material-symbols-outlined">add</span>
-        </button>
-      </div>
 
-      {/* Day Selector */}
-      <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-        <button
-          onClick={() => setSelectedDate(null)}
-          className={cn(
-            "px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap",
-            selectedDate === null
-              ? "bg-primary text-white shadow-lg shadow-primary/20"
-              : "bg-primary/5 text-slate-500 hover:bg-primary/10"
-          )}
-        >
-          All Days
-        </button>
-        {tripDates.map((date, index) => {
-          const dateStr = format(date, "yyyy-MM-dd");
-          const isSelected = selectedDate === dateStr;
-          return (
-            <button
-              key={dateStr}
-              onClick={() => setSelectedDate(dateStr)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex flex-col items-center min-w-[80px]",
-                isSelected
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "bg-primary/5 text-slate-500 hover:bg-primary/10"
-              )}
-            >
-              <span className="text-[10px] uppercase tracking-tighter opacity-80">Day {index + 1}</span>
-              <span>{format(date, "MMM d")}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filters/Tabs */}
-      <div className="flex items-center gap-6 border-b border-primary/10 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        <button
-          onClick={() => setSortBy("votes")}
-          className={cn(
-            "pb-4 px-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap",
-            sortBy === "votes" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
-          )}
-        >
-          Top Voted
-        </button>
-        <button
-          onClick={() => setSortBy("price")}
-          className={cn(
-            "pb-4 px-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap",
-            sortBy === "price" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
-          )}
-        >
-          Lowest Price
-        </button>
-        <button
-          onClick={() => setSortBy("created_at")}
-          className={cn(
-            "pb-4 px-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap",
-            sortBy === "created_at" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
-          )}
-        >
-          Newest
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          {/* Section rendering logic should now use filtered options */}
-          {/* Stays Section */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl lg:text-2xl font-serif font-bold flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary">bed</span>
-                Curated Stays
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredOptions
-                .filter(ro => ro.option.category === "stay")
-                .map(renderOptionCard)
-              }
-              {/* Add Stay placeholder */}
-              <div
-                onClick={() => setShowAddOption(true)}
-                className="border-2 border-dashed border-primary/20 rounded-xl flex flex-col items-center justify-center p-8 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group"
-              >
-                <div className="size-14 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-4">
-                  <span className="material-symbols-outlined text-primary text-3xl font-bold">add</span>
-                </div>
-                <p className="font-bold text-slate-700 dark:text-slate-300">Add another stay</p>
-                <p className="text-xs text-slate-500 mt-1 text-center">Compare more options with your group</p>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+          {/* AI Magic Link Sidebar Box */}
+          <div className="lg:col-span-1">
+            <section className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 sticky top-24 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-brand-purple text-xl material-symbols-filled">magic_button</span>
+                <h3 className="font-extrabold text-sm uppercase tracking-widest text-[#1e144a] dark:text-[#d4caff]">Magic Box</h3>
               </div>
-            </div>
-          </section>
+              <p className="text-slate-500 dark:text-slate-400 mb-6 text-xs font-bold leading-relaxed">
+                Paste any Airbnb, Booking, or activity link to extract details automatically.
+              </p>
 
-          {/* Activities Section */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl lg:text-2xl font-serif font-bold flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary">local_activity</span>
-                Food & Activities
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredOptions
-                .filter(ro => ro.option.category !== "stay")
-                .map(renderOptionCard)
-              }
-              {/* Add Activity placeholder */}
-              <div
-                onClick={() => setShowAddOption(true)}
-                className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl flex flex-col p-8 items-center justify-center text-center cursor-pointer hover:bg-primary/5 transition-colors"
-              >
-                <span className="material-symbols-outlined text-primary text-5xl mb-4">near_me</span>
-                <h4 className="font-serif font-bold text-lg mb-2">Plan your next move</h4>
-                <div className="flex flex-col w-full gap-2 px-4">
-                  <button className="w-full py-2 bg-white dark:bg-slate-800 border border-primary/10 rounded-lg text-sm font-bold text-primary hover:bg-primary/5">
-                    Browse More
-                  </button>
+              <div className="space-y-3">
+                <input
+                  className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all font-medium"
+                  placeholder="https://airbnb.com/rooms/..."
+                  type="text"
+                  value={extractUrl}
+                  onChange={(e) => setExtractUrl(e.target.value)}
+                />
+                <button
+                  onClick={handleExtract}
+                  disabled={isExtracting}
+                  className="w-full bg-brand-purple hover:bg-[#a175ff] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                >
+                  {isExtracting ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    "Extract Link"
+                  )}
+                </button>
+              </div>
+
+              {/* Budget Summary Mini-Box */}
+              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+                <p className="text-slate-500 text-[8px] font-black uppercase tracking-widest mb-1">Estimated Cost / Person</p>
+                <h2 className="text-4xl font-black text-black dark:text-white tracking-tight">${Math.round(totalLikedCostPerPerson).toLocaleString()}</h2>
+                <div className="mt-4 flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase">
+                  <span className="material-symbols-outlined text-sm material-symbols-filled text-primary">favorite</span>
+                  {likedOptions.length} liked
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
+
+          <div className="lg:col-span-3">
+            {isLoading ? (
+              <div className="py-20 flex flex-col items-center justify-center gap-4">
+                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">comparing possibilities...</p>
+              </div>
+            ) : (rankedOptions?.length || 0) === 0 ? (
+              <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300">
+                  <span className="material-symbols-outlined text-5xl outline-icon">search_off</span>
+                </div>
+                <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>
+                <p className="text-gray-500 font-medium max-w-sm mx-auto mb-10 text-lg">Help your group decide! Add stays, restaurants, or things to do using the Magic Link above.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {rankedOptions.map((ro) => {
+                  const userVote = ro.voters.find(v => v.user_id === user?.id);
+                  const hasVoted = !!userVote && userVote.score > 0;
+                  const isFinalized = ro.option.is_finalized;
+                  const isStay = ro.option.category === "stay";
+
+                  // Image logic
+                  let imageUrl = "https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop";
+                  if (ro.option.image_path) {
+                    imageUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${ro.option.image_path}`;
+                  } else if (ro.option.image_url) {
+                    imageUrl = ro.option.image_url;
+                  }
+
+                  const costPerPerson = ro.option.is_per_person
+                    ? ro.option.price
+                    : (members?.length ? ro.option.price / members.length : ro.option.price);
+
+                  return (
+                    <div key={ro.option.id} className={cn(
+                      "group bg-white dark:bg-gray-900 rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1",
+                      hasVoted ? "border-primary shadow-xl shadow-primary/5" : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg"
+                    )}>
+                      <div className="relative h-48 overflow-hidden">
+                        <img alt={ro.option.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 font-sans" src={imageUrl} />
+
+                        {/* Floating Labels */}
+                        <div className="absolute top-4 left-4 flex gap-1.5">
+                          <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
+                            {ro.option.category || "activity"}
+                          </div>
+                          {isFinalized && (
+                            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
+                              Selected
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Small Heart Vote Button */}
+                        <button
+                          onClick={() => handleVote(ro.option.id, hasVoted ? 0 : 1)}
+                          className={cn(
+                            "absolute top-4 right-4 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-20",
+                            hasVoted ? "bg-primary text-white" : "bg-black/20 text-white hover:bg-black/40"
+                          )}
+                        >
+                          <span className={cn("material-symbols-outlined text-base", hasVoted && "material-symbols-filled")}>favorite</span>
+                          {ro.vote_count > 0 && (
+                            <span className="absolute -bottom-1 -right-1 bg-white text-black text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-sm">
+                              {ro.vote_count}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="p-5 flex flex-col min-h-[400px]">
+                        <div className="flex justify-between items-start mb-1">
+                          <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">{ro.option.title}</h3>
+                          {ro.option.link && (
+                            <a href={ro.option.link} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors">
+                              <span className="material-symbols-outlined text-lg">north_east</span>
+                            </a>
+                          )}
+                        </div>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs mb-4 font-bold line-clamp-2">
+                          {ro.option.notes || ro.option.link_description || "Explore this amazing possibility."}
+                        </p>
+
+                        <div className="mt-auto">
+                          {isStay && (ro.option.check_in_date || ro.option.check_out_date) && (
+                            <div className="flex items-center gap-1.5 mb-4 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                              <span className="material-symbols-outlined text-xs text-slate-400">calendar_today</span>
+                              <span className="text-[9px] font-black uppercase tracking-tight text-slate-500">
+                                {ro.option.check_in_date ? format(parseISO(ro.option.check_in_date), "MMM d") : "?"} — {ro.option.check_out_date ? format(parseISO(ro.option.check_out_date), "MMM d") : "?"}
+                                {ro.option.check_in_date && ro.option.check_out_date && (
+                                  <span className="ml-1.5 text-primary">
+                                    ({Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))}n)
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="mb-4 pt-4 border-t border-gray-50 dark:border-gray-800">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <p className="text-[7px] uppercase font-black text-gray-400 tracking-widest">Rate</p>
+                                <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                                  ${Math.round(ro.option.price).toLocaleString()}
+                                  <span className="text-[8px] font-normal lowercase ml-1 opacity-50">
+                                    {ro.option.is_per_person ? 'pp' : 'total'} {ro.option.is_per_night ? '/n' : ''}
+                                  </span>
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[7px] uppercase font-black text-gray-400 tracking-widest">PP Total</p>
+                                <p className="text-lg font-black text-primary">
+                                  ${Math.round(costPerPerson).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+
+                            {isStay && (
+                              <div className="bg-primary/5 dark:bg-primary/10 p-3 rounded-xl border border-primary/10">
+                                <div className="flex justify-between items-center text-[10px] font-black text-primary">
+                                  <span className="uppercase tracking-tighter opacity-70 italic text-[7px]">Group Stay</span>
+                                  <span>
+                                    ${Math.round(
+                                      (ro.option.is_per_person ? ro.option.price * (members?.length || 1) : ro.option.price) *
+                                      (ro.option.is_per_night && ro.option.check_in_date && ro.option.check_out_date
+                                        ? Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))
+                                        : 1)
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Select/Finalize Button */}
+                          <button
+                            onClick={() => isFinalized ? handleUnfinalize(ro.option.id) : (isOwner ? handleFinalize(ro.option.id) : null)}
+                            disabled={!isOwner && !isFinalized}
+                            className={cn(
+                              "w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-xs uppercase tracking-tight",
+                              isFinalized
+                                ? "bg-green-500 text-white shadow-green-500/10 hover:opacity-90"
+                                : isOwner
+                                  ? "bg-black dark:bg-white text-white dark:text-black hover:opacity-90 shadow-black/5"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                            )}
+                          >
+                            <span className="material-symbols-outlined text-base">
+                              {isFinalized ? "check_circle" : "sell"}
+                            </span>
+                            {isFinalized ? "Selected" : isOwner ? "Select for Trip" : "Wait..."}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </main>
+
+      {/* Footer Controls */}
+      <footer className="max-w-7xl mx-auto px-6 py-20 border-t border-gray-100 dark:border-gray-800 text-center">
+        <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">
+          © {new Date().getFullYear()} absolutrip — design system alpha
+        </p>
+      </footer>
 
       {/* Add Option Dialog */}
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
-        <DialogContent className="max-w-lg w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[2.5rem] sm:rounded-[2.5rem]">
-          <div className="max-h-[85vh] overflow-y-auto px-6 py-8 scrollbar-hide">
-            <DialogHeader className="flex flex-row items-center justify-between pb-6">
+        <DialogContent className="max-w-lg w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[2.5rem] bg-white dark:bg-slate-900">
+          <div className="max-h-[85vh] overflow-y-auto px-8 py-10 scrollbar-hide">
+            <DialogHeader className="flex flex-row items-center justify-between pb-8">
               <div className="flex items-center gap-3">
-                <div className="size-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                  <Plus className="size-4" />
+                <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined material-symbols-filled">add</span>
                 </div>
-                <DialogTitle className="text-xl font-bold font-serif text-slate-900 dark:text-white">Add New Option</DialogTitle>
+                <DialogTitle className="text-3xl font-extrabold tracking-tight serif-title italic">add new option</DialogTitle>
               </div>
             </DialogHeader>
             <AddOptionForm
@@ -492,8 +400,11 @@ export default function ExplorePage() {
               onImageUpload={handleImageUpload}
               tripStartDate={activeTrip?.start_date}
               tripEndDate={activeTrip?.end_date}
-              defaultDate={selectedDate || undefined}
-              onCancel={() => setShowAddOption(false)}
+              initialData={extractedData}
+              onCancel={() => {
+                setShowAddOption(false);
+                setExtractedData(null);
+              }}
             />
           </div>
         </DialogContent>

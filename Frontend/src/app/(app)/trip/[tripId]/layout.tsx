@@ -35,18 +35,14 @@ export default function TripLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <DesktopSidebar tripId={tripId} trip={trip} />
-      
-      <div className="flex-1 flex flex-col min-h-screen">
-        {!pathname.includes("/ledger") && !pathname.includes("/settle") && <TripHeader trip={trip} />}
-        
-        <main className="flex-1 pb-20 lg:pb-0">
-          {children}
-        </main>
-        
-        <MobileTabBar tripId={tripId} />
-      </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <TripHeader trip={trip} />
+
+      <main className="flex-1 pb-20 lg:pb-0">
+        {children}
+      </main>
+
+      <MobileTabBar tripId={tripId} />
     </div>
   );
 }

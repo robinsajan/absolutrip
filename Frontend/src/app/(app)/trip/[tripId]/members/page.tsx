@@ -95,98 +95,103 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-4">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <Users className="h-5 w-5" />
-        Trip Members
-      </h2>
+    <div className="p-4 max-w-2xl mx-auto space-y-8">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-3xl">group</span>
+          Trip Members
+        </h2>
+        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Manage access and group roles</p>
+      </div>
 
-      {isOwner && pendingRequests.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 text-amber-800">
-              <Clock className="h-5 w-5" />
-              Pending Requests ({pendingRequests.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {pendingRequests.map((request: JoinRequest) => (
-              <div
-                key={request.id}
-                className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white rounded-xl border border-amber-200 gap-4"
-              >
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarFallback className="bg-amber-100 text-amber-700">{getInitials(request.user_name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="font-bold text-slate-900 truncate">{request.user_name}</p>
-                    <p className="text-xs text-slate-500 truncate">{request.user_email}</p>
+      {
+        isOwner && pendingRequests.length > 0 && (
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2 text-amber-800">
+                <Clock className="h-5 w-5" />
+                Pending Requests ({pendingRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingRequests.map((request: JoinRequest) => (
+                <div
+                  key={request.id}
+                  className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white rounded-xl border border-amber-200 gap-4"
+                >
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <Avatar className="h-10 w-10 shrink-0">
+                      <AvatarFallback className="bg-amber-100 text-amber-700">{getInitials(request.user_name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 truncate">{request.user_name}</p>
+                      <p className="text-xs text-slate-500 truncate">{request.user_email}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      size="sm"
+                      className="flex-1 sm:flex-none h-9 bg-green-600 hover:bg-green-700 text-white font-bold"
+                      onClick={() => handleApprove(request.id)}
+                    >
+                      <Check className="h-4 w-4 mr-1.5" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="flex-1 sm:flex-none h-9 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold"
+                      onClick={() => handleReject(request.id)}
+                    >
+                      <X className="h-4 w-4 mr-1.5" />
+                      Reject
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    size="sm"
-                    className="flex-1 sm:flex-none h-9 bg-green-600 hover:bg-green-700 text-white font-bold"
-                    onClick={() => handleApprove(request.id)}
-                  >
-                    <Check className="h-4 w-4 mr-1.5" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="flex-1 sm:flex-none h-9 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold"
-                    onClick={() => handleReject(request.id)}
-                  >
-                    <X className="h-4 w-4 mr-1.5" />
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              ))}
+            </CardContent>
+          </Card>
+        )
+      }
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Members ({members.length})</CardTitle>
+      <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="p-8 pb-4">
+          <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Members ({members.length})</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-8 pt-4 space-y-4">
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg border"
+              className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all hover:shadow-lg"
             >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>{getInitials(member.user_name)}</AvatarFallback>
-                </Avatar>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black uppercase tracking-tighter">
+                  {getInitials(member.user_name)}
+                </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium">{member.user_name}</p>
+                    <p className="font-extrabold text-slate-800 dark:text-slate-100">{member.user_name}</p>
                     {member.role === "owner" && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Crown className="h-3 w-3" />
-                        Admin
+                      <Badge className="bg-amber-400/10 text-amber-600 border-amber-200 text-[8px] font-black uppercase px-2 py-0.5 rounded-full flex gap-1 items-center">
+                        <span className="material-symbols-outlined text-[10px] material-symbols-filled">crown</span>
+                        Host
                       </Badge>
                     )}
                     {member.user_id === user?.id && (
-                      <Badge variant="outline">You</Badge>
+                      <Badge variant="outline" className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full border-slate-200">You</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{member.user_email}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-0.5">{member.user_email}</p>
                 </div>
               </div>
               {isOwner && member.user_id !== user?.id && (
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50"
                   onClick={() => setRemovingMember(member.user_id)}
                 >
-                  <UserMinus className="h-4 w-4" />
+                  <span className="material-symbols-outlined">person_remove</span>
                 </Button>
               )}
             </div>
@@ -213,6 +218,6 @@ export default function MembersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   );
 }

@@ -498,3 +498,36 @@ def scrape_option_link(option_id, option, membership):
             'message': 'Could not scrape link. The website may be blocking requests.',
             'option': option.to_dict(include_votes=True)
         }), 200
+@bp.route('/options/extract', methods=['POST'])
+@swag_from({
+    'tags': ['Options'],
+    'summary': 'Preview metadata from a link (Airbnb, Booking.com, etc)',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'required': ['url'],
+                'properties': {
+                    'url': {'type': 'string', 'example': 'https://airbnb.com/rooms/123'}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {'description': 'Metadata extracted successfully'},
+        400: {'description': 'Invalid URL or no URL provided'}
+    }
+})
+def extract_link_metadata():
+    data = request.get_json()
+    if not data or not data.get('url'):
+        return jsonify({'error': 'URL is required'}), 400
+    
+    metadata = LinkScraperService.scrape_link(data['url'])
+    if not metadata:
+        return jsonify({'error': 'Could not extract metadata from this link'}), 400
+        
+    return jsonify(metadata), 200

@@ -79,52 +79,48 @@ export function SettlementCard({
 
   return (
     <>
-      <Card
+      <div
         className={cn(
-          "cursor-pointer hover:bg-accent/50 transition-colors",
-          type === "pay" && "border-l-4 border-l-red-500",
-          type === "receive" && "border-l-4 border-l-green-500"
+          "cursor-pointer p-6 rounded-[2rem] border transition-all hover:shadow-xl group flex items-center justify-between",
+          type === "pay"
+            ? "bg-red-50 border-red-100 hover:border-red-300 dark:bg-red-500/5 dark:border-red-500/20"
+            : "bg-green-50 border-green-100 hover:border-green-300 dark:bg-green-500/5 dark:border-green-500/20"
         )}
         onClick={() => setShowDetails(true)}
       >
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12">
-              <AvatarFallback
-                className={cn(
-                  type === "pay"
-                    ? "bg-red-100 text-red-600"
-                    : "bg-green-100 text-green-600"
-                )}
-              >
-                {getInitials(otherPerson)}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="flex-1">
-              <p className="font-medium">
-                {type === "pay" ? "Pay" : "Receive from"}{" "}
-                <span className="text-primary">{otherPerson}</span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Tap to see payment details
-              </p>
-            </div>
-
-            <div className="text-right">
-              <p
-                className={cn(
-                  "text-xl font-bold",
-                  type === "pay" ? "text-red-500" : "text-green-500"
-                )}
-              >
-                ${settlement.amount.toFixed(2)}
-              </p>
-              <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
-            </div>
+        <div className="flex items-center gap-5">
+          <div className={cn(
+            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all group-hover:scale-110 shadow-sm",
+            type === "pay" ? "bg-white text-red-500 shadow-red-500/10" : "bg-white text-green-500 shadow-green-500/10"
+          )}>
+            <span className="material-symbols-outlined material-symbols-filled">
+              {type === "pay" ? "outbound" : "inbox"}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
+              {type === "pay" ? "Send money to" : "Collect from"}
+            </p>
+            <h4 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+              {otherPerson}
+            </h4>
+          </div>
+        </div>
+
+        <div className="text-right flex items-center gap-6">
+          <div>
+            <p className={cn(
+              "text-3xl font-black tracking-tighter",
+              type === "pay" ? "text-red-500" : "text-green-500"
+            )}>
+              ${Math.round(settlement.amount).toLocaleString()}
+            </p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pending</p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors group-hover:translate-x-1" />
+        </div>
+      </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent>

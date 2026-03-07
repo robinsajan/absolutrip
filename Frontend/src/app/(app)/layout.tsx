@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks";
+import { Header } from "@/components/navigation";
 
 export default function AppLayout({
   children,
@@ -30,5 +31,10 @@ export default function AppLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      {children}
+    </div>
+  );
 }

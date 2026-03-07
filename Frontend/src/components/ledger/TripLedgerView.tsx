@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { useMemo, useState, useCallback } from "react";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
-import { useAuth, useExpenses, useSettlement, useTripMembers } from "@/lib/hooks";
+import { useAuth, useExpenses, useSettlement, useTripMembers, useRankedOptions, useBudget } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
 import { expenses as expensesApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
-import type { Expense } from "@/types";
+import type { Expense, RankedOption } from "@/types";
 import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseDetails } from "./ExpenseDetails";
 import { ExpenseFeed } from "./ExpenseFeed";
@@ -48,6 +48,22 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   const { expenses, isLoading: expensesLoading, mutate: mutateExpenses } = useExpenses(tripId);
   const { balances, isLoading: settleLoading, mutate: mutateSettle } = useSettlement(tripId);
   const { members } = useTripMembers(tripId);
+  const { budget } = useBudget(tripId);
+  const { rankedOptions } = useRankedOptions(tripId);
+
+  const calculateOptionPrice = useCallback((ro: RankedOption) => {
+    let price = ro.option.price || 0;
+    if (ro.option.is_per_person) {
+      price *= Math.max(members.length, 1);
+    }
+    if (ro.option.is_per_night && ro.option.check_in_date && ro.option.check_out_date) {
+      try {
+        const nights = Math.max(differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)), 1);
+        price *= nights;
+      } catch (e) { }
+    }
+    return price;
+  }, [members.length]);
 
   const currentUserId = user?.id;
   const currentUserBalance = useMemo(
@@ -65,6 +81,7 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showAddExpense, setShowAddExpense] = useState(false);
 
   const sortedExpenses = useMemo(() => {
     const copy = [...expenses];
@@ -119,313 +136,369 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
 
   const isBusy = expensesLoading || settleLoading;
 
+  const actualExpenses = budget?.total_expenses ?? 0;
+
+  // Simplified spending progress for ledger (actual vs scenario-like)
+  // For ledger, we'll show progress relative to the sum of actuals + finalized options
+  const finalizedOptionsTotal = useMemo(() => {
+    return (rankedOptions || [])
+      .filter(ro => ro.option.is_finalized)
+      .reduce((sum, ro) => {
+        let p = ro.option.price;
+        if (ro.option.is_per_person) p *= (members?.length || 1);
+        return sum + p;
+      }, 0);
+  }, [rankedOptions, members]);
+
+  const totalProjected = actualExpenses + finalizedOptionsTotal;
+  const spendingProgress = totalProjected > 0 ? (actualExpenses / totalProjected) * 100 : 0;
+
+  // Calculate top spenders from actual expenses
+  const spenderData = useMemo(() => {
+    const totals: Record<number, { name: string, amount: number }> = {};
+    expenses.forEach(e => {
+      if (!totals[e.paid_by]) {
+        totals[e.paid_by] = { name: e.payer_name, amount: 0 };
+      }
+      totals[e.paid_by].amount += e.amount;
+    });
+    return Object.entries(totals)
+      .map(([id, data]) => ({ id: Number(id), ...data }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 3);
+  }, [expenses]);
+
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-background-dark">
-      {/* Header */}
-      <header className="sticky top-0 z-10 h-16 border-b border-primary/10 bg-white dark:bg-slate-900 flex items-center justify-between px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-lg">payments</span>
-          </div>
-          <h2 className="text-lg font-bold">Trip Ledger</h2>
-        </div>
-
-        <div className="flex items-center gap-3 lg:gap-4">
-          <div className="relative hidden md:block">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
-              search
-            </span>
-            <input
-              className="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm w-56 lg:w-64 focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="Search expenses..."
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+    <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen pb-24 font-sans">
+      <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">ledger log</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-[0.3em] text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
+              {activeTrip?.name || "Trip"} • {expenses.length} transactions
+            </p>
           </div>
 
-          <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-            <span className="material-symbols-outlined">notifications</span>
+          <button
+            onClick={() => {
+              setEditingExpense(null);
+              setShowAddExpense(true);
+            }}
+            className="bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5 self-start animate-in fade-in slide-in-from-right-4 duration-700"
+          >
+            <span className="material-symbols-outlined text-xl">add</span>
+            add expense
           </button>
-
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-            <span className="material-symbols-outlined text-primary text-xl">account_circle</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="p-4 lg:p-8 max-w-5xl mx-auto w-full space-y-8">
-        {/* Mobile Search */}
-        <div className="relative md:hidden">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
-            search
-          </span>
-          <input
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-primary/10 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 transition-all"
-            placeholder="Search expenses..."
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">You are owed</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-1">{money(youAreOwed)}</p>
-              <p className="text-emerald-600/80 text-xs font-semibold mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">trending_up</span>
-                Net balance across the trip
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600">
-              <span className="material-symbols-outlined text-2xl">call_made</span>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Main Ledger Area */}
+          <div className="lg:col-span-8 space-y-12">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you are owed</p>
+                  <h2 className="text-5xl font-black text-emerald-600 tracking-tighter">{money(youAreOwed)}</h2>
+                  <p className="text-emerald-600/60 text-[8px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs material-symbols-filled">trending_up</span>
+                    Positive Balance
+                  </p>
+                </div>
+                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center text-emerald-600 transform rotate-3 transition-transform group-hover:rotate-6">
+                  <span className="material-symbols-outlined text-3xl filled-icon">call_made</span>
+                </div>
+              </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">You owe</p>
-              <p className="text-3xl font-bold text-rose-500 mt-1">{money(youOwe)}</p>
-              <p className="text-rose-500/80 text-xs font-semibold mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">trending_down</span>
-                Net balance across the trip
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center text-rose-500">
-              <span className="material-symbols-outlined text-2xl">call_received</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Ledger Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-primary/10 flex items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
-              <h3 className="font-bold text-lg">Recent Expenses</h3>
-              {isBusy && <span className="text-xs text-slate-400 font-semibold">Loading…</span>}
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you owe</p>
+                  <h2 className="text-5xl font-black text-rose-500 tracking-tighter">{money(youOwe)}</h2>
+                  <p className="text-rose-500/60 text-[8px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs material-symbols-filled">trending_down</span>
+                    settle up soon
+                  </p>
+                </div>
+                <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center text-rose-500 transform -rotate-3 transition-transform group-hover:-rotate-6">
+                  <span className="material-symbols-outlined text-3xl filled-icon">call_received</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-2 shrink-0">
-              <button
-                className={cn(
-                  "px-3 py-1.5 text-xs font-bold rounded-lg transition-colors",
-                  scope === "all"
-                    ? "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
-                    : "text-slate-500 hover:text-primary"
-                )}
-                onClick={() => setScope("all")}
-              >
-                All Expenses
-              </button>
-              <button
-                className={cn(
-                  "px-3 py-1.5 text-xs font-bold rounded-lg transition-colors",
-                  scope === "mine"
-                    ? "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
-                    : "text-slate-500 hover:text-primary"
-                )}
-                onClick={() => setScope("mine")}
-              >
-                Your Expenses
-              </button>
-            </div>
-          </div>
+            {/* Ledger Table Container */}
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col">
+                  <h3 className="font-black text-xl text-black dark:text-white tracking-tight lowercase">transaction log</h3>
+                  {isBusy && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Syncing…</span>}
+                </div>
 
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-                  <th className="px-6 py-4 font-semibold">Date &amp; Expense</th>
-                  <th className="px-6 py-4 font-semibold">Payer</th>
-                  <th className="px-6 py-4 font-semibold">Total Amount</th>
-                  <th className="px-6 py-4 font-semibold">Your Share</th>
-                  <th className="px-6 py-4 font-semibold text-right">Status</th>
-                </tr>
-              </thead>
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700">
+                  <button
+                    className={cn(
+                      "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      scope === "all"
+                        ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
+                        : "text-slate-500 hover:text-primary"
+                    )}
+                    onClick={() => setScope("all")}
+                  >
+                    everything
+                  </button>
+                  <button
+                    className={cn(
+                      "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      scope === "mine"
+                        ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
+                        : "text-slate-500 hover:text-primary"
+                    )}
+                    onClick={() => setScope("mine")}
+                  >
+                    my shares
+                  </button>
+                </div>
+              </div>
 
-              <tbody className="divide-y divide-primary/5">
-                {visibleExpenses.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
-                      No expenses found
-                    </td>
-                  </tr>
-                ) : (
-                  visibleExpenses.map((expense) => {
-                    const dateObj = toDate(expense.expense_date) ?? new Date(expense.created_at);
-                    const month = format(dateObj, "MMM");
-                    const day = format(dateObj, "dd");
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                      <th className="px-6 py-4 font-semibold">Date &amp; Expense</th>
+                      <th className="px-6 py-4 font-semibold">Payer</th>
+                      <th className="px-6 py-4 font-semibold">Total Amount</th>
+                      <th className="px-6 py-4 font-semibold">Your Share</th>
+                      <th className="px-6 py-4 font-semibold text-right">Status</th>
+                    </tr>
+                  </thead>
 
-                    const share = currentUserId
-                      ? expense.splits.find((s) => s.user_id === currentUserId)?.amount ?? 0
-                      : 0;
-
-                    const net = currentUserId
-                      ? expense.paid_by === currentUserId
-                        ? expense.amount - share
-                        : -share
-                      : 0;
-
-                    const netLabel =
-                      net > 0 ? "You get back" : net < 0 ? `You owe ${expense.payer_name}` : "No change";
-
-                    const isSettlement = expense.category === "settlement";
-
-                    const status = isSettlement
-                      ? { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" }
-                      : net < 0
-                        ? { label: "Unpaid", cls: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" }
-                        : net > 0
-                          ? { label: "Partial", cls: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" }
-                          : { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" };
-
-                    const showActions = currentUserId && expense.paid_by === currentUserId && !isSettlement;
-
-                    return (
-                      <tr
-                        key={expense.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
-                        onClick={() => {
-                          setSelectedExpense(expense);
-                          setIsDetailsOpen(true);
-                        }}
-                        role="button"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="flex flex-col items-center justify-center w-10 h-10 bg-primary/10 text-primary rounded-lg">
-                              <span className="text-[10px] font-bold uppercase">{month}</span>
-                              <span className="text-sm font-bold leading-none">{day}</span>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-sm group-hover:text-primary transition-colors truncate">
-                                {expense.description}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                {activeTrip?.name ? `${activeTrip.name} • ` : ""}
-                                {titleCase(expense.category)}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            {currentUserId && expense.paid_by === currentUserId ? (
-                              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white">
-                                YOU
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                                {getInitials(expense.payer_name)}
-                              </div>
-                            )}
-                            <span className="text-sm">{currentUserId && expense.paid_by === currentUserId ? "You" : expense.payer_name}</span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-bold">{money(expense.amount)}</p>
-                          <p className="text-[10px] text-slate-500">
-                            {expense.split_type === "equally"
-                              ? `Split equally (${expense.splits.length || members.length || 0})`
-                              : `Split: ${expense.split_type}`}
-                          </p>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className={cn("text-sm font-bold", net < 0 ? "text-rose-500" : net > 0 ? "text-emerald-600" : "text-slate-400")}>
-                              {net < 0 ? "-" : net > 0 ? "+" : ""}
-                              {money(Math.abs(net))}
-                            </span>
-                            <span className="text-[10px] text-slate-400 uppercase font-medium truncate">{netLabel}</span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold", status.cls)}>
-                              {status.label}
-                            </span>
-
-                            {showActions && (
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                <button
-                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingExpense(expense);
-                                  }}
-                                  title="Edit"
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                                <button
-                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (window.confirm("Delete this expense?")) {
-                                      handleDeleteExpense(expense.id);
-                                    }
-                                  }}
-                                  title="Delete"
-                                >
-                                  <Trash2 className="size-4" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                  <tbody className="divide-y divide-primary/5">
+                    {visibleExpenses.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                          No expenses found
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      visibleExpenses.map((expense) => {
+                        const dateObj = toDate(expense.expense_date) ?? new Date(expense.created_at);
+                        const month = format(dateObj, "MMM");
+                        const day = format(dateObj, "dd");
 
-          <div className="md:hidden p-4">
-            <ExpenseFeed
-              expenses={visibleExpenses}
-              currentUserId={currentUserId}
-              onDelete={handleDeleteExpense}
-              onEdit={setEditingExpense}
-              memberCount={members.length}
-            />
-          </div>
+                        const share = currentUserId
+                          ? expense.splits.find((s) => s.user_id === currentUserId)?.amount ?? 0
+                          : 0;
 
-          {filteredExpenses.length > 10 && (
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-primary/10 flex justify-center">
-              <button
-                className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
-                onClick={() => setShowAll((v) => !v)}
-              >
-                {showAll ? "View fewer transactions" : "View more transactions"}
-                <span className="material-symbols-outlined text-sm">
-                  {showAll ? "keyboard_arrow_up" : "keyboard_arrow_down"}
-                </span>
-              </button>
+                        const net = currentUserId
+                          ? expense.paid_by === currentUserId
+                            ? expense.amount - share
+                            : -share
+                          : 0;
+
+                        const netLabel =
+                          net > 0 ? "You" : net < 0 ? `To ${expense.payer_name}` : "No change";
+
+                        const isSettlement = expense.category === "settlement";
+
+                        const status = isSettlement
+                          ? { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" }
+                          : net < 0
+                            ? { label: "Unpaid", cls: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" }
+                            : net > 0
+                              ? { label: "Partial", cls: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" }
+                              : { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" };
+
+                        const showActions = currentUserId && expense.paid_by === currentUserId && !isSettlement;
+
+                        return (
+                          <tr
+                            key={expense.id}
+                            className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                            onClick={() => {
+                              setSelectedExpense(expense);
+                              setIsDetailsOpen(true);
+                            }}
+                            role="button"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-4">
+                                <div className="flex flex-col items-center justify-center w-10 h-10 bg-primary/10 text-primary rounded-lg">
+                                  <span className="text-[10px] font-bold uppercase">{month}</span>
+                                  <span className="text-sm font-bold leading-none">{day}</span>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-sm group-hover:text-primary transition-colors truncate">
+                                    {expense.description}
+                                  </p>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    {activeTrip?.name ? `${activeTrip.name} • ` : ""}
+                                    {titleCase(expense.category)}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                {currentUserId && expense.paid_by === currentUserId ? (
+                                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white">
+                                    YOU
+                                  </div>
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                                    {getInitials(expense.payer_name)}
+                                  </div>
+                                )}
+                                <span className="text-sm">{currentUserId && expense.paid_by === currentUserId ? "You" : expense.payer_name}</span>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-bold">{money(expense.amount)}</p>
+                              <p className="text-[10px] text-slate-500">
+                                {expense.split_type === "equally"
+                                  ? `Split equally (${expense.splits.length || members.length || 0})`
+                                  : `Split: ${expense.split_type}`}
+                              </p>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className={cn("text-sm font-bold", net < 0 ? "text-rose-500" : net > 0 ? "text-emerald-600" : "text-slate-400")}>
+                                  {net < 0 ? "-" : net > 0 ? "+" : ""}
+                                  {money(Math.abs(net))}
+                                </span>
+                                <span className="text-[10px] text-slate-400 uppercase font-medium truncate">{netLabel}</span>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold", status.cls)}>
+                                  {status.label}
+                                </span>
+
+                                {showActions && (
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                    <button
+                                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingExpense(expense);
+                                        setShowAddExpense(true);
+                                      }}
+                                      title="Edit"
+                                    >
+                                      <Pencil className="size-4" />
+                                    </button>
+                                    <button
+                                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm("Delete this expense?")) {
+                                          handleDeleteExpense(expense.id);
+                                        }
+                                      }}
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="size-4" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden p-4">
+                <ExpenseFeed
+                  expenses={visibleExpenses}
+                  currentUserId={currentUserId}
+                  onDelete={handleDeleteExpense}
+                  onEdit={(expense) => {
+                    setEditingExpense(expense);
+                    setShowAddExpense(true);
+                  }}
+                  memberCount={members.length}
+                />
+              </div>
+
+              {filteredExpenses.length > 10 && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-primary/10 flex justify-center">
+                  <button
+                    className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
+                    onClick={() => setShowAll((v) => !v)}
+                  >
+                    {showAll ? "View fewer transactions" : "View more transactions"}
+                    <span className="material-symbols-outlined text-sm">
+                      {showAll ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Add/Edit Expense */}
-        <ExpenseForm
-          tripId={tripId}
-          members={members}
-          currentUserId={currentUserId}
-          onSubmit={handleAddExpense}
-          onUpdate={handleUpdateExpense}
-          editExpense={editingExpense}
-          onCancelEdit={() => setEditingExpense(null)}
-          tripStartDate={activeTrip?.start_date}
-          tripEndDate={activeTrip?.end_date}
-        />
+          {/* Right Sidebar: Stats & Metrics */}
+          <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-8 duration-1000 delay-300">
+            {/* Spending Progress */}
+            <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
+                <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
+                  style={{ width: `${Math.min(100, spendingProgress)}%` }}
+                ></div>
+              </div>
+              <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
+            </section>
+
+            {/* Top Spenders Mini-List */}
+            <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
+              <div className="space-y-6">
+                {spenderData.map((spender, i) => (
+                  <div key={spender.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
+                          {getInitials(spender.name)}
+                        </div>
+                        <span className="text-xs font-bold">{spender.name}</span>
+                      </div>
+                      <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                      <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+                {spenderData.length === 0 && (
+                  <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                )}
+              </div>
+            </section>
+
+            {/* Budget Breakdown Summary */}
+            <div className="bg-emerald-500 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 text-white">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-white text-xl material-symbols-filled">insights</span>
+                <h4 className="font-black text-[10px] uppercase tracking-widest text-white/80">Ledger Insights</h4>
+              </div>
+              <p className="text-xs font-bold leading-relaxed">
+                Total group spending has reached {money(actualExpenses)}.
+                {spenderData.length > 0 && ` ${spenderData[0].name} is currently leading the contributions.`}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Details */}
         <ExpenseDetails
@@ -436,8 +509,32 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
             setSelectedExpense(null);
           }}
         />
-      </div>
+
+        <ExpenseForm
+          tripId={tripId}
+          members={members}
+          currentUserId={currentUserId}
+          onSubmit={async (data) => {
+            await handleAddExpense(data);
+            setShowAddExpense(false);
+          }}
+          onUpdate={handleUpdateExpense}
+          editExpense={editingExpense}
+          onCancelEdit={() => {
+            setEditingExpense(null);
+          }}
+          tripStartDate={activeTrip?.start_date}
+          tripEndDate={activeTrip?.end_date}
+          open={showAddExpense}
+          onOpenChange={(open) => {
+            setShowAddExpense(open);
+            if (!open) {
+              setEditingExpense(null);
+            }
+          }}
+          showTrigger={true}
+        />
+      </main>
     </div>
   );
 }
-

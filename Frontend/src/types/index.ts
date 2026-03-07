@@ -14,6 +14,8 @@ export interface Trip {
   created_by: number;
   created_at: string;
   google_maps_url?: string;
+  image_url?: string;
+  description?: string;
   members?: TripMember[];
 }
 

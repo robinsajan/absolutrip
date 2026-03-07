@@ -300,6 +300,11 @@ export const options = {
     }>(`/trips/${tripId}/options/by-date`);
     return res.data;
   },
+
+  extract: async (url: string) => {
+    const res = await api.post<{ image_url: string; link_title: string; link_description: string }>('/options/extract', { url });
+    return res.data;
+  },
 };
 
 export const votes = {

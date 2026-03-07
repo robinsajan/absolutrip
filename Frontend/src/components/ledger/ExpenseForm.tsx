@@ -79,6 +79,9 @@ interface ExpenseFormProps {
   onCancelEdit?: () => void;
   tripStartDate?: string;
   tripEndDate?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
 const categories: { value: ExpenseCategory; label: string; icon: React.ReactNode }[] = [
@@ -107,8 +110,19 @@ export function ExpenseForm({
   onCancelEdit,
   tripStartDate,
   tripEndDate,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+  showTrigger = true,
 }: ExpenseFormProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use external control if provided, otherwise fallback to internal state
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (val: boolean) => {
+    if (externalOnOpenChange) externalOnOpenChange(val);
+    setInternalOpen(val);
+  };
+
   const [isLoading, setIsLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -228,7 +242,7 @@ export function ExpenseForm({
       });
       setSplitData(initialSplitData);
 
-      setOpen(true);
+      setIsOpen(true);
     } else {
       setSelectedSplitUsers(members.map(m => m.user_id));
     }
@@ -270,19 +284,19 @@ export function ExpenseForm({
     setAmount("");
     setDescription("");
     setCategory("food");
-    setPaidBy(currentUserId);
+    setPaidBy(currentUserId || members[0]?.user_id);
     setSplitType('equally');
     setSelectedSplitUsers(members.map(m => m.user_id));
     setSplitData({});
-    setExpenseDate(undefined);
+    setExpenseDate(new Date());
     setCurrency('USD');
     setReceiptUrl("");
     setSelectedStayOptionId(null);
   };
 
   const handleClose = () => {
-    setOpen(false);
-    if (isEditMode && onCancelEdit) {
+    setIsOpen(false);
+    if (onCancelEdit) {
       onCancelEdit();
     }
     resetForm();
@@ -453,31 +467,41 @@ export function ExpenseForm({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleClose()}>
-        {!isEditMode && (
+      <Dialog open={isOpen} onOpenChange={(val) => val ? setIsOpen(true) : handleClose()}>
+        {showTrigger && !isEditMode && (
           <DialogTrigger asChild>
-            <Button size="lg" className="fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-lg lg:bottom-8 z-40">
-              <Plus className="h-6 w-6" />
+            <Button size="lg" className="fixed bottom-24 right-4 h-16 w-16 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-white lg:bottom-12 lg:right-12 z-40 transition-all hover:scale-110 active:scale-95 group">
+              <span className="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90">add</span>
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="max-w-md w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[2.5rem]">
-          <div className="max-h-[85vh] overflow-y-auto px-6 py-8 scrollbar-hide">
-            <DialogHeader className="flex flex-row items-center justify-between pb-6">
-              <DialogTitle className="text-2xl font-serif font-bold italic tracking-tight">
-                {isEditMode ? "Edit Expense" : "Add Expense"}
-              </DialogTitle>
+        <DialogContent className="max-w-md w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900">
+          <div className="max-h-[90vh] overflow-y-auto px-8 py-10 scrollbar-hide">
+            <DialogHeader className="flex flex-row items-center justify-between pb-10">
+              <div className="flex items-center gap-3">
+                <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined material-symbols-filled">
+                    {isEditMode ? "edit" : "add_circle"}
+                  </span>
+                </div>
+                <DialogTitle className="text-3xl font-extrabold tracking-tight serif-title italic">
+                  {isEditMode ? "edit expense" : "add expense"}
+                </DialogTitle>
+              </div>
+              <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {/* Amount & Currency Section */}
-              <div className="space-y-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 p-6 border border-slate-100 dark:border-slate-800">
+              <div className="space-y-4 rounded-[2.5rem] bg-gray-50 dark:bg-black/20 p-8 border border-gray-100 dark:border-white/5 shadow-inner">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block px-1">
-                      {currency === 'USD' ? 'Total Amount' : `Amount in ${currency}`}
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 block px-1">
+                      {currency === 'USD' ? 'total amount' : `amount in ${currency}`}
                     </Label>
                     <div className="flex items-center">
-                      <span className="text-4xl font-light text-slate-300 mr-2">$</span>
+                      <span className="text-5xl font-black text-gray-300 mr-3 tracking-tighter">$</span>
                       <Input
                         type="number"
                         placeholder="0.00"
@@ -486,24 +510,24 @@ export function ExpenseForm({
                           if (currency === 'USD') setAmount(e.target.value);
                           else setBaseAmount(e.target.value);
                         }}
-                        className="text-4xl font-black h-12 p-0 border-none bg-transparent focus-visible:ring-0 text-slate-900 dark:text-white"
+                        className="text-5xl font-black h-16 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
                         disabled={isLoading}
                       />
                     </div>
                     {currency !== 'USD' && (
-                      <div className="mt-2 flex items-center gap-3 text-xs animate-in slide-in-from-top-1 duration-200">
-                        <div className="flex items-center gap-1.5 bg-primary/5 text-primary px-2 py-1 rounded-lg border border-primary/10">
-                          <span className="font-bold">Total:</span>
-                          <span className="font-black">${amount} USD</span>
+                      <div className="mt-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center gap-1.5 bg-accent-lime text-black px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                          <span>Total:</span>
+                          <span>${amount} USD</span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                          <Globe className="h-3 w-3 text-slate-400" />
-                          <span className="text-slate-500">Rate:</span>
+                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-100 dark:border-gray-700 text-[10px] font-bold">
+                          <span className="material-symbols-outlined text-[14px]">language</span>
+                          <span className="text-gray-400 uppercase tracking-widest">Rate:</span>
                           <input
                             type="number"
                             value={exchangeRate}
                             onChange={(e) => setExchangeRate(e.target.value)}
-                            className="w-16 bg-transparent border-none focus:ring-0 p-0 font-bold"
+                            className="w-12 bg-transparent border-none focus:ring-0 p-0 font-black"
                           />
                         </div>
                       </div>
@@ -511,12 +535,12 @@ export function ExpenseForm({
                   </div>
 
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="w-20 rounded-xl border-none bg-white dark:bg-slate-900 shadow-sm">
+                    <SelectTrigger className="w-24 h-14 rounded-2xl border-none bg-white dark:bg-gray-800 shadow-xl font-black text-xs">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border-none shadow-2xl">
                       {currencies.map(c => (
-                        <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+                        <SelectItem key={c.code} value={c.code} className="rounded-xl font-bold">{c.code}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -524,28 +548,32 @@ export function ExpenseForm({
               </div>
 
               {/* Description & Category */}
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-6">
                 {category === "stay" ? (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Stay</Label>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Stay Details</Label>
                     {(selectedStayOptionId || isEditMode) ? (
                       (() => {
                         const opt = selectedStayOptionId
                           ? stayOptions.find((o: any) => o.id === selectedStayOptionId)
                           : null;
                         return (
-                          <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-black/20 p-4">
+                          <div className="rounded-[2rem] border border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 p-6 shadow-sm">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="font-bold text-slate-900 dark:text-white truncate">
+                                <p className="text-lg font-black text-gray-900 dark:text-white truncate tracking-tight uppercase">
                                   {opt?.title || description || "Selected stay"}
                                 </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                  Date auto-set from stay {opt?.check_in_date ? `(${opt.check_in_date})` : ""}
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                  Total auto-calculated • Split equally across all members
-                                </p>
+                                <div className="flex flex-col gap-1 mt-3">
+                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-xs">event_available</span>
+                                    Date Set from stay {opt?.check_in_date ? `(${opt.check_in_date})` : ""}
+                                  </p>
+                                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-xs">auto_awesome</span>
+                                    Auto-calculated • Equal Split
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -558,45 +586,43 @@ export function ExpenseForm({
                           onValueChange={(v) => setSelectedStayOptionId(parseInt(v))}
                           disabled={!tripId || isLoading}
                         >
-                          <SelectTrigger className="rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-black/20 h-14">
-                            <SelectValue placeholder={tripId ? "Choose a stay option…" : "Stay options unavailable"} />
+                          <SelectTrigger className="rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-16 px-6 font-bold shadow-sm">
+                            <SelectValue placeholder={tripId ? "Choose a stay..." : "Unavailable"} />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="rounded-2xl border-none shadow-2xl">
                             {stayOptions.length === 0 ? (
-                              <SelectItem value="0" disabled>
-                                No stay options found
-                              </SelectItem>
+                              <SelectItem value="0" disabled>No stays found</SelectItem>
                             ) : (
                               stayOptions.map((o: any) => (
-                                <SelectItem key={o.id} value={o.id.toString()}>
+                                <SelectItem key={o.id} value={o.id.toString()} className="rounded-xl font-bold py-3">
                                   {o.title} • ${Number(o.price).toLocaleString()}
                                 </SelectItem>
                               ))
                             )}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-slate-500">
-                          Selecting a stay auto-fills the date, total, and split.
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-1">
+                          Auto-fills date, total, and distribution
                         </p>
                       </>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">What was this for?</Label>
                     <Input
                       id="description"
-                      placeholder="What was this for?"
+                      placeholder="e.g. Dinner by the beach"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       disabled={isLoading}
-                      className="rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-black/20 h-14"
+                      className="rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-16 px-6 text-lg font-bold shadow-sm placeholder:text-gray-300"
                     />
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Category</Label>
+                <div className="space-y-4">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Category</Label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((cat) => (
                       <Button
@@ -605,11 +631,16 @@ export function ExpenseForm({
                         variant={category === cat.value ? "default" : "outline"}
                         size="sm"
                         onClick={() => setCategory(cat.value)}
-                        className={cn("rounded-full h-10 px-4", category === cat.value && "shadow-md")}
+                        className={cn(
+                          "rounded-full h-11 px-6 border-gray-100 dark:border-white/5 transition-all text-[10px] font-black uppercase tracking-widest",
+                          category === cat.value ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
                         disabled={isLoading}
                       >
-                        {cat.icon}
-                        <span className="ml-2 text-xs font-semibold">{cat.label}</span>
+                        <span className="material-symbols-outlined text-[18px] mr-2">
+                          {cat.value === "stay" ? "home" : cat.value === "activity" ? "stars" : cat.value === "food" ? "restaurant" : cat.value === "transport" ? "directions_car" : "more_horiz"}
+                        </span>
+                        {cat.label}
                       </Button>
                     ))}
                   </div>
@@ -617,33 +648,33 @@ export function ExpenseForm({
               </div>
 
               {/* Advanced Splitting Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    Split Details
+              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-white/5">
+                <div className="flex items-center justify-between px-1">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-[18px]">group</span>
+                    Who is sharing this?
                   </Label>
                 </div>
 
                 {category === "stay" ? (
-                  <div className="mt-2 space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-primary" />
-                        Auto split (equally)
+                  <div className="mt-2 space-y-3 bg-gray-50 dark:bg-black/20 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <span className="material-symbols-outlined text-xs text-primary">numbers</span>
+                        Automatic Equal Split
                       </span>
-                      <span className="text-xs font-bold text-slate-500">
+                      <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/10 rounded-full">
                         {selectedSplitUsers.length} members
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {members.map((member) => (
                         <div
                           key={member.user_id}
-                          className="flex items-center justify-between text-xs bg-white/80 dark:bg-slate-800/60 rounded-lg px-3 py-2 border border-slate-100 dark:border-slate-800"
+                          className="flex items-center justify-between text-[11px] bg-white dark:bg-slate-800/80 rounded-2xl px-4 py-3 border border-gray-50 dark:border-white/5 shadow-sm"
                         >
-                          <span className="truncate font-medium">{member.user_name}</span>
-                          <span className="font-bold text-primary ml-2">
+                          <span className="truncate font-extrabold uppercase tracking-tight">{member.user_name}</span>
+                          <span className="font-black text-primary ml-2">
                             ${((parseFloat(amount) || 0) / Math.max(members.length, 1)).toFixed(2)}
                           </span>
                         </div>
@@ -652,179 +683,182 @@ export function ExpenseForm({
                   </div>
                 ) : (
                   <Tabs value={splitType} onValueChange={(v) => setSplitType(v as any)} className="w-full">
-                    <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-slate-100 dark:bg-slate-900 h-12">
-                      <TabsTrigger value="equally" className="rounded-xl data-[state=active]:shadow-sm">
-                        <Hash className="h-3 w-3 mr-1" /> Equally
+                    <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-gray-100 dark:bg-gray-800 h-14 mb-6">
+                      <TabsTrigger value="equally" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                        Equal
                       </TabsTrigger>
-                      <TabsTrigger value="shares" className="rounded-xl data-[state=active]:shadow-sm">
-                        <Users className="h-3 w-3 mr-1" /> Shares
+                      <TabsTrigger value="shares" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                        Shares
                       </TabsTrigger>
-                      <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:shadow-sm">
-                        <Percent className="h-3 w-3 mr-1" /> %
+                      <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                        %
                       </TabsTrigger>
-                      <TabsTrigger value="exact" className="rounded-xl data-[state=active]:shadow-sm">
-                        <Calculator className="h-3 w-3 mr-1" /> $
+                      <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                        $
                       </TabsTrigger>
                     </TabsList>
 
-                  <div className="mt-4 space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-                    {members.map((member) => (
-                      <div key={member.user_id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            id={`split-${member.user_id}`}
-                            checked={selectedSplitUsers.includes(member.user_id)}
-                            onCheckedChange={() => toggleSplitMember(member.user_id)}
-                          />
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-[10px]">{getInitials(member.user_name)}</AvatarFallback>
-                          </Avatar>
-                          <Label htmlFor={`split-${member.user_id}`} className="text-xs font-medium cursor-pointer">
-                            {member.user_name}
-                          </Label>
-                        </div>
-
-                        {selectedSplitUsers.includes(member.user_id) && splitType !== 'equally' && (
-                          <div className="flex items-center gap-2 w-24">
-                            {splitType === 'shares' && (
-                              <Input
-                                type="number"
-                                placeholder="1"
-                                value={splitData[member.user_id]?.share_count || 1}
-                                onChange={(e) => handleSplitDataChange(member.user_id, 'share_count', e.target.value)}
-                                className="h-8 text-right text-xs rounded-lg"
-                              />
-                            )}
-                            {splitType === 'percentage' && (
-                              <div className="relative">
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  value={splitData[member.user_id]?.percentage || 0}
-                                  onChange={(e) => handleSplitDataChange(member.user_id, 'percentage', e.target.value)}
-                                  className="h-8 text-right text-xs rounded-lg pr-5 w-20"
-                                />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">%</span>
-                              </div>
-                            )}
-                            {splitType === 'exact' && (
-                              <div className="relative">
-                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">$</span>
-                                <Input
-                                  type="number"
-                                  placeholder="0.00"
-                                  value={splitData[member.user_id]?.amount || 0}
-                                  onChange={(e) => handleSplitDataChange(member.user_id, 'amount', e.target.value)}
-                                  className="h-8 text-right text-xs rounded-lg pl-4 w-24"
-                                />
-                              </div>
-                            )}
+                    <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5">
+                      {members.map((member) => (
+                        <div key={member.user_id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-white/5 last:border-0 group">
+                          <div className="flex items-center gap-4">
+                            <Checkbox
+                              id={`split-${member.user_id}`}
+                              checked={selectedSplitUsers.includes(member.user_id)}
+                              onCheckedChange={() => toggleSplitMember(member.user_id)}
+                              className="w-6 h-6 rounded-lg"
+                            />
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover:scale-110">
+                                <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{getInitials(member.user_name)}</AvatarFallback>
+                              </Avatar>
+                              <Label htmlFor={`split-${member.user_id}`} className="text-xs font-black uppercase tracking-widest cursor-pointer text-gray-700 dark:text-gray-300">
+                                {member.user_name}
+                              </Label>
+                            </div>
                           </div>
-                        )}
 
-                        {selectedSplitUsers.includes(member.user_id) && splitType === 'equally' && (
-                          <span className="text-[10px] font-bold text-slate-400">
-                            ${((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          {selectedSplitUsers.includes(member.user_id) && splitType !== 'equally' && (
+                            <div className="flex items-center gap-2 w-28 animate-in slide-in-from-right-4 duration-300">
+                              {splitType === 'shares' && (
+                                <div className="relative w-full">
+                                  <Input
+                                    type="number"
+                                    placeholder="1"
+                                    value={splitData[member.user_id]?.share_count || 1}
+                                    onChange={(e) => handleSplitDataChange(member.user_id, 'share_count', e.target.value)}
+                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400 uppercase">shr</span>
+                                </div>
+                              )}
+                              {splitType === 'percentage' && (
+                                <div className="relative w-full">
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    value={splitData[member.user_id]?.percentage || 0}
+                                    onChange={(e) => handleSplitDataChange(member.user_id, 'percentage', e.target.value)}
+                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
+                                </div>
+                              )}
+                              {splitType === 'exact' && (
+                                <div className="relative w-full">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">$</span>
+                                  <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={splitData[member.user_id]?.amount || 0}
+                                    onChange={(e) => handleSplitDataChange(member.user_id, 'amount', e.target.value)}
+                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pl-7 pr-3"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedSplitUsers.includes(member.user_id) && splitType === 'equally' && (
+                            <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-full uppercase tracking-tighter animate-in fade-in duration-300">
+                              ${((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </Tabs>
                 )}
               </div>
 
               {/* Extras: Date, Receipt, Payer */}
-              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Expense Date</Label>
+              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-white/5">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Expense Date</Label>
                     {category === "stay" ? (
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-12 rounded-2xl justify-start text-xs font-medium cursor-default"
+                        className="w-full h-14 rounded-2xl justify-start text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-gray-50/50 cursor-default opacity-80"
                         disabled
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
-                        {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Select a stay to set date"}
+                        <span className="material-symbols-outlined mr-3 text-primary text-[20px]">calendar_month</span>
+                        {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Auto-set"}
                       </Button>
                     ) : (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-12 rounded-2xl justify-start text-xs font-medium">
-                            <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                          <Button variant="outline" className="w-full h-14 rounded-2xl justify-start text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm">
+                            <span className="material-symbols-outlined mr-3 text-primary text-[20px]">calendar_month</span>
                             {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Today"}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl" align="start">
                           <CalendarComponent
                             mode="single"
                             selected={expenseDate}
                             onSelect={setExpenseDate}
                             disabled={isDateDisabled}
                             initialFocus
+                            className="rounded-2xl"
                           />
                         </PopoverContent>
                       </Popover>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Paid By</Label>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Paid By</Label>
                     <Select value={paidBy?.toString()} onValueChange={(v) => setPaidBy(parseInt(v))}>
-                      <SelectTrigger className="w-full h-12 rounded-2xl bg-white dark:bg-slate-900 border-slate-100">
+                      <SelectTrigger className="w-full h-14 rounded-2xl border-none bg-white dark:bg-black/20 shadow-sm font-black text-[10px] uppercase tracking-widest px-6">
                         <SelectValue placeholder="Who paid?" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-2xl border-none shadow-2xl">
                         {members.map(m => (
-                          <SelectItem key={m.user_id} value={m.user_id.toString()}>{m.user_name}</SelectItem>
+                          <SelectItem key={m.user_id} value={m.user_id.toString()} className="rounded-xl font-bold py-3 uppercase tracking-tighter text-[10px]">{m.user_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Receipt (Image or PDF)</Label>
-                  <div className="flex items-center gap-2 mt-1">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Receipt Evidence</Label>
+                  <div className="flex items-center gap-4 mt-1">
                     {receiptUrl ? (
-                      <div className="flex-1 flex items-center justify-between bg-primary/5 border border-primary/20 rounded-2xl h-12 px-4 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Receipt className="h-4 w-4 text-primary shrink-0" />
-                          <span className="text-xs font-medium truncate">{receiptUrl.split('/').pop()}</span>
+                      <div className="flex-1 flex items-center justify-between bg-primary/5 border border-primary/10 rounded-[2rem] h-16 px-6 animate-in fade-in zoom-in-95 duration-500 shadow-sm">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[150px]">{receiptUrl.split('/').pop()}</span>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-full"
                           onClick={() => setReceiptUrl("")}
+                          className="h-10 w-10 rounded-full hover:bg-destructive/10 hover:text-destructive text-gray-400 transition-colors"
                         >
-                          <X className="h-4 w-4" />
+                          <span className="material-symbols-outlined text-[20px]">close</span>
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex-1 relative">
-                        <Input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="receipt-upload"
-                          disabled={isUploading || isLoading}
-                        />
-                        <Label
-                          htmlFor="receipt-upload"
-                          className={cn(
-                            "flex items-center gap-2 justify-center w-full h-12 rounded-2xl border border-dashed cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs font-medium",
-                            isUploading ? "opacity-50 cursor-not-allowed border-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50",
-                            (isLoading) && "pointer-events-none opacity-50"
-                          )}
-                        >
-                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Upload className="h-4 w-4 text-slate-400" />}
-                          {isUploading ? "Uploading..." : "Upload Receipt"}
-                        </Label>
+                      <div className="flex-1">
+                        <label className="flex items-center gap-4 cursor-pointer group">
+                          <div className="flex-1 flex items-center justify-center gap-3 h-16 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all bg-white dark:bg-black/20 shadow-sm">
+                            {isUploading ? (
+                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            ) : (
+                              <span className="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">upload_file</span>
+                            )}
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover:text-primary/70">
+                              {isUploading ? "Uploading..." : "Click to add receipt"}
+                            </span>
+                          </div>
+                          <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*,application/pdf" disabled={isUploading || isLoading} />
+                        </label>
                       </div>
                     )}
                   </div>
@@ -832,13 +866,24 @@ export function ExpenseForm({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-6">
-                <Button type="button" variant="ghost" className="flex-1 rounded-2xl h-14 font-bold text-slate-500" onClick={handleClose}>
-                  Cancel
+              <div className="flex flex-col gap-4 pt-10">
+                <Button
+                  type="submit"
+                  className="w-full h-16 rounded-[2rem] bg-black dark:bg-white text-white dark:text-black hover:opacity-90 font-black uppercase tracking-[0.4em] text-[10px] shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                  disabled={isLoading || isUploading}
+                >
+                  {isLoading ? "Processing..." : (isEditMode ? "Update Transaction" : "Record Transaction")}
                 </Button>
-                <Button type="submit" className="flex-1 rounded-2xl h-14 font-bold shadow-xl shadow-primary/20" disabled={isLoading}>
-                  {isLoading ? "Saving..." : isEditMode ? "Update" : "Add Expense"}
-                </Button>
+                {isEditMode && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleClose}
+                    className="w-full h-12 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-destructive hover:bg-destructive/5 transition-all"
+                  >
+                    Cancel Edit
+                  </Button>
+                )}
               </div>
             </form>
           </div>

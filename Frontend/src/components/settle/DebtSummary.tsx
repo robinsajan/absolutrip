@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUp, ArrowDown, Check, Info } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -20,11 +21,10 @@ interface DebtSummaryProps {
 export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps) {
   if (!balance) {
     return (
-      <Card className="bg-muted">
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Loading your balance...</p>
-        </CardContent>
-      </Card>
+      <div className="p-12 text-center bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+        <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-xs font-black uppercase tracking-widest text-gray-400">Loading balance...</p>
+      </div>
     );
   }
 
@@ -36,23 +36,23 @@ export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps
     switch (status) {
       case "owes":
         return {
-          icon: ArrowUp,
-          bgClass: "bg-gradient-to-br from-red-500 to-red-600",
-          message: `${firstName}, you owe a total of`,
-          subMessage: "Settle up with your friends below",
+          icon: "trending_down",
+          bgClass: "bg-red-500 text-white shadow-xl shadow-red-500/10",
+          message: `${firstName}, you owe the group`,
+          subMessage: "Settle up below",
         };
       case "owed":
         return {
-          icon: ArrowDown,
-          bgClass: "bg-gradient-to-br from-green-500 to-green-600",
-          message: `${firstName}, you are owed`,
-          subMessage: "Your friends owe you money",
+          icon: "trending_up",
+          bgClass: "bg-green-500 text-white shadow-xl shadow-green-500/10",
+          message: `${firstName}, others owe you`,
+          subMessage: "You paid more than your share",
         };
       case "settled":
       default:
         return {
-          icon: Check,
-          bgClass: "bg-gradient-to-br from-primary to-primary/80",
+          icon: "check_circle",
+          bgClass: "bg-primary text-white shadow-xl shadow-primary/10",
           message: `${firstName}, you're all settled!`,
           subMessage: "No debts to pay or collect",
         };
@@ -60,87 +60,71 @@ export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps
   };
 
   const config = getStatusConfig();
-  const Icon = config.icon;
 
   return (
-    <div className="space-y-3">
-      <Card className={cn("text-white overflow-hidden", config.bgClass)}>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white/20 rounded-full">
-              <Icon className="h-6 w-6" />
+    <div className="space-y-6">
+      <div className={cn("rounded-[2.5rem] p-8 min-h-[180px] flex flex-col justify-between transition-all", config.bgClass)}>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+              <span className="material-symbols-outlined material-symbols-filled text-2xl">{config.icon}</span>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm opacity-90">{config.message}</p>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{config.message}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <h2 className="text-5xl font-black tracking-tighter">${Math.round(amount).toLocaleString()}</h2>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button className="opacity-70 hover:opacity-100 transition-opacity">
-                        <Info className="h-4 w-4" />
+                      <button className="opacity-40 hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-sm">info</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="text-sm">
-                        {explanation?.how_it_works || 
+                    <TooltipContent side="bottom" className="max-w-xs bg-white text-black border-none shadow-2xl rounded-2xl p-4">
+                      <p className="text-xs font-medium leading-relaxed">
+                        {explanation?.how_it_works ||
                           "Your balance = Total Paid - Your Share. Positive means you're owed money, negative means you owe."}
                       </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              {status !== "settled" && (
-                <p className="text-3xl font-bold mt-1">${amount.toFixed(2)}</p>
-              )}
-              <p className="text-xs opacity-80 mt-1">{config.subMessage}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2">
+          <span className="material-symbols-outlined text-sm">schedule</span>
+          {config.subMessage}
+        </p>
+      </div>
 
       {balance.total_paid !== undefined && balance.total_share !== undefined && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Your breakdown:</span>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="text-muted-foreground hover:text-foreground transition-colors">
-                        <Info className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="text-sm">
-                        Total Paid is how much you&apos;ve spent for the group. Your Share is what you owe based on expense splits.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+        <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-8 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Financial Breakdown</span>
+            <Link href="/expenses" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View History</Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-8">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">You Paid</p>
+              <p className="text-2xl font-black text-green-500 tracking-tighter">${Math.round(balance.total_paid).toLocaleString()}</p>
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-3">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Paid</p>
-                <p className="font-semibold text-green-600">${balance.total_paid.toFixed(2)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Share</p>
-                <p className="font-semibold text-orange-600">${balance.total_share.toFixed(2)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Balance</p>
-                <p className={cn(
-                  "font-semibold",
-                  balance.balance > 0 ? "text-green-600" : balance.balance < 0 ? "text-red-600" : "text-primary"
-                )}>
-                  {balance.balance >= 0 ? "+" : ""}${balance.balance.toFixed(2)}
-                </p>
-              </div>
+            <div className="space-y-1 border-x border-gray-50 dark:border-gray-800 px-8">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Share</p>
+              <p className="text-2xl font-black text-orange-500 tracking-tighter">${Math.round(balance.total_share).toLocaleString()}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-1 text-right">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Net Balance</p>
+              <p className={cn(
+                "text-2xl font-black tracking-tighter",
+                balance.balance >= 0 ? "text-green-500" : "text-red-500"
+              )}>
+                {balance.balance >= 0 ? "+" : ""}${Math.round(balance.balance).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
