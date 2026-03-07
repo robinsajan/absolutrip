@@ -5,3 +5,5 @@
 .env
 /tests
 *.db
+tripsync.db
+/uploads/
