@@ -4,3 +4,5 @@ expeses edit Feature
 Change ledger to something
 add date
 
+after all give summaru or internary of trip
+python -m flask --app run db upgrade

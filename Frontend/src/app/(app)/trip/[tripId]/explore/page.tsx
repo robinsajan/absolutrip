@@ -110,6 +110,46 @@ export default function ExplorePage() {
   };
 
   const handleFinalize = async (optionId: number) => {
+    const optionToFinalize = (rankedOptions || []).find(ro => ro.option.id === optionId)?.option;
+    if (!optionToFinalize) return;
+
+    if (optionToFinalize.check_in_date) {
+      const currentFinalized = rankedOptions.filter(ro => ro.option.is_finalized);
+
+      const start = parseISO(optionToFinalize.check_in_date);
+      const end = optionToFinalize.check_out_date
+        ? parseISO(optionToFinalize.check_out_date)
+        : start;
+
+      const conflict = currentFinalized.find(ro => {
+        if (!ro.option.check_in_date) return false;
+
+        const fStart = parseISO(ro.option.check_in_date);
+        const fEnd = ro.option.check_out_date
+          ? parseISO(ro.option.check_out_date)
+          : fStart;
+
+        // Check for overlaps
+        if (optionToFinalize.category === 'stay' && ro.option.category === 'stay') {
+          // Standard stay overlap: [start, end) conflicts with [fStart, fEnd)
+          return start < fEnd && end > fStart;
+        }
+
+        // If it's an activity or other, check same day
+        if (optionToFinalize.category !== 'stay' && ro.option.category !== 'stay') {
+          return isSameDay(start, fStart);
+        }
+
+        return false;
+      });
+
+      if (conflict) {
+        const conflictDate = format(parseISO(conflict.option.check_in_date!), "MMM d");
+        toast.error(`There is a conflict! You have already selected "${conflict.option.title}" for ${conflictDate}. Please resolve the conflict first.`);
+        return;
+      }
+    }
+
     try {
       await optionsApi.finalize(optionId);
       toast.success("Option selected! ✨");
@@ -185,7 +225,7 @@ export default function ExplorePage() {
 
       let basePrice = is_per_person ? price : price / members.length;
 
-      if (is_per_night && check_in_date && check_out_date) {
+      if (check_in_date && check_out_date) {
         try {
           const nights = Math.max(1, differenceInDays(parseISO(check_out_date), parseISO(check_in_date)));
           basePrice *= nights;
@@ -255,9 +295,10 @@ export default function ExplorePage() {
       ? Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))
       : 1;
 
-    const groupTotal = (ro.option.is_per_person ? ro.option.price * (members?.length || 1) : ro.option.price) * (ro.option.is_per_night ? nights : 1);
-    const ppPerDay = (ro.option.is_per_person ? ro.option.price : ro.option.price / (members?.length || 1)) / (ro.option.is_per_night ? 1 : nights);
-
+    const memberCount = Math.max(1, members?.length || 0);
+    const unitPrice = ro.option.price_per_day_pp ?? (ro.option.price / memberCount);
+    const groupTotal = ro.option.total_price ?? (unitPrice * memberCount * nights);
+    const ppPerDay = unitPrice;
     return (
       <div key={ro.option.id} className={cn(
         "group bg-white dark:bg-gray-900 rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1",
@@ -345,7 +386,7 @@ export default function ExplorePage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[8px] uppercase font-black text-primary/70 tracking-widest mb-0.5">PP / Day</p>
+                  <p className="text-[8px] uppercase font-black text-primary/70 tracking-widest mb-0.5">Per Person Per Night</p>
                   <p className="text-xl font-black text-primary leading-none">
                     ${Math.round(ppPerDay).toLocaleString()}
                   </p>
@@ -355,8 +396,8 @@ export default function ExplorePage() {
 
             {/* Select/Finalize Button */}
             <button
-              onClick={() => isFinalized ? handleUnfinalize(ro.option.id) : (isOwner ? handleFinalize(ro.option.id) : null)}
-              disabled={!isOwner && !isFinalized}
+              onClick={() => isOwner ? (isFinalized ? handleUnfinalize(ro.option.id) : handleFinalize(ro.option.id)) : null}
+              disabled={!isOwner}
               className={cn(
                 "w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-sm text-xs uppercase tracking-tight",
                 isFinalized

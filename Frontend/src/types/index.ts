@@ -112,6 +112,8 @@ export interface StayOption {
   is_finalized?: boolean;
   is_per_person?: boolean;
   is_per_night?: boolean;
+  price_per_day_pp?: number;
+  total_price?: number;
 }
 
 export interface OptionsByDate {

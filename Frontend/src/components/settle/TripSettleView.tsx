@@ -43,18 +43,30 @@ export function TripSettleView({ tripId }: { tripId: number }) {
   const { user } = useAuth();
   const { members } = useTripMembers(tripId);
   const { balances, settlements, isLoading, mutate: mutateSettle } = useSettlement(tripId);
-  const { mutate: mutateExpenses } = useExpenses(mutateExpenseTripId(tripId));
-
-  const totalOutstanding = useMemo(() =>
-    settlements.reduce((sum, s) => sum + s.amount, 0),
-    [settlements]
-  );
+  const { mutate: mutateExpenses } = useExpenses(tripId); // Corrected from mutateExpenseTripId(tripId)
 
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [fromUserId, setFromUserId] = useState<number | null>(null);
   const [toUserId, setToUserId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const myId = user?.id;
+
+  // Business logic moved to the top and memoized
+  const owedByMe = useMemo(() => settlements.filter((s) => s.from_user_id === myId), [settlements, myId]);
+  const owesMe = useMemo(() => settlements.filter((s) => s.to_user_id === myId), [settlements, myId]);
+
+  const totalOwedByMe = useMemo(() => owedByMe.reduce((sum, s) => sum + s.amount, 0), [owedByMe]);
+  const totalOwedToMe = useMemo(() => owesMe.reduce((sum, s) => sum + s.amount, 0), [owesMe]);
+
+  const settledWithMe = useMemo(() =>
+    balances.filter(
+      (b) =>
+        b.user_id !== myId &&
+        !owedByMe.some((s) => s.to_user_id === b.user_id) &&
+        !owesMe.some((s) => s.from_user_id === b.user_id)
+    ), [balances, myId, owedByMe, owesMe]);
 
   const handleRecordSettlement = async (s?: any) => {
     const amt = s ? s.amount : Number(amount);
@@ -86,7 +98,7 @@ export function TripSettleView({ tripId }: { tripId: number }) {
 
   if (isLoading) {
     return (
-      <div className="p-20 text-center">
+      <div className="p-20 text-center animate-pulse">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
         <p className="text-xs font-black uppercase tracking-widest text-gray-400">Loading ledger...</p>
       </div>
@@ -94,125 +106,151 @@ export function TripSettleView({ tripId }: { tripId: number }) {
   }
 
   return (
-    <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen">
-      <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
-        {/* Dark Banner Header */}
-        <div className="bg-slate-900 text-white p-12 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between min-h-[320px] shadow-2xl shadow-black/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="relative z-10">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Total Outstanding</p>
-            <div className="flex items-start gap-4">
-              <h2 className="text-7xl font-black tracking-tighter">${Math.round(totalOutstanding).toLocaleString()}</h2>
-              <div className="mt-2 bg-accent-lime/10 text-accent-lime text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-accent-lime/20 flex items-center gap-1.5 backdrop-blur-md">
-                <span className="material-symbols-outlined text-xs filled-icon">error</span>
-                Pending
-              </div>
-            </div>
-            <p className="text-sm text-slate-400 font-bold mt-2 uppercase tracking-widest">Across {settlements.length} active settlements</p>
+    <div className="bg-[#fcfcf9] dark:bg-[#0a0a0b] min-h-screen text-slate-900 dark:text-slate-100">
+      <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
+        {/* Simple Summary Header */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center truncate">Owed by you</p>
+            <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
+              ${Math.round(totalOwedByMe).toLocaleString()}
+            </h2>
           </div>
-
-          <div className="flex flex-wrap gap-4 mt-8 relative z-10">
-            <div className="bg-slate-800/50 backdrop-blur-md px-8 py-5 rounded-3xl flex flex-col gap-1 min-w-[140px] border border-white/5">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Settled</span>
-              <span className="text-2xl font-black text-accent-lime">0</span>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur-md px-8 py-5 rounded-3xl flex flex-col gap-1 min-w-[140px] border border-white/5">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pending</span>
-              <span className="text-2xl font-black text-primary"> {settlements.length} </span>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur-md px-8 py-5 rounded-3xl flex flex-col gap-1 min-w-[140px] border border-white/5">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Members</span>
-              <span className="text-2xl font-black text-white">{members.length}</span>
-            </div>
-          </div>
-
-          <div className="absolute right-12 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none scale-[2]">
-            <span className="material-symbols-outlined text-[240px] text-accent-lime font-light">account_balance_wallet</span>
+          <div className="bg-slate-100/50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-700">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center truncate">Owed to you</p>
+            <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
+              ${Math.round(totalOwedToMe).toLocaleString()}
+            </h2>
           </div>
         </div>
 
-        {/* Settlement Ledger */}
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-          <div className="flex items-center justify-between mb-8 px-4">
-            <h3 className="text-[10px] font-black text-black dark:text-white uppercase tracking-[0.3em]">Who Owes Whom</h3>
-            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline px-4 py-2 bg-primary/5 rounded-full flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">history</span>
-              Audit Logs
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {settlements.length === 0 ? (
-              <div className="p-16 text-center bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                <span className="material-symbols-outlined text-4xl text-gray-300 mb-4">check_circle</span>
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Everyone is settled up</p>
-              </div>
-            ) : (
-              settlements.map((s, idx) => {
-                const canSettle = user?.id === s.from_user_id;
-
-                return (
+        <div className="space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          {/* Section: Owed by Me */}
+          {owedByMe.length > 0 && (
+            <section>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2">Owed by you</h3>
+              <div className="space-y-4">
+                {owedByMe.map((s, idx) => (
                   <div
                     key={idx}
-                    className={cn(
-                      "bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] flex items-center justify-between border border-gray-50 dark:border-gray-800 transition-all",
-                      canSettle ? "hover:shadow-2xl hover:scale-[1.01] group cursor-pointer" : "opacity-90"
-                    )}
+                    className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-50 dark:border-slate-800/50 group hover:shadow-md transition-all cursor-pointer"
                     onClick={() => {
-                      if (!canSettle) return;
                       setFromUserId(s.from_user_id);
                       setToUserId(s.to_user_id);
                       setAmount(s.amount.toString());
                       setOpen(true);
                     }}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center gap-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 font-black text-lg shadow-sm">
-                          {getInitials(s.from_user_name)}
-                        </div>
-                        <span className="font-extrabold text-gray-900 dark:text-white text-lg tracking-tight lowercase">{s.from_user_name}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-400 font-extrabold text-sm border-2 border-white dark:border-slate-800 shadow-inner">
+                        {getInitials(s.to_user_name)}
                       </div>
-
-                      <div className="flex items-center justify-center w-8 h-8 md:w-12 md:h-12 bg-gray-50 dark:bg-gray-800 rounded-full">
-                        <span className={cn("material-symbols-outlined text-gray-300 transition-colors text-sm md:text-base", canSettle && "group-hover:text-primary")}>arrow_forward</span>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-primary/5 dark:bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-lg shadow-sm">
-                          {getInitials(s.to_user_name)}
-                        </div>
-                        <span className="font-extrabold text-gray-900 dark:text-white text-lg tracking-tight lowercase">{s.to_user_name}</span>
+                      <div>
+                        <p className="font-extrabold text-sm tracking-tight">{s.to_user_name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-[9px]">Awaiting settlement</p>
                       </div>
                     </div>
+                    <span className="text-lg font-black text-slate-900 dark:text-white">${Math.round(s.amount).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-                    <div className="flex items-center gap-6 md:gap-10">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 lowercase">amount</p>
-                        <span className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">${Math.round(s.amount).toLocaleString()}</span>
+          {/* Section: Owes Me */}
+          {owesMe.length > 0 && (
+            <section>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2">
+                {owesMe.length} {owesMe.length === 1 ? "person owes" : "people owe"} you
+              </h3>
+              <div className="space-y-4">
+                {owesMe.map((s, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-50 dark:border-slate-800/50 group hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => {
+                      setFromUserId(s.from_user_id);
+                      setToUserId(s.to_user_id);
+                      setAmount(s.amount.toString());
+                      setOpen(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-400 font-extrabold text-sm border-2 border-white dark:border-slate-800 shadow-inner">
+                        {getInitials(s.from_user_name)}
                       </div>
-                      <button
-                        className={cn(
-                          "h-12 md:h-14 px-6 md:px-10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          canSettle
-                            ? "bg-primary text-white hover:opacity-90 hover:scale-105 active:scale-95 shadow-xl shadow-primary/20"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
-                        )}
-                        disabled={!canSettle}
-                      >
-                        {canSettle ? "settle" : "waiting"}
-                      </button>
+                      <div>
+                        <p className="font-extrabold text-sm tracking-tight">{s.from_user_name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-[9px]">Pending Payment</p>
+                      </div>
+                    </div>
+                    <span className="text-lg font-black text-slate-900 dark:text-white">${Math.round(s.amount).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 px-2">Settled</h3>
+            <div className="space-y-2">
+              {settledWithMe.length === 0 && owedByMe.length === 0 && owesMe.length === 0 && (
+                <div className="p-16 text-center">
+                  <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">check_circle</span>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Everything is balanced!</p>
+                </div>
+              )}
+              {settledWithMe.map((b, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-900 dark:text-slate-100 font-extrabold text-xs">
+                      {getInitials(b.user_name)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">{b.user_name}</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{b.expenses_paid} total expenses</p>
                     </div>
                   </div>
-                )
-              })
-            )}
+                  <span className="text-xs font-black text-slate-900 dark:text-white">$0</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* Bottom Actions Fixed Bar */}
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50">
+          <div className="max-w-2xl mx-auto grid grid-cols-2 gap-4">
+            <Button
+              variant="outline"
+              className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+              onClick={() => (window.location.href = `/trip/${tripId}/budget?tab=breakdown`)}
+            >
+              Split Expense
+            </Button>
+            <Button
+              className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90 shadow-xl shadow-black/10 transition-all active:scale-95"
+              onClick={() => {
+                if (owedByMe.length > 0) {
+                  const first = owedByMe[0];
+                  setFromUserId(first.from_user_id);
+                  setToUserId(first.to_user_id);
+                  setAmount(first.amount.toString());
+                  setOpen(true);
+                } else {
+                  setOpen(true);
+                }
+              }}
+            >
+              Settle Up
+            </Button>
           </div>
         </div>
 
         {/* Footer Banner */}
-        <div className="bg-[#f3efff] dark:bg-[#1a152e] border border-[#e4d9ff] dark:border-[#352a5c] rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm mt-10">
           <div className="flex items-center gap-6 text-center md:text-left">
-            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center text-[#7c5cf2] shadow-sm transform -rotate-3 shrink-0">
+            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-sm transform -rotate-3 shrink-0">
               <span className="material-symbols-outlined filled-icon text-3xl">account_balance_wallet</span>
             </div>
             <div>
@@ -220,17 +258,17 @@ export function TripSettleView({ tripId }: { tripId: number }) {
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Coming soon — instant settlement integration</p>
             </div>
           </div>
-          <span className="bg-purple-200 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-300/30 whitespace-nowrap">Available Soon</span>
+          <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-300 dark:border-slate-700 whitespace-nowrap">Available Soon</span>
         </div>
       </main>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md bg-white dark:bg-gray-900 rounded-[3rem] p-10 border-none shadow-2xl">
           <DialogHeader className="pb-8">
-            <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic">record settlement</DialogTitle>
+            <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic animate-in fade-in slide-in-from-top-4 duration-500">record settlement</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="text-center">
@@ -266,8 +304,3 @@ export function TripSettleView({ tripId }: { tripId: number }) {
     </div>
   );
 }
-
-function mutateExpenseTripId(tripId: number): number {
-  return tripId;
-}
-

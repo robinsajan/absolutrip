@@ -25,11 +25,45 @@ class StayOption(db.Model):
     is_finalized = db.Column(db.Boolean, default=False)
     is_per_person = db.Column(db.Boolean, default=False)
     is_per_night = db.Column(db.Boolean, default=False)
+    price_per_day_pp = db.Column(db.Numeric(10, 2), nullable=True)
+    total_price = db.Column(db.Numeric(10, 2), nullable=True)
 
     trip = db.relationship('Trip', back_populates='options')
     added_by_user = db.relationship('User', back_populates='added_options')
     votes = db.relationship('Vote', back_populates='option', lazy='dynamic',
                             cascade='all, delete-orphan')
+
+    def update_pricing(self):
+        """Calculates and updates the price_per_day_pp and total_price for a StayOption."""
+        if self.price is None:
+            self.price_per_day_pp = None
+            self.total_price = None
+            return
+
+        # Count only approved members in group
+        member_count = self.trip.members.filter_by(status='approved').count() or 1
+        
+        # Total duration (minimum 1 night)
+        nights = 1
+        if self.check_in_date and self.check_out_date:
+            nights = (self.check_out_date - self.check_in_date).days
+            if nights < 1:
+                nights = 1
+
+        # Calculate conditional totals
+        raw_price = float(self.price)
+        
+        # Grand Total for the whole group for the entire stay
+        total_group_price = raw_price
+        if self.is_per_person:
+            total_group_price *= member_count
+        if self.is_per_night:
+            total_group_price *= nights
+            
+        self.total_price = total_group_price
+        
+        # Per Person Per Day unit price
+        self.price_per_day_pp = total_group_price / member_count / nights
 
     def to_dict(self, include_votes=False):
         data = {
@@ -51,7 +85,9 @@ class StayOption(db.Model):
             'category': self.category,
             'is_finalized': self.is_finalized,
             'is_per_person': self.is_per_person,
-            'is_per_night': self.is_per_night
+            'is_per_night': self.is_per_night,
+            'price_per_day_pp': float(self.price_per_day_pp) if self.price_per_day_pp else None,
+            'total_price': float(self.total_price) if self.total_price else None
         }
         if include_votes:
             data['votes'] = [v.to_dict() for v in self.votes]

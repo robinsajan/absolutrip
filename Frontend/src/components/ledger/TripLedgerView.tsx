@@ -52,13 +52,21 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   const { rankedOptions } = useRankedOptions(tripId);
 
   const calculateOptionPrice = useCallback((ro: RankedOption) => {
-    let price = ro.option.price || 0;
-    if (ro.option.is_per_person) {
-      price *= Math.max(members.length, 1);
+    const { option } = ro;
+    const count = Math.max(members.length, 1);
+
+    if (option.price_per_day_pp !== undefined && option.price_per_day_pp !== null) {
+      let nights = 1;
+      if (option.check_in_date && option.check_out_date) {
+        nights = Math.max(differenceInDays(parseISO(option.check_out_date), parseISO(option.check_in_date)), 1);
+      }
+      return option.price_per_day_pp * count * nights;
     }
-    if (ro.option.is_per_night && ro.option.check_in_date && ro.option.check_out_date) {
+
+    let price = (option.price || 0) / count;
+    if (option.is_per_night && option.check_in_date && option.check_out_date) {
       try {
-        const nights = Math.max(differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)), 1);
+        const nights = Math.max(differenceInDays(parseISO(option.check_out_date), parseISO(option.check_in_date)), 1);
         price *= nights;
       } catch (e) { }
     }
@@ -143,12 +151,8 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   const finalizedOptionsTotal = useMemo(() => {
     return (rankedOptions || [])
       .filter(ro => ro.option.is_finalized)
-      .reduce((sum, ro) => {
-        let p = ro.option.price;
-        if (ro.option.is_per_person) p *= (members?.length || 1);
-        return sum + p;
-      }, 0);
-  }, [rankedOptions, members]);
+      .reduce((sum, ro) => sum + calculateOptionPrice(ro), 0);
+  }, [rankedOptions, calculateOptionPrice]);
 
   const totalProjected = actualExpenses + finalizedOptionsTotal;
   const spendingProgress = totalProjected > 0 ? (actualExpenses / totalProjected) * 100 : 0;

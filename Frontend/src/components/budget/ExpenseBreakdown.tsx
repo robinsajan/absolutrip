@@ -18,11 +18,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const categoryColors: Record<string, string> = {
-  food: "bg-orange-500",
-  transport: "bg-blue-500",
-  stay: "bg-purple-500",
-  activity: "bg-green-500",
-  other: "bg-gray-500",
+  food: "bg-slate-900 dark:bg-slate-100",
+  transport: "bg-slate-700 dark:bg-slate-300",
+  stay: "bg-slate-500 dark:bg-slate-500",
+  activity: "bg-slate-400 dark:bg-slate-600",
+  other: "bg-slate-300 dark:bg-slate-700",
 };
 
 export function ExpenseBreakdown({

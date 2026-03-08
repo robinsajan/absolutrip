@@ -32,15 +32,15 @@ export function BudgetHeader({
   whoShouldPayNext,
 }: BudgetHeaderProps) {
   return (
-    <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-2xl shadow-primary/20">
+    <Card className="bg-[#ccff00] text-black shadow-2xl shadow-[#ccff00]/20 border-none">
       <CardContent className="p-6">
         <div className="flex flex-col items-center gap-3 mb-6">
           {personalBalance !== undefined && (
             <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 backdrop-blur-md border ${personalBalance > 0.01
-              ? "bg-green-500/20 border-green-400/30 text-green-100"
+              ? "bg-green-900/10 border-green-900/20 text-green-900"
               : personalBalance < -0.01
-                ? "bg-red-500/20 border-red-400/30 text-red-100"
-                : "bg-white/10 border-white/20 text-white/80"
+                ? "bg-red-900/10 border-red-900/20 text-red-900"
+                : "bg-black/5 border-black/10 text-black/70"
               }`}>
               {personalBalance > 0.01 ? (
                 <>Others owe you ${personalBalance.toFixed(2)}</>
@@ -53,7 +53,7 @@ export function BudgetHeader({
           )}
 
           {whoShouldPayNext && (
-            <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-amber-400/20 border border-amber-400/30 text-amber-100 animate-pulse">
+            <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-black/5 border border-black/10 text-black animate-pulse">
               💡 Suggestion: {whoShouldPayNext.user_name} should pay next
             </div>
           )}
@@ -82,7 +82,7 @@ export function BudgetHeader({
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-primary-foreground/20">
+        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-black/10">
           <div className="text-center">
             <p className="text-2xl font-black">${totalExpenses.toFixed(0)}</p>
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Total</p>
@@ -94,7 +94,7 @@ export function BudgetHeader({
             </p>
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Members</p>
           </div>
-          <div className="text-center border-l border-primary-foreground/20">
+          <div className="text-center border-l border-black/10">
             <p className="text-2xl font-black">${(totalExpenses / Math.max(memberCount, 1)).toFixed(0)}</p>
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Avg</p>
           </div>

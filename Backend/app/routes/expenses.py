@@ -106,7 +106,7 @@ def record_expense(trip_id, trip, membership):
     
     # If no split data, default to all members for 'equally'
     if not split_data:
-        members = TripMember.query.filter_by(trip_id=trip_id).all()
+        members = TripMember.query.filter_by(trip_id=trip_id, status='approved').all()
         split_data = [{'user_id': m.user_id} for m in members]
 
     # Validate all split users are members

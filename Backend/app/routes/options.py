@@ -17,6 +17,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+
 def get_upload_folder():
     upload_folder = os.path.join(current_app.root_path, '..', 'uploads', 'options')
     os.makedirs(upload_folder, exist_ok=True)
@@ -100,6 +102,9 @@ def create_option(trip_id, trip, membership):
     )
     db.session.add(option)
     db.session.flush()
+
+    # Calculate pricing based on current trip state
+    option.update_pricing()
 
     if option.link:
         LinkScraperService.scrape_and_update_option(option)
@@ -231,6 +236,9 @@ def update_option(option_id, option, membership):
 
     if 'is_per_night' in data:
         option.is_per_night = data['is_per_night']
+
+    # Recalculate derived pricing field
+    option.update_pricing()
 
     if option.link and option.link != old_link:
         option.image_url = None
@@ -384,6 +392,36 @@ def finalize_option(option_id, option, membership):
     if membership.role != 'owner':
         return jsonify({'error': 'Only the trip owner can finalize options'}), 403
 
+    # Conflict check
+    if option.check_in_date:
+        current_finalized = StayOption.query.filter_by(
+            trip_id=option.trip_id, 
+            is_finalized=True
+        ).all()
+
+        for f_opt in current_finalized:
+            if not f_opt.check_in_date:
+                continue
+            
+            # Same category conflict
+            if option.category == 'stay' and f_opt.category == 'stay':
+                # Stay overlap: [start, end)
+                # If either end is null, treat as single day
+                end = option.check_out_date or option.check_in_date
+                f_end = f_opt.check_out_date or f_opt.check_in_date
+                
+                if option.check_in_date < f_end and end > f_opt.check_in_date:
+                    return jsonify({
+                        'error': f'Conflict! You already selected "{f_opt.title}" for this period.'
+                    }), 400
+            
+            elif option.category != 'stay' and f_opt.category != 'stay':
+                # Activity same day
+                if option.check_in_date == f_opt.check_in_date:
+                    return jsonify({
+                        'error': f'Conflict! You already selected "{f_opt.title}" for this day.'
+                    }), 400
+
     option.is_finalized = True
     db.session.commit()
 
@@ -397,16 +435,20 @@ def finalize_option(option_id, option, membership):
 @option_access_required
 @swag_from({
     'tags': ['Options'],
-    'summary': 'Unfinalize/deselect an option (any member can unselect)',
+    'summary': 'Unfinalize/deselect an option (admin only)',
     'parameters': [
         {'name': 'option_id', 'in': 'path', 'type': 'integer', 'required': True}
     ],
     'responses': {
         200: {'description': 'Option unfinalized successfully'},
+        403: {'description': 'Only trip owner can unfinalize options'},
         404: {'description': 'Option not found'}
     }
 })
 def unfinalize_option(option_id, option, membership):
+    if membership.role != 'owner':
+        return jsonify({'error': 'Only the trip owner can unfinalize options'}), 403
+
     option.is_finalized = False
     db.session.commit()
 

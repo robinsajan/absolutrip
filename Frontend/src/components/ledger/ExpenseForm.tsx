@@ -153,10 +153,17 @@ export function ExpenseForm({
   const calcStayTotal = useMemo(() => {
     return (opt: any) => {
       const memberCount = Math.max(members.length, 1);
-      const price = Number(opt.price || 0);
-      let total = price;
 
-      if (opt.is_per_person) total *= memberCount;
+      if (opt.price_per_day_pp !== undefined && opt.price_per_day_pp !== null) {
+        let nights = 1;
+        if (opt.check_in_date && opt.check_out_date) {
+          nights = Math.max(differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)), 1);
+        }
+        return Number((opt.price_per_day_pp * memberCount * nights).toFixed(2));
+      }
+
+      const price = (Number(opt.price || 0) / memberCount);
+      let total = price;
 
       if (opt.is_per_night && opt.check_in_date && opt.check_out_date) {
         try {

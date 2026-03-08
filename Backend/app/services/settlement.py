@@ -6,7 +6,7 @@ from ..models import Expense, ExpenseSplit, TripMember
 class SettlementService:
     @staticmethod
     def calculate_balances(trip_id):
-        members = TripMember.query.filter_by(trip_id=trip_id).all()
+        members = TripMember.query.filter_by(trip_id=trip_id, status='approved').all()
         member_ids = {m.user_id for m in members}
 
         paid = defaultdict(Decimal)
@@ -32,7 +32,7 @@ class SettlementService:
     @staticmethod
     def calculate_balance_details(trip_id):
         """Calculate detailed balance breakdown for each user."""
-        members = TripMember.query.filter_by(trip_id=trip_id).all()
+        members = TripMember.query.filter_by(trip_id=trip_id, status='approved').all()
         member_map = {m.user_id: m.user for m in members}
         member_ids = {m.user_id for m in members}
 
@@ -72,7 +72,7 @@ class SettlementService:
     def calculate_settlements(trip_id):
         balances = SettlementService.calculate_balances(trip_id)
 
-        members = TripMember.query.filter_by(trip_id=trip_id).all()
+        members = TripMember.query.filter_by(trip_id=trip_id, status='approved').all()
         member_map = {m.user_id: m.user for m in members}
 
         creditors = []
@@ -144,7 +144,7 @@ class SettlementService:
             Expense.category != 'settlement'
         ).all()
         
-        members = TripMember.query.filter_by(trip_id=trip_id).all()
+        members = TripMember.query.filter_by(trip_id=trip_id, status='approved').all()
 
         total = sum(Decimal(str(e.amount)) for e in expenses)
         member_count = len(members)

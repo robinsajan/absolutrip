@@ -313,6 +313,11 @@ def approve_join_request(trip_id, request_id, trip, membership):
         return jsonify({'error': 'Join request not found'}), 404
     
     join_request.status = 'approved'
+    
+    # Recalculate all stay options pricing as group size has changed
+    for option in trip.options:
+        option.update_pricing()
+        
     db.session.commit()
     
     return jsonify({
@@ -423,6 +428,11 @@ def remove_member(trip_id, user_id, trip, membership):
         return jsonify({'error': 'User is not a member of this trip'}), 404
 
     db.session.delete(member)
+    
+    # Recalculate all stay options pricing as group size has changed
+    for option in trip.options:
+        option.update_pricing()
+        
     db.session.commit()
 
     return jsonify({'message': 'Member removed successfully'}), 200

@@ -1,0 +1,138 @@
+# TripSync Database Schema Documentation
+
+This document provides a detailed breakdown of the database schema for the TripSync application. The system is built using Flask-SQLAlchemy and manages users, trips, collaborative options (stays/activities), and a comprehensive expense-splitting system.
+
+## Schema Overview
+
+The database consists of 9 main tables categorized into four functional modules:
+1. **User Management**: `users`
+2. **Trip Management**: `trips`, `trip_members`
+3. **Collaboration Hub**: `stay_options`, `votes`
+4. **Expense Management**: `expenses`, `expense_splits`, `expense_comments`, `expense_activities`
+
+---
+
+## 1. User Management
+
+### `users` table
+Stores core user profile and authentication information.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `email` | String(120) | Unique identifier, indexed |
+| `password_hash` | String(256) | Scrypted password hash |
+| `name` | String(100) | User's display name |
+| `created_at` | DateTime | Account creation timestamp |
+
+---
+
+## 2. Trip Management
+
+### `trips` table
+Stores the main trip entity.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `name` | String(200) | Name of the trip |
+| `start_date` | Date | Official start date |
+| `end_date` | Date | Official end date |
+| `invite_code` | String(32) | Unique URL-safe token for joining, indexed |
+| `created_by` | Integer | Foreign Key to `users.id` (Creator) |
+| `created_at` | DateTime | Trip creation timestamp |
+| `google_maps_url` | String(500) | Optional link to destination maps |
+| `default_currency` | String(3) | Base currency for the trip (e.g., 'USD') |
+
+### `trip_members` table
+Manages user access to trips and their specific roles.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `trip_id` | Integer | Foreign Key to `trips.id` |
+| `user_id` | Integer | Foreign Key to `users.id` |
+| `role` | String(20) | User's role: 'owner' or 'member' |
+| `status` | String(20) | 'pending', 'approved', or 'rejected' |
+| `joined_at` | DateTime | Timestamp when the user joined the trip |
+
+---
+
+## 3. Collaboration Hub (Options & Votes)
+
+### `stay_options` table
+Stores potential stays and activities for group comparison.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `trip_id` | Integer | Foreign Key to `trips.id` |
+| `title` | String(200) | Name of the stay or activity |
+| [link](file:///c:/Users/test/Desktop/tripsync/Backend/app/routes/options.py#491-526) | String(500) | External URL (Airbnb, Booking.com, etc.) |
+| `price` | Numeric(10,2) | Base price entered by user |
+| `notes` | Text | Additional descriptions |
+| `added_by` | Integer | Foreign Key to `users.id` |
+| `check_in_date` | Date | Start date of stay/activity |
+| `check_out_date` | Date | End date (nullable if single day) |
+| `category` | String(50) | 'stay' or 'activity' |
+| `is_finalized` | Boolean | Selection status (Admin pick) |
+| `is_per_person` | Boolean | Whether price is per person |
+| `is_per_night` | Boolean | Whether price is per night |
+| `image_path` | String(500) | Local path to uploaded images |
+| `image_url` | String(500) | External image links (scraped) |
+
+### `votes` table
+Tracks user preferences for the generated options.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `option_id` | Integer | Foreign Key to `stay_options.id` |
+| `user_id` | Integer | Foreign Key to `users.id` |
+| `score` | Integer | 1 for a like, 0 for removed |
+| `created_at` | DateTime | Vote timestamp |
+
+---
+
+## 4. Expense Management
+
+### `expenses` table
+Main transaction record for trip expenditures.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `trip_id` | Integer | Foreign Key to `trips.id` |
+| `paid_by` | Integer | Foreign Key to `users.id` (Payer) |
+| `amount` | Numeric(10,2) | Final amount in trip's default currency |
+| `base_amount` | Numeric(10,2) | Original amount in transactional currency |
+| `currency` | String(3) | Currency used at payment |
+| `exchange_rate` | Numeric(10,4) | Rate at time of transaction |
+| `description` | String(300) | Usage context (e.g., 'Lunch') |
+| `category` | String(50) | 'food', 'transport', 'housing', etc. |
+| `split_type` | String(20) | 'equally', 'shares', 'exact', 'percentage' |
+| `expense_date` | Date | When the expense occurred |
+
+### `expense_splits` table
+Determines the breakdown of liability for each expense.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `expense_id` | Integer | Foreign Key to `expenses.id` |
+| `user_id` | Integer | Foreign Key to `users.id` |
+| `amount` | Numeric(10,2) | Exact amount owed by this user |
+| `share_count` | Integer | Weight for 'shares' split type |
+| `percentage` | Numeric(5,2) | Weight for 'percentage' split type |
+
+### `expense_comments` table
+Allows communication within specific transactions.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `expense_id` | Integer | Foreign Key to `expenses.id` |
+| `user_id` | Integer | Foreign Key to `users.id` |
+| `content` | Text | The comment text |
+
+### `expense_activities` table
+Audit log tracking the lifecycle of an expense.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | Primary Key |
+| `expense_id` | Integer | Foreign Key to `expenses.id` |
+| `user_id` | Integer | User who triggered the activity |
+| `activity_type` | String(50) | 'created', 'updated', 'comment_added' |
+| `details` | String(500) | Description of the specific change |
