@@ -17,7 +17,14 @@ import { RankedOption } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { PlusCircle, TrendingUp, TrendingDown, Users, Info } from "lucide-react";
+import { PlusCircle, TrendingUp, TrendingDown, Users, Info, ChevronDown } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export type BudgetTab = "overview" | "breakdown";
 
@@ -128,6 +135,15 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
   }, [optionsLoading, stayOptions, activityOptions, hasInitializedDefault]);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSticky, setIsSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > 300);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const tripDates = useMemo(() => {
     if (!trip?.start_date || !trip?.end_date) return [];
@@ -355,6 +371,30 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] py-10 dark:bg-background-dark">
+      {/* Sticky Mobile Summary */}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-[#ccff00] text-black px-6 py-4 shadow-2xl transition-all duration-300 transform md:hidden",
+        isSticky ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+      )}>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Personal Share</span>
+            <span className="text-2xl font-black italic serif-title leading-none">${displayPerPerson.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center gap-5">
+            <div className="flex flex-col items-end">
+              <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Group Total</span>
+              <span className="text-sm font-bold leading-none">${displayGroupTotal.toFixed(0)}</span>
+            </div>
+            <div className="h-6 w-px bg-black/10" />
+            <div className="flex items-center gap-1.5">
+              <Users className="size-4" />
+              <span className="text-sm font-bold leading-none">{memberCount}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           <div className="lg:col-span-2">
@@ -366,9 +406,63 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
               personalBalance={personalBalance}
               whoShouldPayNext={budget.who_should_pay_next}
             />
+
+            {/* Mobile Breakdown Trigger */}
+            <div className="mt-4 lg:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="w-full flex items-center justify-between bg-black dark:bg-white text-white dark:text-black p-5 rounded-[1.5rem] font-black uppercase tracking-[0.1em] text-xs shadow-xl shadow-black/10">
+                    <div className="flex items-center gap-3">
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#ccff00] animate-pulse" />
+                      Selection Breakdown
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[#ccff00] dark:text-primary font-black">${displayPerPerson.toFixed(0)}</span>
+                      <ChevronDown className="size-5" />
+                    </div>
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="bg-black border-none rounded-t-[2.5rem] p-0 overflow-hidden h-[70vh] [&>button]:text-white">
+                  <div className="p-8 text-white h-full flex flex-col">
+                    <SheetHeader className="pb-6 border-b border-white/10 p-0">
+                      <SheetTitle className="text-2xl font-black italic serif-title text-white flex items-center justify-between">
+                        breakdown
+                        <span className="text-[#ccff00] font-black text-3xl italic">${displayPerPerson.toFixed(0)}</span>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="space-y-4 pt-8 overflow-y-auto flex-1 pr-2">
+                      {selectedBreakdown.length === 0 ? (
+                        <p className="text-white/30 text-xs font-bold uppercase tracking-widest text-center py-10">No options selected yet</p>
+                      ) : (
+                        selectedBreakdown.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between gap-4 border-b border-white/5 pb-4 last:border-0">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black uppercase text-white/30 tracking-wider mb-1">
+                                {item.category}
+                              </span>
+                              <span className="text-base font-bold text-white/90">
+                                {item.title}
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xl font-black text-[#ccff00]">
+                                ${item.total.toFixed(0)}
+                              </span>
+                              <span className="text-[10px] text-white/20 uppercase font-black tracking-tighter">
+                                {item.nights ? `${item.nights} nights` : '1 unit'}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
 
-          <div className="lg:col-span-1 flex flex-col h-full">
+          <div className="hidden lg:flex lg:col-span-1 flex-col h-full">
             {selectedBreakdown.length > 0 ? (
               <Card className="bg-black text-white border-none shadow-2xl overflow-hidden h-full flex flex-col">
                 <CardContent className="p-5 flex flex-col h-full">

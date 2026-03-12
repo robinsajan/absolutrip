@@ -12,6 +12,7 @@ import type { Expense, RankedOption } from "@/types";
 import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseDetails } from "./ExpenseDetails";
 import { ExpenseFeed } from "./ExpenseFeed";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type ExpenseScope = "all" | "mine";
 
@@ -83,7 +84,7 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   const youOwe = Math.max(-(currentUserBalance?.balance ?? 0), 0);
 
   const [query, setQuery] = useState("");
-  const [scope, setScope] = useState<ExpenseScope>("all");
+  const [scope, setScope] = useState<ExpenseScope>("mine");
   const [showAll, setShowAll] = useState(false);
 
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -177,88 +178,101 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-4xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">ledger log</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-[0.3em] text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
+            <h1 className="text-3xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">ledger log</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
               {activeTrip?.name || "Trip"} • {expenses.length} transactions
             </p>
           </div>
 
+          {/* Desktop Add Button */}
           <button
             onClick={() => {
               setEditingExpense(null);
               setShowAddExpense(true);
             }}
-            className="bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5 self-start animate-in fade-in slide-in-from-right-4 duration-700"
+            className="hidden md:flex bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5 animate-in fade-in slide-in-from-right-4 duration-700"
           >
             <span className="material-symbols-outlined text-xl">add</span>
             add expense
           </button>
         </div>
 
+        {/* Mobile FAB */}
+        <button
+          onClick={() => {
+            setEditingExpense(null);
+            setShowAddExpense(true);
+          }}
+          className="md:hidden fixed bottom-24 right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+          aria-label="Add expense"
+        >
+          <span className="material-symbols-outlined text-3xl">add</span>
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Main Ledger Area */}
           <div className="lg:col-span-8 space-y-12">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
+            <div className="grid grid-cols-2 gap-3 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you are owed</p>
-                  <h2 className="text-5xl font-black text-emerald-600 tracking-tighter">{money(youAreOwed)}</h2>
-                  <p className="text-emerald-600/60 text-[8px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
+                  <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 lowercase">you are owed</p>
+                  <h2 className="text-xl sm:text-2xl md:text-5xl font-black text-emerald-600 tracking-tighter">{money(youAreOwed)}</h2>
+                  <p className="hidden sm:flex text-emerald-600/60 text-[8px] font-black uppercase tracking-widest mt-2 items-center gap-1">
                     <span className="material-symbols-outlined text-xs material-symbols-filled">trending_up</span>
                     Positive Balance
                   </p>
                 </div>
-                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center text-emerald-600 transform rotate-3 transition-transform group-hover:rotate-6">
-                  <span className="material-symbols-outlined text-3xl filled-icon">call_made</span>
+                <div className="w-8 h-8 md:w-16 md:h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl md:rounded-2xl flex items-center justify-center text-emerald-600 transform rotate-3 transition-transform group-hover:rotate-6 shrink-0">
+                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">call_made</span>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
+              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you owe</p>
-                  <h2 className="text-5xl font-black text-rose-500 tracking-tighter">{money(youOwe)}</h2>
-                  <p className="text-rose-500/60 text-[8px] font-black uppercase tracking-widest mt-2 flex items-center gap-1">
+                  <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 lowercase">you owe</p>
+                  <h2 className="text-xl sm:text-2xl md:text-5xl font-black text-rose-500 tracking-tighter">{money(youOwe)}</h2>
+                  <p className="hidden sm:flex text-rose-500/60 text-[8px] font-black uppercase tracking-widest mt-2 items-center gap-1">
                     <span className="material-symbols-outlined text-xs material-symbols-filled">trending_down</span>
                     settle up soon
                   </p>
                 </div>
-                <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center text-rose-500 transform -rotate-3 transition-transform group-hover:-rotate-6">
-                  <span className="material-symbols-outlined text-3xl filled-icon">call_received</span>
+                <div className="w-8 h-8 md:w-16 md:h-16 bg-rose-50 dark:bg-rose-900/20 rounded-xl md:rounded-2xl flex items-center justify-center text-rose-500 transform -rotate-3 transition-transform group-hover:-rotate-6 shrink-0">
+                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">call_received</span>
                 </div>
               </div>
             </div>
 
             {/* Ledger Table Container */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div className="flex flex-col">
-                  <h3 className="font-black text-xl text-black dark:text-white tracking-tight lowercase">transaction log</h3>
+              <div className="p-6 md:p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col text-center md:text-left">
+                  <h3 className="font-black text-lg md:text-xl text-black dark:text-white tracking-tight lowercase">transaction log</h3>
                   {isBusy && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Syncing…</span>}
                 </div>
 
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700">
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 w-full md:w-auto overflow-x-auto">
                   <button
                     className={cn(
-                      "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      "flex-1 md:flex-none px-4 md:px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                       scope === "all"
                         ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
                         : "text-slate-500 hover:text-primary"
                     )}
                     onClick={() => setScope("all")}
                   >
-                    everything
+                    All Expenses
                   </button>
                   <button
                     className={cn(
-                      "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      "flex-1 md:flex-none px-4 md:px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                       scope === "mine"
                         ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
                         : "text-slate-500 hover:text-primary"
                     )}
                     onClick={() => setScope("mine")}
                   >
-                    my shares
+                    My Expenses
                   </button>
                 </div>
               </div>
@@ -447,59 +461,124 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
             </div>
           </div>
 
-          {/* Right Sidebar: Stats & Metrics */}
+          {/* Stats & Metrics Section */}
           <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-8 duration-1000 delay-300">
-            {/* Spending Progress */}
-            <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
-                <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
-                  style={{ width: `${Math.min(100, spendingProgress)}%` }}
-                ></div>
-              </div>
-              <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
-            </section>
-
-            {/* Top Spenders Mini-List */}
-            <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
-              <div className="space-y-6">
-                {spenderData.map((spender, i) => (
-                  <div key={spender.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
-                          {getInitials(spender.name)}
-                        </div>
-                        <span className="text-xs font-bold">{spender.name}</span>
+            {/* Mobile Toggle for Insights */}
+            <div className="lg:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="w-full bg-emerald-500 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between active:scale-95 transition-transform">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-xl material-symbols-filled">insights</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">View Ledger Insights</span>
+                    </div>
+                    <span className="material-symbols-outlined">expand_more</span>
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh] bg-[#fbfbf8] dark:bg-slate-950 rounded-t-[3rem] p-8 overflow-y-auto border-none">
+                  <SheetHeader className="mb-8">
+                    <SheetTitle className="text-3xl font-black lowercase serif-title italic">ledger insights</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-8">
+                    {/* Spending Progress */}
+                    <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
+                      <div className="flex justify-between items-center mb-6">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
+                        <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
                       </div>
-                      <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
-                    </div>
-                    <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-                {spenderData.length === 0 && (
-                  <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
-                )}
-              </div>
-            </section>
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
+                          style={{ width: `${Math.min(100, spendingProgress)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
+                    </section>
 
-            {/* Budget Breakdown Summary */}
-            <div className="bg-emerald-500 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 text-white">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-white text-xl material-symbols-filled">insights</span>
-                <h4 className="font-black text-[10px] uppercase tracking-widest text-white/80">Ledger Insights</h4>
+                    {/* Top Spenders Mini-List */}
+                    <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
+                      <div className="space-y-6">
+                        {spenderData.map((spender, i) => (
+                          <div key={spender.id} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
+                                  {getInitials(spender.name)}
+                                </div>
+                                <span className="text-xs font-bold">{spender.name}</span>
+                              </div>
+                              <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
+                            </div>
+                            <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                              <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
+                            </div>
+                          </div>
+                        ))}
+                        {spenderData.length === 0 && (
+                          <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {/* Desktop Sidebar (hidden on mobile) */}
+            <div className="hidden lg:block space-y-8 h-full">
+              {/* Spending Progress */}
+              <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
+                  <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
+                    style={{ width: `${Math.min(100, spendingProgress)}%` }}
+                  ></div>
+                </div>
+                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
+              </section>
+
+              {/* Top Spenders Mini-List */}
+              <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
+                <div className="space-y-6">
+                  {spenderData.map((spender, i) => (
+                    <div key={spender.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
+                            {getInitials(spender.name)}
+                          </div>
+                          <span className="text-xs font-bold">{spender.name}</span>
+                        </div>
+                        <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                        <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                  {spenderData.length === 0 && (
+                    <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                  )}
+                </div>
+              </section>
+
+              {/* Budget Breakdown Summary */}
+              <div className="bg-emerald-500 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 text-white">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="material-symbols-outlined text-white text-xl material-symbols-filled">insights</span>
+                  <h4 className="font-black text-[10px] uppercase tracking-widest text-white/80">Ledger Insights</h4>
+                </div>
+                <p className="text-xs font-bold leading-relaxed">
+                  Total group spending has reached {money(actualExpenses)}.
+                  {spenderData.length > 0 && ` ${spenderData[0].name} is currently leading the contributions.`}
+                </p>
               </div>
-              <p className="text-xs font-bold leading-relaxed">
-                Total group spending has reached {money(actualExpenses)}.
-                {spenderData.length > 0 && ` ${spenderData[0].name} is currently leading the contributions.`}
-              </p>
             </div>
           </div>
         </div>
@@ -536,7 +615,7 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
               setEditingExpense(null);
             }
           }}
-          showTrigger={true}
+          showTrigger={false}
         />
       </main>
     </div>

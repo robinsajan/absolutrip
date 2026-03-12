@@ -482,16 +482,16 @@ export function ExpenseForm({
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="max-w-md w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900">
-          <div className="max-h-[90vh] overflow-y-auto px-8 py-10 scrollbar-hide">
-            <DialogHeader className="flex flex-row items-center justify-between pb-10">
+        <DialogContent className="max-w-md w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[2rem] bg-white dark:bg-slate-900">
+          <div className="max-h-[90vh] overflow-y-auto px-5 py-6 md:px-8 md:py-10 scrollbar-hide">
+            <DialogHeader className="flex flex-row items-center justify-between pb-6 md:pb-10">
               <div className="flex items-center gap-3">
                 <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                   <span className="material-symbols-outlined material-symbols-filled">
                     {isEditMode ? "edit" : "add_circle"}
                   </span>
                 </div>
-                <DialogTitle className="text-3xl font-extrabold tracking-tight serif-title italic">
+                <DialogTitle className="text-xl md:text-3xl font-extrabold tracking-tight serif-title italic">
                   {isEditMode ? "edit expense" : "add expense"}
                 </DialogTitle>
               </div>
@@ -499,16 +499,16 @@ export function ExpenseForm({
                 <span className="material-symbols-outlined">close</span>
               </button>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
               {/* Amount & Currency Section */}
-              <div className="space-y-4 rounded-[2.5rem] bg-gray-50 dark:bg-black/20 p-8 border border-gray-100 dark:border-white/5 shadow-inner">
+              <div className="space-y-4 rounded-[1.5rem] md:rounded-[2.5rem] bg-gray-50 dark:bg-black/20 p-5 md:p-8 border border-gray-100 dark:border-white/5 shadow-inner">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 block px-1">
                       {currency === 'USD' ? 'total amount' : `amount in ${currency}`}
                     </Label>
                     <div className="flex items-center">
-                      <span className="text-5xl font-black text-gray-300 mr-3 tracking-tighter">$</span>
+                      <span className="text-2xl md:text-5xl font-black text-gray-300 mr-2 md:mr-3 tracking-tighter">$</span>
                       <Input
                         type="number"
                         placeholder="0.00"
@@ -517,7 +517,7 @@ export function ExpenseForm({
                           if (currency === 'USD') setAmount(e.target.value);
                           else setBaseAmount(e.target.value);
                         }}
-                        className="text-5xl font-black h-16 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
+                        className="text-2xl md:text-5xl font-black h-10 md:h-16 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
                         disabled={isLoading}
                       />
                     </div>
@@ -623,12 +623,12 @@ export function ExpenseForm({
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       disabled={isLoading}
-                      className="rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-16 px-6 text-lg font-bold shadow-sm placeholder:text-gray-300"
+                      className="rounded-xl md:rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-12 md:h-16 px-4 md:px-6 text-sm md:text-lg font-bold shadow-sm placeholder:text-gray-300"
                     />
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Category</Label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((cat) => (
@@ -639,12 +639,12 @@ export function ExpenseForm({
                         size="sm"
                         onClick={() => setCategory(cat.value)}
                         className={cn(
-                          "rounded-full h-11 px-6 border-gray-100 dark:border-white/5 transition-all text-[10px] font-black uppercase tracking-widest",
+                          "rounded-full h-9 md:h-11 px-4 md:px-6 border-gray-100 dark:border-white/5 transition-all text-[9px] md:text-[10px] font-black uppercase tracking-widest",
                           category === cat.value ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                         )}
                         disabled={isLoading}
                       >
-                        <span className="material-symbols-outlined text-[18px] mr-2">
+                        <span className="material-symbols-outlined text-[14px] md:text-[18px] mr-1.5 md:mr-2">
                           {cat.value === "stay" ? "home" : cat.value === "activity" ? "stars" : cat.value === "food" ? "restaurant" : cat.value === "transport" ? "directions_car" : "more_horiz"}
                         </span>
                         {cat.label}
@@ -655,7 +655,7 @@ export function ExpenseForm({
               </div>
 
               {/* Advanced Splitting Section */}
-              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-white/5">
+              <div className="space-y-4 md:space-y-6 pt-4 md:pt-6 border-t border-gray-100 dark:border-white/5">
                 <div className="flex items-center justify-between px-1">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[18px]">group</span>
@@ -664,7 +664,7 @@ export function ExpenseForm({
                 </div>
 
                 {category === "stay" ? (
-                  <div className="mt-2 space-y-3 bg-gray-50 dark:bg-black/20 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5">
+                  <div className="mt-2 space-y-3 bg-gray-50 dark:bg-black/20 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 dark:border-white/5">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                         <span className="material-symbols-outlined text-xs text-primary">numbers</span>
@@ -690,22 +690,22 @@ export function ExpenseForm({
                   </div>
                 ) : (
                   <Tabs value={splitType} onValueChange={(v) => setSplitType(v as any)} className="w-full">
-                    <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-gray-100 dark:bg-gray-800 h-14 mb-6">
-                      <TabsTrigger value="equally" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                    <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-gray-100 dark:bg-gray-800 h-10 md:h-14 mb-4 md:mb-6">
+                      <TabsTrigger value="equally" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                         Equal
                       </TabsTrigger>
-                      <TabsTrigger value="shares" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                      <TabsTrigger value="shares" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                         Shares
                       </TabsTrigger>
-                      <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                      <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                         %
                       </TabsTrigger>
-                      <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[10px] font-black uppercase tracking-widest">
+                      <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                         $
                       </TabsTrigger>
                     </TabsList>
 
-                    <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5">
+                    <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 dark:border-white/5">
                       {members.map((member) => (
                         <div key={member.user_id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-white/5 last:border-0 group">
                           <div className="flex items-center gap-4">
@@ -716,7 +716,7 @@ export function ExpenseForm({
                               className="w-6 h-6 rounded-lg"
                             />
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover:scale-110">
+                              <Avatar className="h-8 md:h-10 w-8 md:w-10 ring-2 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover:scale-110">
                                 <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{getInitials(member.user_name)}</AvatarFallback>
                               </Avatar>
                               <Label htmlFor={`split-${member.user_id}`} className="text-xs font-black uppercase tracking-widest cursor-pointer text-gray-700 dark:text-gray-300">
@@ -734,7 +734,7 @@ export function ExpenseForm({
                                     placeholder="1"
                                     value={splitData[member.user_id]?.share_count || 1}
                                     onChange={(e) => handleSplitDataChange(member.user_id, 'share_count', e.target.value)}
-                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
                                   />
                                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400 uppercase">shr</span>
                                 </div>
@@ -746,7 +746,7 @@ export function ExpenseForm({
                                     placeholder="0"
                                     value={splitData[member.user_id]?.percentage || 0}
                                     onChange={(e) => handleSplitDataChange(member.user_id, 'percentage', e.target.value)}
-                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
                                   />
                                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
                                 </div>
@@ -759,7 +759,7 @@ export function ExpenseForm({
                                     placeholder="0.00"
                                     value={splitData[member.user_id]?.amount || 0}
                                     onChange={(e) => handleSplitDataChange(member.user_id, 'amount', e.target.value)}
-                                    className="h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pl-7 pr-3"
+                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pl-7 pr-3"
                                   />
                                 </div>
                               )}
@@ -780,14 +780,14 @@ export function ExpenseForm({
 
               {/* Extras: Date, Receipt, Payer */}
               <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-white/5">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Expense Date</Label>
                     {category === "stay" ? (
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-14 rounded-2xl justify-start text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-gray-50/50 cursor-default opacity-80"
+                        className="w-full h-12 md:h-14 rounded-2xl justify-start text-[9px] md:text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-gray-50/50 cursor-default opacity-80"
                         disabled
                       >
                         <span className="material-symbols-outlined mr-3 text-primary text-[20px]">calendar_month</span>
@@ -796,8 +796,8 @@ export function ExpenseForm({
                     ) : (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-2xl justify-start text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm">
-                            <span className="material-symbols-outlined mr-3 text-primary text-[20px]">calendar_month</span>
+                          <Button variant="outline" className="w-full h-12 md:h-14 rounded-2xl justify-start text-[9px] md:text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm">
+                            <span className="material-symbols-outlined mr-2 md:mr-3 text-primary text-[16px] md:text-[20px]">calendar_month</span>
                             {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Today"}
                           </Button>
                         </PopoverTrigger>
@@ -818,7 +818,7 @@ export function ExpenseForm({
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Paid By</Label>
                     <Select value={paidBy?.toString()} onValueChange={(v) => setPaidBy(parseInt(v))}>
-                      <SelectTrigger className="w-full h-14 rounded-2xl border-none bg-white dark:bg-black/20 shadow-sm font-black text-[10px] uppercase tracking-widest px-6">
+                      <SelectTrigger className="w-full h-12 md:h-14 rounded-2xl border-none bg-white dark:bg-black/20 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest px-4 md:px-6">
                         <SelectValue placeholder="Who paid?" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl border-none shadow-2xl">
@@ -834,7 +834,7 @@ export function ExpenseForm({
                   <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Receipt Evidence</Label>
                   <div className="flex items-center gap-4 mt-1">
                     {receiptUrl ? (
-                      <div className="flex-1 flex items-center justify-between bg-primary/5 border border-primary/10 rounded-[2rem] h-16 px-6 animate-in fade-in zoom-in-95 duration-500 shadow-sm">
+                      <div className="flex-1 flex items-center justify-between bg-primary/5 border border-primary/10 rounded-[2rem] h-14 md:h-16 px-4 md:px-6 animate-in fade-in zoom-in-95 duration-500 shadow-sm">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white">
                             <span className="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -854,7 +854,7 @@ export function ExpenseForm({
                     ) : (
                       <div className="flex-1">
                         <label className="flex items-center gap-4 cursor-pointer group">
-                          <div className="flex-1 flex items-center justify-center gap-3 h-16 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all bg-white dark:bg-black/20 shadow-sm">
+                          <div className="flex-1 flex items-center justify-center gap-2 md:gap-3 h-14 md:h-16 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all bg-white dark:bg-black/20 shadow-sm">
                             {isUploading ? (
                               <Loader2 className="h-5 w-5 animate-spin text-primary" />
                             ) : (
@@ -873,10 +873,10 @@ export function ExpenseForm({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col gap-4 pt-10">
+              <div className="flex flex-col gap-3 md:gap-4 pt-6 md:pt-10">
                 <Button
                   type="submit"
-                  className="w-full h-16 rounded-[2rem] bg-black dark:bg-white text-white dark:text-black hover:opacity-90 font-black uppercase tracking-[0.4em] text-[10px] shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full h-12 md:h-16 rounded-[2.5rem] bg-black dark:bg-white text-white dark:text-black hover:opacity-90 font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-[8px] md:text-[10px] shadow-2xl transition-all active:scale-95 disabled:opacity-50"
                   disabled={isLoading || isUploading}
                 >
                   {isLoading ? "Processing..." : (isEditMode ? "Update Transaction" : "Record Transaction")}

@@ -111,6 +111,7 @@ export default function TripsPage() {
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showAllTrips, setShowAllTrips] = useState(false);
   const [showOverlapDialog, setShowOverlapDialog] = useState(false);
   const [pendingTripData, setPendingTripData] = useState<any>(null);
@@ -166,6 +167,7 @@ export default function TripsPage() {
       setMapsUrl("");
       setPendingTripData(null);
       setShowOverlapDialog(false);
+      setCreateDialogOpen(false);
       router.push(`/trip/${result.trip.id}/explore`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create trip");
@@ -204,27 +206,89 @@ export default function TripsPage() {
 
   return (
     <div className="bg-[#fbfbf9] dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 pt-4 pb-12 md:py-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic">Welcome back, {user?.name}!</h1>
-            <p className="text-slate-500 font-bold  tracking-widest text-s">
+            <h1 className="text-2xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic truncate max-w-full">Welcome back, {user?.name}!</h1>
+            <p className="text-slate-500 font-bold tracking-widest text-[10px] md:text-s">
               {isLoading ? "loading your adventures..." : `You have ${trips?.length || 0} trips coming up. Ready for your next adventure?`}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="md:hidden bg-primary text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-lg shadow-primary/20">
+                  <span className="material-symbols-outlined text-base">add</span>
+                  new trip
+                </button>
+              </DialogTrigger>
+              <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] p-0 overflow-hidden max-w-sm">
+                <div className="bg-primary p-6 text-white text-center">
+                  <h2 className="text-2xl font-black italic serif-title">Plan a new trip</h2>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Name</Label>
+                    <Input
+                      placeholder="Goa Trip"
+                      className="rounded-xl h-12"
+                      value={tripName}
+                      onChange={(e) => setTripName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Location Link</Label>
+                    <Input
+                      placeholder="Google Maps URL"
+                      className="rounded-xl h-12"
+                      value={mapsUrl}
+                      onChange={(e) => setMapsUrl(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Date</Label>
+                      <Input
+                        type="date"
+                        className="rounded-xl h-12"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">End Date</Label>
+                      <Input
+                        type="date"
+                        className="rounded-xl h-12"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        min={startDate}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleCreateTrip()}
+                    disabled={isCreating}
+                    className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-primary/10 hover:opacity-90 transition-all"
+                  >
+                    {isCreating ? "creating..." : "Create Trip ✨"}
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
               <DialogTrigger asChild>
-                <button className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm">
-                  <span className="material-symbols-outlined text-xl outline-icon">group_add</span>
+                <button className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 md:px-8 md:py-4 rounded-full font-bold text-xs md:text-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm">
+                  <span className="material-symbols-outlined text-base md:text-xl outline-icon">group_add</span>
                   join trip
                 </button>
               </DialogTrigger>
-              <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem]">
-                <DialogHeader>
-                  <DialogTitle className="text-3xl font-extrabold tracking-tight serif-title">Join a Trip</DialogTitle>
+              <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] p-0 overflow-hidden max-w-sm">
+                <DialogHeader className="bg-primary p-6 text-white text-center">
+                  <DialogTitle className="text-2xl font-black italic serif-title">Join a Trip</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-6 pt-6">
+                <div className="p-6 space-y-6">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Invite Code</Label>
                     <Input
@@ -248,7 +312,7 @@ export default function TripsPage() {
         </div>
 
         {/* Quick Create Section */}
-        <section className="mb-16">
+        <section className="mb-16 hidden md:block">
           <div className="bg-primary rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl shadow-primary/10">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48"></div>
             <div className="relative z-10">
@@ -302,7 +366,7 @@ export default function TripsPage() {
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="bg-accent-lime text-black font-extrabold px-6 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10 text-sm"
+                  className="bg-accent-lime text-black font-extrabold px-10 py-5 md:px-6 md:py-0 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10 text-sm uppercase tracking-widest"
                 >
                   {isCreating ? "..." : "create"}
                 </button>

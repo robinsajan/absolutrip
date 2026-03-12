@@ -118,36 +118,55 @@ export function ScenarioPlanner({
             <div
               key={option.id}
               onClick={() => !hideSelectionIndicator && onSelectOption(option.id)}
-              className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${hideSelectionIndicator ? "cursor-default" : "cursor-pointer"} ${isSelected
+              className={`flex items-start md:items-center justify-between p-4 rounded-xl border-2 transition-all ${hideSelectionIndicator ? "cursor-default" : "cursor-pointer"} ${isSelected
                 ? "border-primary bg-primary/5"
                 : isFinalized
                   ? "border-green-500 bg-green-50 hover:bg-green-100"
                   : "border-muted hover:border-muted-foreground/50 hover:bg-muted/50"
                 }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 {!hideSelectionIndicator && (
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
                     }`}>
                     {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                   </div>
                 )}
-                <Label className="cursor-pointer">
-                  <span className="font-medium flex items-center gap-2">
+                <div className="min-w-0">
+                  <span className="font-bold flex flex-wrap items-center gap-2 text-sm md:text-base leading-tight">
                     {option.title}
                     {isFinalized && (
-                      <Badge variant="outline" className="text-green-700 border-green-500 gap-1">
+                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 text-green-700 border-green-500 gap-1 shrink-0">
                         <CheckCircle2 className="h-3 w-3" />
                         Admin Pick
                       </Badge>
                     )}
                   </span>
-                  <span className="text-xs text-muted-foreground block">
+
+                  {/* Mobile Mobile Dates */}
+                  {option.check_in_date && (
+                    <div className="md:hidden mt-1 flex flex-col">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                        {format(parseISO(option.check_in_date), "MMM d")}
+                        {option.check_out_date && (
+                          <> — {format(parseISO(option.check_out_date), "MMM d")}</>
+                        )}
+                      </span>
+                      {option.check_in_date && option.check_out_date && (
+                        <span className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                          {Math.max(differenceInDays(parseISO(option.check_out_date), parseISO(option.check_in_date)), 1)} {Math.max(differenceInDays(parseISO(option.check_out_date), parseISO(option.check_in_date)), 1) === 1 ? 'night' : 'nights'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <span className="text-[10px] text-muted-foreground block mt-0.5">
                     {rankedOption.vote_count} votes
                   </span>
-                </Label>
+                </div>
               </div>
 
+              {/* Desktop Dates */}
               <div className="flex-1 px-4 text-center hidden md:block">
                 {option.check_in_date && (
                   <div className="flex flex-col items-center">
@@ -166,16 +185,16 @@ export function ScenarioPlanner({
                 )}
               </div>
 
-              <div className="text-right">
-                <p className={`font-bold ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
+              <div className="text-right shrink-0">
+                <p className={`font-bold text-sm md:text-base ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
                   ${ppTotal.toFixed(2)}
                 </p>
                 <div className="flex flex-col text-[10px] text-muted-foreground leading-tight">
                   <p>
-                    ${unitPrice.toFixed(2)} / Person / Night
+                    ${unitPrice.toFixed(0)} / PN
                   </p>
                   <p>
-                    Group: ${groupTotal.toFixed(0)}
+                    Grp: ${groupTotal.toFixed(0)}
                   </p>
                 </div>
               </div>
