@@ -11,4 +11,4 @@ requests>=2.31.0
 psycopg2-binary>=2.9.9
 resend>=0.8.0
 load_dotenv>=1.0.0
-gunicorn>=21.2.0
+gunicorn
