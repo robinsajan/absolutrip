@@ -2,8 +2,12 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
+from dotenv import load_dotenv
 from .config import config
 from .extensions import db, migrate, login_manager
+
+# Load environment variables
+load_dotenv()
 
 swagger_template = {
     "swagger": "2.0",
