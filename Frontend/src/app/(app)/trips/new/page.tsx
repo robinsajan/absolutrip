@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { trips as tripsApi } from "@/lib/api/endpoints";
 import { useTrips } from "@/lib/hooks";
 import type { Trip } from "@/types";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 type Step = "name" | "dates" | "invite";
 
@@ -23,8 +25,7 @@ export default function NewTripPage() {
   const [copied, setCopied] = useState(false);
 
   const [name, setName] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
 
   const handleNext = async () => {
@@ -35,12 +36,8 @@ export default function NewTripPage() {
       }
       setStep("dates");
     } else if (step === "dates") {
-      if (!startDate || !endDate) {
+      if (!dateRange?.from || !dateRange?.to) {
         toast.error("Please select both dates");
-        return;
-      }
-      if (new Date(startDate) > new Date(endDate)) {
-        toast.error("End date must be after start date");
         return;
       }
 
@@ -48,8 +45,8 @@ export default function NewTripPage() {
       try {
         const result = await tripsApi.create({
           name: name.trim(),
-          start_date: startDate,
-          end_date: endDate,
+          start_date: format(dateRange.from, "yyyy-MM-dd"),
+          end_date: format(dateRange.to, "yyyy-MM-dd"),
         });
         setCreatedTrip(result.trip);
         mutate();
@@ -127,11 +124,10 @@ export default function NewTripPage() {
           {["name", "dates", "invite"].map((s, i) => (
             <div
               key={s}
-              className={`h-1 flex-1 rounded-full ${
-                ["name", "dates", "invite"].indexOf(step) >= i
-                  ? "bg-primary"
-                  : "bg-muted"
-              }`}
+              className={`h-1 flex-1 rounded-full ${["name", "dates", "invite"].indexOf(step) >= i
+                ? "bg-primary"
+                : "bg-muted"
+                }`}
             />
           ))}
         </div>
@@ -166,22 +162,11 @@ export default function NewTripPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
+                <Label>Trip Dates</Label>
+                <DatePickerWithRange
+                  date={dateRange}
+                  setDate={setDateRange}
+                  placeholder="Select trip duration"
                 />
               </div>
             </CardContent>

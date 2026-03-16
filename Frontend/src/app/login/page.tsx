@@ -65,7 +65,7 @@ export default function LoginPage() {
                             <div className="bg-white/20 p-2 rounded-xl text-white flex items-center justify-center backdrop-blur-md border border-white/20">
                                 <span className="material-symbols-outlined outline-icon">flight_takeoff</span>
                             </div>
-                            <span className="text-2xl font-extrabold tracking-tight text-white">absolutrip</span>
+                            <span className="text-2xl font-extrabold tracking-tight text-white">absoluTrip</span>
                         </Link>
 
                         <div className="max-w-md">
@@ -83,7 +83,7 @@ export default function LoginPage() {
                     </div>
 
                     <div className="relative z-10 flex items-center gap-2 bg-white/10 border border-white/20 p-2 rounded-full w-fit backdrop-blur-md">
-                        <div className="px-5 py-3 rounded-full bg-white/20 text-white font-bold text-sm">12K+</div>
+                        {/* <div className="px-5 py-3 rounded-full bg-white/20 text-white font-bold text-sm">12K+</div> */}
                         <div className="px-5 py-3 rounded-full bg-white/10 text-white/90 font-bold text-sm">Groups</div>
                         <div className="px-5 py-3 rounded-full bg-white/10 text-white/90 font-bold text-sm">Trips</div>
                         <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
@@ -145,7 +145,7 @@ export default function LoginPage() {
                                     </button>
                                 </div>
                                 <div className="flex justify-end">
-                                    <Link className="text-primary text-xs font-bold hover:underline" href="#">forgot password?</Link>
+                                    <Link className="text-primary text-xs font-bold hover:underline" href="/forgot-password">forgot password?</Link>
                                 </div>
                             </div>
 
@@ -170,24 +170,11 @@ export default function LoginPage() {
             {/* Floating Controls */}
             {mounted && (
                 <div className="fixed bottom-6 right-6 flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-2 shadow-xl z-50">
-                    <button
-                        onClick={toggleDarkMode}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                        aria-label="Toggle Dark Mode"
-                    >
-                        {theme === "dark" ? (
-                            <span className="material-symbols-outlined outline-icon text-accent-lime">light_mode</span>
-                        ) : (
-                            <span className="material-symbols-outlined outline-icon">dark_mode</span>
-                        )}
-                    </button>
-                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
                     <div className="flex items-center gap-3 px-3">
                         <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined outline-icon text-sm text-primary">auto_fix_high</span>
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Created with AI</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">Created with</span>
+                            <span className="material-symbols-outlined text-sm text-primary">favorite</span>
                         </div>
-                        <button className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">Remix</button>
                     </div>
                 </div>
             )

@@ -32,8 +32,6 @@ export function useAuth() {
 
   const register = async (email: string, password: string, name: string) => {
     const result = await auth.register({ email, password, name });
-    setUser(result.user);
-    await mutate({ user: result.user }, { revalidate: false });
     return result;
   };
 

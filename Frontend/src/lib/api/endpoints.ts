@@ -34,8 +34,25 @@ export const auth = {
     return res.data;
   },
 
+  verify: async (token: string) => {
+    const res = await api.get<{ message: string }>(`/auth/verify/${token}`);
+    return res.data;
+  },
+
   me: async () => {
     const res = await api.get<{ user: User }>('/auth/me');
+    return res.data;
+  },
+  resendVerification: async (email: string) => {
+    const res = await api.post<{ message: string }>('/auth/resend-verification', { email });
+    return res.data;
+  },
+  forgotPassword: async (email: string) => {
+    const res = await api.post<{ message: string }>('/auth/forgot-password', { email });
+    return res.data;
+  },
+  resetPassword: async (data: { token: string; password: string }) => {
+    const res = await api.post<{ message: string }>('/auth/reset-password', data);
     return res.data;
   },
 };

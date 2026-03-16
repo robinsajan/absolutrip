@@ -51,7 +51,7 @@ export function LandingPage() {
           <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center">
             <span className="material-symbols-outlined">flight_takeoff</span>
           </div>
-          <span className="text-2xl font-extrabold tracking-tight">absolutrip</span>
+          <span className="text-2xl font-extrabold tracking-tight">absoluTrip</span>
         </div>
 
         {/* Desktop Links */}
@@ -83,7 +83,7 @@ export function LandingPage() {
               </SheetTrigger>
               <SheetContent side="right" className="bg-background-light dark:bg-background-dark border-slate-200 dark:border-slate-800">
                 <SheetHeader className="text-left mb-8">
-                  <SheetTitle className="text-2xl font-bold">absolutrip</SheetTitle>
+                  <SheetTitle className="text-2xl font-bold">absoluTrip</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-6">
                   <Link href="/" className="text-xl font-bold hover:text-primary">home</Link>
@@ -119,18 +119,18 @@ export function LandingPage() {
             <span className="inline-flex items-center justify-center bg-primary text-white w-[80px] h-[50px] md:w-[180px] md:h-[100px] rounded-2xl md:rounded-3xl mx-1 md:mx-2 align-middle transition-transform hover:rotate-12 cursor-default">
               <span className="material-symbols-outlined text-2xl md:text-6xl">arrow_forward</span>
             </span>
-            with <span className="text-primary block md:inline">absolutrip</span>
+            with <span className="text-primary block md:inline">absoluTrip</span>
           </h1>
         </div>
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mt-8">
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">With more than</p>
             <div className="flex flex-col">
               <span className="text-base md:text-lg font-extrabold uppercase line-height-tight">12K+ trips planned</span>
               <span className="text-base md:text-lg font-extrabold uppercase line-height-tight">500+ happy groups</span>
             </div>
-          </div>
+          </div> */}
           <Link href="/register">
             <button className="border-2 border-slate-900 dark:border-slate-100 px-8 py-5 rounded-full font-bold text-lg flex items-center gap-3 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all group w-full md:w-auto justify-center">
               Plan now
@@ -251,27 +251,20 @@ export function LandingPage() {
       {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-6 py-24" id="testimonials">
         <div className="mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold hero-title">Loved by 12,000+ travelers</h2>
+          <h2 className="text-4xl md:text-5xl font-extrabold hero-title">Loved by 2 travelers</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <TestimonialCard
-            text="Absolutrip made our group trip to Japan actually happen. The budget tool saved us from so many awkward conversations!"
-            author="Sarah Jenkins"
-            role="Digital Nomad"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuDC4CdGar84kPbT-0QTlonLYHPYGfNZl5ExiRrTzDqDIu8LfxK8kXHiUHlSDN7cDmUE6UhqUJdYyu-dFCHnCQaJUbH4WIGO0KZw_pUXio15QeOcr1KpzoyQd4s3wX6IdeWwwlDQQLaUDC6mjMENvyXhLi_rik992lk8rZ5YcQJEKw9cjmCI63DYsAh5G88HGArCFsk4ScmTLZpMb5Zyo_xv9T8rb_DQlSpAccN55sxLJBODcEPMUliamongspcLQUO1TC9em-VaXh-D"
+            text="absoluTrip made our group trip to Japan actually happen. The budget tool saved us from so many awkward conversations!"
+            author="Robin Sajan"
+            role="Co Founder: absoluTrip"
           />
-          <TestimonialCard
-            highlight
-            text="The AI suggestions were surprisingly spot on. It found these tiny hidden cafes in Rome we never would have found ourselves."
-            author="Marc Kubert"
-            role="Leisure Traveler"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuC_3mW65w_rdo25vuT3xWdin2eQ8iSwumoTlZ84BVqsGPcFW7utjeKxIjKeOqiwLHtRstrlAALqdsMQFLWylXbKG86SB2LlvPHfboO0Fi-_Gfz1oCvgr3natzTXbT5CDGi3CNzOSGACjxi_3s0JSdtLISiBfpphJov1axDEPswtUSwuErfct1W9P6zV-a228Sy_k9ZBYaXWgNkUbFoeP6U7ZV73dKsXIKe-GOst63w_IjZwKB4QMbG-yupnRLWh-L66-H2SonE3Cotm"
-          />
+
           <TestimonialCard
             text="Finally, a travel app that doesn't feel like a spreadsheet. Beautiful UI and incredibly intuitive to use."
-            author="Elena Rodriguez"
-            role="Backpacker"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuBQbKzM04jk6cksv9PCpNaEBHBYWC_s4FuWbrhfWtLOTYG-fkzbu5lss8RH2_moFqdk2blDHlQLfS14W8tNSxHyXoTxyj0h7p4WBCJP5935iCwbiVYsmegoUm4Y1KB2FCTTyIk-y6-icStsyfye-jijXu4Y9wRR1skcECLAtqNJhry7KenNxxDkEpKAFPW0iaquwBEgn1u5iBkOU2NL9JxOnSQcCSGPJgS718banBihoCgM7oj8P-LrJc4vNUvLbM4V2CfTyn_QLSM5"
+            author="Jason Kalathingal"
+            role="Co Founder: absoluTrip"
+
           />
         </div>
       </section>
@@ -285,7 +278,7 @@ export function LandingPage() {
           </div>
           <div className="relative z-10">
             <h2 className="text-5xl md:text-8xl font-extrabold hero-title mb-8">Ready to travel?</h2>
-            <p className="text-xl md:text-2xl opacity-80 mb-12 max-w-2xl mx-auto">Join thousands of travelers leveling up their trips with absolutrip.</p>
+            <p className="text-xl md:text-2xl opacity-80 mb-12 max-w-2xl mx-auto">Join thousands of travelers leveling up their trips with absoluTrip.</p>
             <Link href="/register">
               <button className="bg-accent-lime text-slate-900 px-10 py-6 rounded-full font-bold text-xl hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-xl">
                 Start Planning Free
@@ -297,15 +290,15 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 pt-24 pb-12">
+      <footer className="bg-background-light dark:bg-background-dark border-slate-200 dark:border-slate-800 pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
+          {/* <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
             <div className="md:col-span-4">
               <div className="flex items-center gap-2 mb-6">
                 <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center">
                   <span className="material-symbols-outlined">flight_takeoff</span>
                 </div>
-                <span className="text-2xl font-extrabold tracking-tight">absolutrip</span>
+                <span className="text-2xl font-extrabold tracking-tight">absoluTrip</span>
               </div>
               <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
                 The modern travel planning platform for groups and solo adventurers. Plan, budget, and explore with confidence.
@@ -340,10 +333,10 @@ export function LandingPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-12 border-t border-slate-200 dark:border-slate-800">
-            <p className="text-sm text-slate-500 font-medium">© {new Date().getFullYear()} absolutrip. All rights reserved.</p>
+            <p className="text-sm text-slate-500 font-medium">© {new Date().getFullYear()} absoluTrip. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-slate-500 font-medium">
               <Link className="hover:text-primary transition-colors" href="#">Privacy Policy</Link>
               <Link className="hover:text-primary transition-colors" href="#">Terms of Service</Link>
@@ -356,26 +349,14 @@ export function LandingPage() {
       {/* Floating Controls */}
       {mounted && (
         <div className="fixed bottom-6 right-6 flex items-center bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-full p-2 shadow-2xl z-50">
-          <button
-            onClick={toggleDarkMode}
-            className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-90"
-            aria-label="Toggle Dark Mode"
-          >
-            {theme === "dark" ? (
-              <span className="material-symbols-outlined text-accent-lime">light_mode</span>
-            ) : (
-              <span className="material-symbols-outlined text-slate-500">dark_mode</span>
-            )}
-          </button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+
+
           <div className="flex items-center gap-3 px-3">
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-lg text-primary">auto_fix_high</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">AI Created</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">Created with</span>
+              <span className="material-symbols-outlined text-sm text-primary">favorite</span>
             </div>
-            <button className="bg-primary text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter hover:opacity-90 transition-opacity">
-              Remix
-            </button>
+
           </div>
         </div>
       )}
@@ -383,7 +364,7 @@ export function LandingPage() {
   );
 }
 
-function TestimonialCard({ text, author, role, img, highlight = false }: { text: string; author: string; role: string; img: string; highlight?: boolean }) {
+function TestimonialCard({ text, author, role, highlight = false }: { text: string; author: string; role: string; highlight?: boolean }) {
   return (
     <div className={`${highlight ? 'bg-primary text-white' : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800'} p-8 rounded-3xl transition-transform hover:-translate-y-1`}>
       <div className={`flex gap-1 ${highlight ? 'text-accent-lime' : 'text-accent-lime'} mb-6`}>
@@ -393,7 +374,6 @@ function TestimonialCard({ text, author, role, img, highlight = false }: { text:
       </div>
       <p className="text-xl font-medium mb-8 italic leading-relaxed">"{text}"</p>
       <div className="flex items-center gap-4">
-        <img alt={author} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" src={img} />
         <div>
           <p className="font-bold">{author}</p>
           <p className={`text-sm ${highlight ? 'opacity-70' : 'text-slate-500'}`}>{role}</p>

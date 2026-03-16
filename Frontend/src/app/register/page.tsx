@@ -37,15 +37,15 @@ export default function RegisterPage() {
       return;
     }
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("Password is too small. Please use at least 6 characters.");
       return;
     }
 
     setIsLoading(true);
     try {
-      await register(email, password, name);
-      toast.success("Account created successfully!");
-      router.push("/trips");
+      const res = await register(email, password, name);
+      toast.success(res.message || "Account created! Please verify your email.");
+      router.push("/login");
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create account");
     } finally {
@@ -68,7 +68,7 @@ export default function RegisterPage() {
               <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center">
                 <span className="material-symbols-outlined outline-icon">flight_takeoff</span>
               </div>
-              <span className="text-2xl font-extrabold tracking-tight text-white">absolutrip</span>
+              <span className="text-2xl font-extrabold tracking-tight text-white">absoluTrip</span>
             </Link>
             <div className="max-w-md">
               <div className="inline-flex items-center gap-2 bg-accent-lime text-black px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-8">
@@ -95,13 +95,13 @@ export default function RegisterPage() {
               </ul>
             </div>
           </div>
-          <div className="relative z-10 bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-sm">
+          {/* <div className="relative z-10 bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-sm">
             <div className="flex items-center gap-2 text-white/60 text-sm font-semibold mb-1">
               <span className="material-symbols-outlined text-accent-lime text-lg material-symbols-filled">star</span>
               Trusted by
             </div>
-            <p className="text-white text-xl font-bold">12,000+ travel groups worldwide</p>
-          </div>
+            <p className="text-white text-xl font-bold">travel groups worldwide</p>
+          </div> */}
         </div>
 
         {/* Right Side (Form) */}
@@ -192,24 +192,11 @@ export default function RegisterPage() {
       {/* Floating Controls */}
       {mounted && (
         <div className="fixed bottom-6 right-6 flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-2 shadow-xl z-50">
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            aria-label="Toggle Dark Mode"
-          >
-            {theme === "dark" ? (
-              <span className="material-symbols-outlined outline-icon text-accent-lime">light_mode</span>
-            ) : (
-              <span className="material-symbols-outlined outline-icon">dark_mode</span>
-            )}
-          </button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
           <div className="flex items-center gap-3 px-3">
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined outline-icon text-sm text-primary">auto_fix_high</span>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Created with AI</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">Created with</span>
+              <span className="material-symbols-outlined text-sm text-primary">favorite</span>
             </div>
-            <button className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">Remix</button>
           </div>
         </div>
       )}

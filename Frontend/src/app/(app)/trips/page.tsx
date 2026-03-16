@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
@@ -102,8 +104,7 @@ export default function TripsPage() {
 
   // Create Trip form state
   const [tripName, setTripName] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [mapsUrl, setMapsUrl] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -129,8 +130,8 @@ export default function TripsPage() {
     if (e) e.preventDefault();
     const data = pendingTripData || {
       name: tripName.trim(),
-      start_date: startDate,
-      end_date: endDate,
+      start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "",
+      end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "",
       google_maps_url: mapsUrl.trim(),
     };
 
@@ -162,8 +163,7 @@ export default function TripsPage() {
       toast.success("Trip created!");
       mutate();
       setTripName("");
-      setStartDate("");
-      setEndDate("");
+      setDateRange(undefined);
       setMapsUrl("");
       setPendingTripData(null);
       setShowOverlapDialog(false);
@@ -245,26 +245,13 @@ export default function TripsPage() {
                       onChange={(e) => setMapsUrl(e.target.value)}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Date</Label>
-                      <Input
-                        type="date"
-                        className="rounded-xl h-12"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">End Date</Label>
-                      <Input
-                        type="date"
-                        className="rounded-xl h-12"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        min={startDate}
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Dates</Label>
+                    <DatePickerWithRange
+                      date={dateRange}
+                      setDate={setDateRange}
+                      placeholder="Select start and end dates"
+                    />
                   </div>
                   <button
                     onClick={() => handleCreateTrip()}
@@ -344,23 +331,14 @@ export default function TripsPage() {
                     onChange={(e) => setMapsUrl(e.target.value)}
                   />
                 </div>
-                <div className="bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
-                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Start</label>
-                  <input
-                    className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs [color-scheme:dark]"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
-                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">End</label>
-                  <input
-                    className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs [color-scheme:dark]"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
+                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
+                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Dates</label>
+                  <DatePickerWithRange
+                    date={dateRange}
+                    setDate={setDateRange}
+                    className="grid gap-0"
+                    buttonClassName="h-auto border-none p-0 bg-transparent text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs items-center"
+                    placeholder="Select dates"
                   />
                 </div>
                 <button

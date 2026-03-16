@@ -22,6 +22,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Settings, Trash2, Copy, Share2 } from "lucide-react";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
 
 export default function SettingsPage() {
   const params = useParams();
@@ -34,45 +37,42 @@ export default function SettingsPage() {
 
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("");
-  const [editStart, setEditStart] = useState("");
-  const [editEnd, setEditEnd] = useState("");
+  const [editDateRange, setEditDateRange] = useState<DateRange | undefined>(undefined);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (activeTrip) {
       setEditName(activeTrip.name || "");
       setEditLocation(activeTrip.google_maps_url || "");
-
-      // format dates (YYYY-MM-DD)
-      const parseDate = (d: string) => {
-        if (!d) return "";
-        return new Date(d).toISOString().split("T")[0];
-      };
-
-      setEditStart(parseDate(activeTrip.start_date));
-      setEditEnd(parseDate(activeTrip.end_date));
+      setEditDateRange({
+        from: activeTrip.start_date ? new Date(activeTrip.start_date) : undefined,
+        to: activeTrip.end_date ? new Date(activeTrip.end_date) : undefined
+      });
     }
   }, [activeTrip]);
 
   const handleUpdateTrip = async () => {
-    if (!editName || !editStart || !editEnd) {
+    if (!editName || !editDateRange?.from || !editDateRange?.to) {
       toast.error("Please fill out name and dates");
       return;
     }
 
     setIsUpdating(true);
     try {
+      const startStr = format(editDateRange.from, "yyyy-MM-dd");
+      const endStr = format(editDateRange.to, "yyyy-MM-dd");
+
       // Check if dates are changed
       const originalStart = activeTrip?.start_date ? new Date(activeTrip.start_date).toISOString().split("T")[0] : "";
       const originalEnd = activeTrip?.end_date ? new Date(activeTrip.end_date).toISOString().split("T")[0] : "";
 
-      if (editStart !== originalStart || editEnd !== originalEnd) {
+      if (startStr !== originalStart || endStr !== originalEnd) {
         // Fetch all stays / options
         const { options } = await optionsApi.list(tripId);
 
         // Find stays that fall completely outside the new dates, or whose dates are outside the bounds
-        const newStart = new Date(editStart);
-        const newEnd = new Date(editEnd);
+        const newStart = editDateRange.from;
+        const newEnd = editDateRange.to;
 
         const invalidStay = options.find((opt) => {
           if (opt.category === 'stay' || (opt.check_in_date && opt.check_out_date)) {
@@ -95,8 +95,8 @@ export default function SettingsPage() {
       await tripsApi.update(tripId, {
         name: editName,
         google_maps_url: editLocation,
-        start_date: editStart,
-        end_date: editEnd,
+        start_date: startStr,
+        end_date: endStr,
       });
 
       toast.success("Trip updated successfully!");
@@ -200,25 +200,13 @@ export default function SettingsPage() {
                   placeholder="https://maps.google.com/..."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Start Date</Label>
-                  <Input
-                    type="date"
-                    value={editStart}
-                    onChange={(e) => setEditStart(e.target.value)}
-                    className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold [color-scheme:dark]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">End Date</Label>
-                  <Input
-                    type="date"
-                    value={editEnd}
-                    onChange={(e) => setEditEnd(e.target.value)}
-                    className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold [color-scheme:dark]"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Dates</Label>
+                <DatePickerWithRange
+                  date={editDateRange}
+                  setDate={setEditDateRange}
+                  className="w-full"
+                />
               </div>
             </div>
             <Button

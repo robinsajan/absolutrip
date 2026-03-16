@@ -88,7 +88,8 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   };
 
   const isDateDisabled = (date: Date) => {
-    return !isDateInTripRange(date);
+    const today = startOfDay(new Date());
+    return !isDateInTripRange(date) || date < today;
   };
 
   const resetForm = () => {
@@ -273,7 +274,13 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                 <CalendarComponent
                   mode="range"
                   selected={dateSelection}
-                  onSelect={setDateSelection}
+                  onSelect={(range, selectedDay) => {
+                    if (dateSelection?.from && dateSelection?.to) {
+                      setDateSelection({ from: selectedDay, to: undefined });
+                    } else {
+                      setDateSelection(range);
+                    }
+                  }}
                   disabled={isDateDisabled}
                   defaultMonth={dateSelection?.from || tripDateRange?.start}
                   initialFocus

@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     trip_memberships = db.relationship('TripMember', back_populates='user', lazy='dynamic')
@@ -31,6 +32,7 @@ class User(UserMixin, db.Model):
             'id': self.id,
             'email': self.email,
             'name': self.name,
+            'is_verified': self.is_verified,
             'created_at': self.created_at.isoformat()
         }
 
