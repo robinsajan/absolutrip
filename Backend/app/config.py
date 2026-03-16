@@ -18,6 +18,12 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    # Required for cross-site cookies (Localhost -> Render)
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    # If using flask-login remember me
+    REMEMBER_COOKIE_SAMESITE = 'None'
+    REMEMBER_COOKIE_SECURE = True
 
 
 class TestingConfig(Config):
