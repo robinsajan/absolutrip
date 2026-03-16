@@ -3,11 +3,12 @@ from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
 from dotenv import load_dotenv
+
+# Load environment variables BEFORE importing local modules that use them
+load_dotenv()
+
 from .config import config
 from .extensions import db, migrate, login_manager
-
-# Load environment variables
-load_dotenv()
 
 swagger_template = {
     "swagger": "2.0",
@@ -55,8 +56,9 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
     CORS(app, 
-         origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+         origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:3000"],
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
