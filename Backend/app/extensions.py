@@ -10,3 +10,15 @@ login_manager = LoginManager()
 @login_manager.unauthorized_handler
 def unauthorized():
     return jsonify({'error': 'Authentication required'}), 401
+
+@login_manager.request_loader
+def load_user_from_request(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        # Expected format: "Bearer <token>"
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == 'bearer':
+            token = parts[1]
+            from .models import User
+            return User.verify_jwt(token)
+    return None

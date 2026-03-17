@@ -109,9 +109,11 @@ def login():
         return jsonify({'error': 'Please verify your email address before logging in.'}), 401
 
     login_user(user, remember=True)
+    token = user.generate_jwt()
 
     return jsonify({
         'message': 'Logged in successfully',
+        'token': token,
         'user': user.to_dict()
     }), 200
 

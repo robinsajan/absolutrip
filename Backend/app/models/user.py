@@ -1,4 +1,7 @@
+import jwt
+import time
 from datetime import datetime
+from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager
@@ -35,6 +38,25 @@ class User(UserMixin, db.Model):
             'is_verified': self.is_verified,
             'created_at': self.created_at.isoformat()
         }
+
+    def generate_jwt(self, expires_in=604800): # Default 7 days
+        return jwt.encode(
+            {'user_id': self.id, 'exp': time.time() + expires_in},
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+
+    @staticmethod
+    def verify_jwt(token):
+        try:
+            payload = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                algorithms=['HS256']
+            )
+        except Exception:
+            return None
+        return User.query.get(payload['user_id'])
 
 
 @login_manager.user_loader
