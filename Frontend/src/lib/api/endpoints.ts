@@ -25,7 +25,7 @@ export const auth = {
   },
 
   login: async (data: { email: string; password: string }) => {
-    const res = await api.post<{ message: string; user: User }>('/auth/login', data);
+    const res = await api.post<{ message: string; user: User; token: string }>('/auth/login', data);
     return res.data;
   },
 

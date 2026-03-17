@@ -25,6 +25,9 @@ export function useAuth() {
 
   const login = async (email: string, password: string) => {
     const result = await auth.login({ email, password });
+    if (result.token) {
+      localStorage.setItem('auth_token', result.token);
+    }
     setUser(result.user);
     await mutate({ user: result.user }, { revalidate: false });
     return result;
@@ -36,9 +39,15 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await auth.logout();
-    reset();
-    await mutate(undefined, { revalidate: false });
+    try {
+      await auth.logout();
+    } catch (e) {
+      console.error('Logout error:', e);
+    } finally {
+      localStorage.removeItem('auth_token');
+      reset();
+      await mutate(undefined, { revalidate: false });
+    }
   };
 
   return {
