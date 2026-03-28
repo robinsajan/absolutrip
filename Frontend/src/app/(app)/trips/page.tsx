@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
+import { SafeImage } from "@/components/common/SafeImage";
+import { cn } from "@/lib/utils";
 
 function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
@@ -39,10 +41,10 @@ function TripCard({ trip }: { trip: Trip }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] overflow-hidden group border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all h-full flex flex-col">
       <div className="relative h-56 overflow-hidden">
-        <img
-          alt={trip.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+        <SafeImage
           src={trip.image_url || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop"}
+          alt={trip.name}
+          className="group-hover:scale-110 transition-transform duration-700"
         />
         <div className={`absolute top-4 right-4 ${statusColor} px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm`}>
           {status}

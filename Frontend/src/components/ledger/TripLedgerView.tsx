@@ -178,21 +178,21 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
   return (
     <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen pb-24 font-sans">
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
+        <div className="flex flex-row items-center justify-between gap-4">
+          <div className="min-w-0">
             <h1 className="text-3xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">expense log</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100 truncate">
               {activeTrip?.name || "Trip"} • {expenses.length} transactions
             </p>
           </div>
 
-          {/* Desktop Actions */}
-          <div className="flex gap-4 items-center animate-in fade-in slide-in-from-right-4 duration-700">
+          {/* Header Actions */}
+          <div className="flex gap-3 md:gap-4 items-center animate-in fade-in slide-in-from-right-4 duration-700 shrink-0">
             <button
               onClick={() => router.push(`/trip/${tripId}/settle`)}
-              className="hidden md:flex bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 px-6 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:bg-emerald-100 transition-all shadow-sm"
+              className="flex bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 px-4 md:px-6 py-2.5 md:py-4 rounded-full font-black text-[8px] md:text-[10px] uppercase tracking-widest items-center gap-1.5 md:gap-2 hover:bg-emerald-100 transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-500/10"
             >
-              <Wallet className="size-4" />
+              <Wallet className="size-3.5 md:size-4" />
               Settle Up
             </button>
             <button

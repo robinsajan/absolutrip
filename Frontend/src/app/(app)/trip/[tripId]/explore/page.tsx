@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
@@ -8,6 +9,7 @@ import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks"
 import { useAppStore } from "@/lib/store";
 import { options as optionsApi, votes as votesApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
+import { getOptionImages } from "@/lib/image";
 import type { RankedOption, TripMember } from "@/types";
 import { AddOptionForm } from "@/components/explore";
 import {
@@ -20,6 +22,7 @@ import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   if (!imageUrls || imageUrls.length === 0) {
     return <img alt={alt} className="w-full h-full object-cover font-sans cursor-pointer group-hover:scale-105 transition-transform duration-700" src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop" />;
@@ -28,18 +31,34 @@ function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string })
   const nextImg = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsImageLoading(true);
     setCurrentIndex((prev) => (prev + 1) % imageUrls.length);
   };
 
   const prevImg = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsImageLoading(true);
     setCurrentIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
 
   return (
     <div className="relative w-full h-full group">
-      <img alt={alt} className="w-full h-full object-cover font-sans group-hover:scale-105 transition-transform duration-700" src={imageUrls[currentIndex]} />
+      {isImageLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-10 transition-opacity">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      )}
+      <img 
+        alt={alt} 
+        className={cn(
+          "w-full h-full object-cover font-sans transition-all duration-700",
+          isImageLoading ? "opacity-0 scale-100" : "opacity-100 scale-100 group-hover:scale-105"
+        )}
+        src={imageUrls[currentIndex]} 
+        onLoad={() => setIsImageLoading(false)}
+        onError={() => setIsImageLoading(false)}
+      />
       {imageUrls.length > 1 && (
         <>
           <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 z-10 flex items-center justify-center">
@@ -228,15 +247,7 @@ export default function ExplorePage() {
     const isFinalized = ro.option.is_finalized;
     const isStay = ro.option.category === "stay";
 
-    let imageUrls = ["https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop"];
-    if (ro.option.image_url) {
-      imageUrls = ro.option.image_url.split(',').map((u: string) => {
-        const url = u.trim();
-        return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${url}`;
-      });
-    } else if (ro.option.image_path) {
-      imageUrls = ro.option.image_path.split(',').map((u: string) => `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${u.trim()}`);
-    }
+    const imageUrls = getOptionImages(ro.option);
 
     const nights = ro.option.check_in_date && ro.option.check_out_date
       ? Math.max(1, differenceInDays(parseISO(ro.option.check_out_date), parseISO(ro.option.check_in_date)))

@@ -108,31 +108,59 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any)
     );
 }
 
-function BudgetHeader({ adminEstimate, perPerson, onReset, onSave }: any) {
+function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: any) {
     const diff = perPerson - adminEstimate;
     return (
-        <div className="bg-white dark:bg-slate-900 border-b border-primary/10 p-8 flex flex-wrap gap-8 items-center justify-between shadow-sm rounded-[32px] mb-8">
-            <div className="flex gap-16">
-                <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Target Price (Admin)</p>
-                    <p className="text-3xl font-black text-slate-900 dark:text-white">₹{adminEstimate.toLocaleString('en-IN')}</p>
+        <div className="space-y-3">
+            <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-xl space-y-4 md:space-y-6">
+                <div className="flex items-end justify-between gap-2 md:gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400">Your Plan Total:</p>
+                        <p className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white leading-none">₹{perPerson.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400">Target (Admin Pick):</p>
+                        <p className="text-lg md:text-2xl font-black text-slate-900 dark:text-white leading-none">₹{adminEstimate.toLocaleString('en-IN')}</p>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Your Plan Total</p>
-                    <p className="text-3xl font-black text-primary">₹{perPerson.toLocaleString()}</p>
-                </div>
-                {adminEstimate > 0 && perPerson > 0 && (
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Difference</p>
-                        <p className={`text-3xl font-black ${diff > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Difference:</p>
+                    <div className="flex items-center gap-2">
+                        <p className={`text-2xl md:text-4xl font-black ${diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
                             {diff > 0 ? '+' : ''}₹{diff.toLocaleString()}
                         </p>
+                        <ArrowRight className={`size-5 md:size-8 ${diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />
                     </div>
-                )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                    <Button 
+                        className="flex-1 rounded-2xl bg-slate-950 dark:bg-slate-800 text-white hover:bg-slate-900 dark:hover:bg-slate-700 py-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-black/10"
+                        onClick={onSave}
+                    >
+                        Save Plan
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 py-6 font-black uppercase text-[10px] tracking-widest"
+                        onClick={onReset}
+                    >
+                        Reset
+                    </Button>
+                </div>
             </div>
-            <div className="flex gap-3">
-                <Button variant="default" className="rounded-full bg-emerald-500 hover:bg-emerald-600 px-6 font-black uppercase text-[10px]" onClick={onSave}>Save Plan</Button>
-                <Button variant="ghost" className="rounded-full bg-red-50 text-red-500 hover:bg-red-100 px-6 font-black uppercase text-[10px]" onClick={onReset}>Reset</Button>
+            
+            <div className="flex justify-end px-2">
+                 <Button 
+                    variant="ghost" 
+                    className="rounded-xl px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed transition-all text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] gap-2 border border-slate-100 dark:border-slate-800 shadow-sm"
+                    disabled
+                >
+                    <Sparkles className="size-3 opacity-50" /> Let AI Plan Your Trip (Coming Soon)
+                </Button>
             </div>
         </div>
     );
@@ -143,16 +171,16 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
     const activities = selections.filter((s: any) => s.category !== 'stay').sort((a: any, b: any) => a.planned_day - b.planned_day);
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-primary/10 shadow-sm space-y-10">
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] md:rounded-[40px] border border-primary/10 shadow-sm space-y-6 md:space-y-10">
             {/* Stays Section */}
-            <div className="space-y-6">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                    <Hotel className="size-4" /> Accommodations
+            <div className="space-y-4 md:space-y-6">
+                <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <Hotel className="size-3.5" /> Accommodations
                 </h3>
                 {stays.length === 0 ? (
-                    <p className="text-slate-300 text-xs italic ml-2">No stays selected</p>
+                    <p className="text-slate-300 text-[10px] italic ml-2">No stays selected</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {stays.map((stay: any) => {
                             const getStayDates = () => {
                                 if (!startDate) return null;
@@ -162,22 +190,22 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                             };
 
                             return (
-                                <div key={stay.id} className="flex gap-5 items-center bg-slate-50 p-4 rounded-[28px] group relative border border-transparent hover:border-primary/20 transition-all">
-                                    <div className="size-14 rounded-2xl overflow-hidden shrink-0 shadow-sm">
-                                        {getOptionImageUrl(stay) ? <img src={getOptionImageUrl(stay)!} className="w-full h-full object-cover" /> : <Hotel className="size-6 opacity-20 p-3" />}
+                                <div key={stay.id} className="flex gap-3 md:gap-5 items-center bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-[20px] md:rounded-[28px] group relative border border-transparent hover:border-primary/20 transition-all">
+                                    <div className="size-10 md:size-14 rounded-xl md:rounded-2xl overflow-hidden shrink-0 shadow-sm">
+                                        {getOptionImageUrl(stay) ? <img src={getOptionImageUrl(stay)!} className="w-full h-full object-cover" /> : <Hotel className="size-4 md:size-6 opacity-20 p-2 md:p-3" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex items-center gap-2 mb-0.5">
                                             <div className="flex flex-col">
-                                                <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase px-2 w-fit mb-0.5">Day {stay.planned_day} &mdash; {stay.end_day || stay.planned_day}</Badge>
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{getStayDates()}</span>
+                                                <Badge className="bg-primary/10 text-primary border-none text-[7px] md:text-[8px] font-black uppercase px-2 w-fit mb-0.5">Day {stay.planned_day} &mdash; {stay.end_day || stay.planned_day}</Badge>
+                                                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{getStayDates()}</span>
                                             </div>
-                                            <span className="text-[10px] font-black text-primary ml-auto">₹{((stay.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
+                                            <span className="text-[9px] md:text-[10px] font-black text-primary ml-auto">₹{((stay.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
                                         </div>
-                                        <h4 className="font-bold text-slate-900 text-sm truncate">{stay.title}</h4>
+                                        <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{stay.title}</h4>
                                     </div>
-                                    <button className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-2" onClick={() => onRemove(selections.indexOf(stay))}>
-                                        <Trash2 className="size-4" />
+                                    <button className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1.5" onClick={() => onRemove(selections.indexOf(stay))}>
+                                        <Trash2 className="size-3.5" />
                                     </button>
                                 </div>
                             );
@@ -186,35 +214,33 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                 )}
             </div>
 
-            <div className="h-px bg-slate-100 mx-2" />
-
-            <div className="h-px bg-slate-100 mx-2" />
+            <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2" />
 
             {/* Activities Section */}
-            <div className="space-y-6">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                    <Bike className="size-4" /> Activities & More
+            <div className="space-y-4 md:space-y-6">
+                <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <Bike className="size-3.5" /> Activities & More
                 </h3>
                 {activities.length === 0 ? (
-                    <p className="text-slate-300 text-xs italic ml-2">No activities selected</p>
+                    <p className="text-slate-300 text-[10px] italic ml-2">No activities selected</p>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2 md:space-y-3">
                         {activities.map((item: any) => (
-                            <div key={`${item.planned_day}-${item.id}`} className="flex gap-4 items-center group relative p-3 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-primary/10">
-                                <div className="size-10 rounded-xl overflow-hidden shrink-0 bg-white border border-slate-100 shadow-sm">
-                                    {getOptionImageUrl(item) ? <img src={getOptionImageUrl(item)!} className="w-full h-full object-cover" /> : <MapPin className="size-4 opacity-20" />}
+                            <div key={`${item.planned_day}-${item.id}`} className="flex gap-3 items-center group relative p-2.5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl md:rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-primary/10">
+                                <div className="size-8 md:size-10 rounded-lg md:rounded-xl overflow-hidden shrink-0 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    {getOptionImageUrl(item) ? <img src={getOptionImageUrl(item)!} className="w-full h-full object-cover" /> : <MapPin className="size-3.5 opacity-20" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center justify-between gap-1.5">
                                         <div className="flex flex-col">
-                                            <h4 className="font-bold text-slate-900 text-[11px] truncate">{item.title}</h4>
-                                            <span className="text-[8px] font-black text-slate-400 uppercase">Selected for Day {item.planned_day}</span>
+                                            <h4 className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{item.title}</h4>
+                                            <span className="text-[7px] font-black text-slate-400 uppercase">Day {item.planned_day}</span>
                                         </div>
-                                        <span className="text-[10px] font-black text-primary">₹{((item.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
+                                        <span className="text-[9px] font-black text-primary">₹{((item.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <button className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1" onClick={() => onRemove(selections.indexOf(item))}>
-                                    <Trash2 className="size-3.5" />
+                                    <Trash2 className="size-3" />
                                 </button>
                             </div>
                         ))}
@@ -223,11 +249,11 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
             </div>
 
             {selections.length > 0 && (
-                <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-                    <p className="text-[9px] font-bold text-slate-400 max-w-[180px]">Saving will update your trip's primary itinerary.</p>
+                <div className="pt-4 md:pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                    <p className="text-[8px] font-bold text-slate-400 max-w-[140px] leading-tight">Saving will update your trip's primary itinerary.</p>
                     <Button 
                         size="sm"
-                        className="rounded-2xl px-6 py-5 font-black uppercase text-[10px] tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg gap-2 h-auto" 
+                        className="rounded-xl md:rounded-2xl px-4 md:px-6 py-4 md:py-5 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 transition-all shadow-lg gap-1.5 md:gap-2 h-auto" 
                         onClick={onSave}
                         disabled={loading}
                     >
@@ -307,13 +333,41 @@ export function TripBudgetPlanner({ tripId }: { tripId: number }) {
         if (opt.category === 'stay' && opt.check_in_date && opt.check_out_date) {
             dur = Math.max(1, differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)));
         }
+
         const s = currentDay;
         const e = opt.category === 'stay' ? (s + dur - 1) : s;
         const up = getUnitPrice(opt, trip);
         const tp = opt.total_price || (up * dur * (trip?.num_travelers || 1));
-        setSelections(p => [...p, { ...opt, planned_day: s, end_day: e, total_price: tp, unit_price: up, duration_days: dur }]);
-        if (opt.category === 'stay') { setActiveStayEndDay(e); }
-        toast.success("Added to plan!");
+        
+        const newItem = { ...opt, planned_day: s, end_day: e, total_price: tp, unit_price: up, duration_days: dur };
+
+        if (opt.category === 'stay') {
+            // Find if there's already a stay covering this specific planning day
+            const existingStayIdx = selections.findIndex(sel => 
+                sel.category === 'stay' && currentDay >= sel.planned_day && currentDay <= (sel.end_day || sel.planned_day)
+            );
+            
+            if (existingStayIdx !== -1) {
+                const newSelections = [...selections];
+                newSelections[existingStayIdx] = newItem;
+                setSelections(newSelections);
+                toast.success("Stay replaced for this period!");
+            } else {
+                setSelections(p => [...p, newItem]);
+                toast.success("Stay added to itinerary!");
+            }
+            setActiveStayEndDay(e);
+        } else {
+            // Activity toggle logic: if already selected for this day, remove it. Otherwise add.
+            const existingIdx = selections.findIndex(s => s.id === opt.id && s.planned_day === currentDay);
+            if (existingIdx !== -1) {
+                setSelections(p => p.filter((_, i) => i !== existingIdx));
+                toast.success("Removed from Day " + currentDay);
+            } else {
+                setSelections(p => [...p, newItem]);
+                toast.success("Added to Day " + currentDay);
+            }
+        }
     };
 
     const saveScenario = async () => {
@@ -356,67 +410,98 @@ export function TripBudgetPlanner({ tripId }: { tripId: number }) {
                 perPerson={perPerson} 
                 onReset={() => { if(confirm("Are you sure? This will clear your current timeline selections.")) { setSelections([]); setCurrentDay(1); setActiveStayEndDay(null); setManualStep('stay'); }}} 
                 onSave={saveScenario} 
+                onAiClick={() => { setPlanningMode('ai'); setAiStep('budget'); setAiResults(null); }}
             />
-
-            <div className="flex justify-center -mt-4">
-                <Button variant="outline" className="rounded-full px-8 py-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] gap-2 group shadow-sm" onClick={() => { setPlanningMode('ai'); setAiStep('budget'); setAiResults(null); }}>
-                    <Sparkles className="size-3 group-hover:rotate-12 transition-transform" /> Let AI plan your trip
-                </Button>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-[48px] border border-primary/10 p-10 shadow-sm relative overflow-hidden space-y-10">
-                        <div className="flex justify-between items-center relative z-10">
-                            {planningMode === 'ai' && <Button variant="ghost" className="rounded-full gap-2 text-slate-400 font-bold" onClick={() => setPlanningMode('manual')}><ArrowRight className="size-4 rotate-180" /> Back to Manual</Button>}
-                            <Button variant="ghost" className="rounded-full gap-2 text-slate-400 font-bold ml-auto" onClick={fetchTripData}><RefreshCcw className="size-4" /> Reload Catalog</Button>
-                        </div>
+                    <div className="bg-white dark:bg-slate-900 rounded-[32px] md:rounded-[48px] border border-primary/10 p-5 md:p-10 shadow-sm relative overflow-hidden space-y-6 md:space-y-10">
+                        {planningMode === 'ai' && (
+                            <div className="flex justify-between items-center relative z-10">
+                                <Button variant="ghost" className="rounded-full gap-2 text-slate-400 font-bold" onClick={() => setPlanningMode('manual')}><ArrowRight className="size-4 rotate-180" /> Back to Manual</Button>
+                            </div>
+                        )}
 
                         {planningMode === 'manual' ? (
-                            <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-                                <div className="space-y-6">
+                            <div className="space-y-6 md:space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-4 md:space-y-6">
                                     <div className="flex items-center justify-between">
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">{currentDay <= totalDays ? "Stay Selection" : "Activities Catalog"}</p>
-                                            <h2 className="text-4xl font-black italic text-slate-900">
-                                                {currentDay <= totalDays 
-                                                    ? (activeStayEndDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
-                                                    : "Enhance Your Trip"
-                                                }
-                                            </h2>
+                                        <div className="space-y-1 md:space-y-2">
+                                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary">
+                                                {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
+                                            </p>
+                                            <div className="flex items-center gap-4">
+                                                <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
+                                                    {currentDay <= totalDays 
+                                                        ? (activeStayEndDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
+                                                        : "Enhance Your Trip"
+                                                    }
+                                                </h2>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    className="size-7 md:size-10 rounded-full text-slate-300 hover:text-primary transition-colors"
+                                                    onClick={fetchTripData}
+                                                    title="Reload Catalog"
+                                                >
+                                                    <RefreshCcw className="size-3.5 md:size-4" />
+                                                </Button>
+                                            </div>
                                             {currentDay <= totalDays && (
-                                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">{format(addDays(parseISO(trip.start_date!), currentDay - 1), 'MMMM do, yyyy')}</p>
+                                                <p className="text-slate-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">{format(addDays(parseISO(trip.start_date!), currentDay - 1), 'MMMM do, yyyy')}</p>
                                             )}
                                         </div>
                                     </div>
-                                    <Progress value={Math.min(100, (currentDay / totalDays) * 100)} className="h-2.5 rounded-full" />
+                                    <Progress value={Math.min(100, (currentDay / totalDays) * 100)} className="h-1.5 md:h-2.5 rounded-full" />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {reservedOptions.filter(o => (currentDay > totalDays ? o.category !== 'stay' : o.category === manualStep) && matchesDay(o)).map((opt: any) => (
-                                        <Card key={opt.id} className="rounded-[40px] border-2 border-primary/5 hover:border-primary transition-all p-3 flex gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative" onClick={() => addSelection(opt)}>
-                                            <button className="absolute top-4 right-4 z-20 size-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-primary shadow-sm" onClick={e => { e.stopPropagation(); setInfoOpt(opt); }}><ChevronsRight className="size-4" /></button>
-                                            <div className="size-36 rounded-[32px] overflow-hidden shrink-0 bg-slate-50 relative">
-                                                {getOptionImageUrl(opt) ? <img src={getOptionImageUrl(opt)!} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center"><Hotel className="opacity-20 size-10" /></div>}
-                                            </div>
-                                            <div className="flex flex-col justify-between py-2 grow pr-2">
-                                                <div>
-                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">{opt.destination || trip.destination}</p>
-                                                    <h4 className="font-bold text-slate-900 line-clamp-2 text-sm leading-tight">{opt.title}</h4>
-                                                    {opt.category === 'stay' && opt.check_in_date && (
-                                                        <p className="text-[9px] font-bold text-primary mt-1 flex items-center gap-1">
-                                                            <Calendar className="size-2.5" />
-                                                            {format(parseISO(opt.check_in_date), 'MMM d')} - {format(parseISO(opt.check_out_date), 'MMM d')}
-                                                        </p>
+                                    {reservedOptions.filter(o => (currentDay > totalDays ? o.category !== 'stay' : o.category === manualStep) && matchesDay(o)).map((opt: any) => {
+                                        const isSelected = selections.some(s => 
+                                            s.id === opt.id && 
+                                            (s.category === 'stay' 
+                                                ? (currentDay >= s.planned_day && currentDay <= (s.end_day || s.planned_day))
+                                                : (s.planned_day === currentDay))
+                                        );
+                                        return (
+                                            <Card 
+                                                key={opt.id} 
+                                                className={`rounded-[32px] md:rounded-[40px] transition-all p-3 flex flex-row gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative border-2 ${isSelected ? 'border-green-500 ring-4 ring-green-500/10' : 'border-primary/5 hover:border-primary'}`} 
+                                                onClick={() => addSelection(opt)}
+                                            >
+                                                <button className="absolute bottom-4 right-4 z-20 size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-primary shadow-sm" onClick={e => { e.stopPropagation(); setInfoOpt(opt); }}><ChevronsRight className="size-4" /></button>
+                                                <div className="size-24 md:size-36 rounded-2xl md:rounded-[32px] overflow-hidden shrink-0 bg-slate-50 dark:bg-slate-800 relative">
+                                                    {getOptionImageUrl(opt) ? <img src={getOptionImageUrl(opt)!} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center"><Hotel className="opacity-20 size-6 md:size-10" /></div>}
+                                                    {isSelected && (
+                                                        <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
+                                                            <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-full shadow-lg scale-100 md:scale-110 animate-in zoom-in duration-300">
+                                                                <CheckCircle2 className="size-4 md:size-6" />
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <div className="space-y-0.5">
-                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Rate</p>
-                                                    <p className="text-xl font-black text-primary">₹{getUnitPrice(opt, trip).toLocaleString()}<span className="text-[9px] text-slate-400 ml-1">/pp</span></p>
+                                                <div className="flex-1 flex flex-col justify-between py-1 md:py-2 grow pr-1 md:pr-2 gap-1.5 md:gap-2 min-w-0">
+                                                    <div>
+                                                        <div className="flex justify-between items-start">
+                                                            <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1 truncate">{opt.destination || trip.destination}</p>
+                                                            {isSelected && <Badge className="bg-green-500 text-white border-none text-[6px] md:text-[8px] font-black uppercase tracking-widest px-1.5 md:px-2">Selected</Badge>}
+                                                        </div>
+                                                        <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-xs md:text-sm leading-tight">{opt.title}</h4>
+                                                        {opt.category === 'stay' && opt.check_in_date && (
+                                                            <p className="text-[8px] md:text-[9px] font-bold text-primary mt-1 flex items-center gap-1">
+                                                                <Calendar className="size-2 md:size-2.5" />
+                                                                {format(parseISO(opt.check_in_date), 'MMM d')} - {format(parseISO(opt.check_out_date), 'MMM d')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-0 md:space-y-0.5 mt-auto">
+                                                        <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate/pp</p>
+                                                        <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, trip).toLocaleString()}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Card>
-                                    ))}
+                                            </Card>
+                                        );
+                                    })}
                                     {reservedOptions.filter(o => o.category === manualStep && matchesDay(o)).length === 0 && (
                                         <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
                                             <MapPin className="size-10 text-slate-200 mx-auto mb-3" />
@@ -425,22 +510,22 @@ export function TripBudgetPlanner({ tripId }: { tripId: number }) {
                                     )}
                                 </div>
 
-                                <div className="bg-slate-900 p-10 rounded-[48px] flex items-center justify-between text-white shadow-2xl relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 opacity-10 -mr-10 -mt-10 animate-pulse transition-transform group-hover:scale-110 pointer-events-none transition-opacity duration-300"><Calendar className="size-48" /></div>
-                                    <div className="flex items-center gap-5 relative z-10">
-                                        <div className="size-14 rounded-3xl bg-primary flex items-center justify-center text-white shadow-lg"><CheckCircle2 className="size-8" /></div>
+                                <div className="bg-slate-900 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-2xl relative overflow-hidden group gap-6">
+                                    <div className="absolute right-0 top-0 opacity-10 -mr-10 -mt-10 animate-pulse transition-transform group-hover:scale-110 pointer-events-none transition-opacity duration-300"><Calendar className="size-32 md:size-48" /></div>
+                                    <div className="flex items-center gap-4 md:gap-5 relative z-10">
+                                        <div className="size-10 md:size-14 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-white shadow-lg"><CheckCircle2 className="size-6 md:size-8" /></div>
                                         <div>
-                                            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-1">Status</p>
-                                            <p className="text-slate-300 text-sm font-bold">{currentDay <= totalDays ? `Day ${currentDay} in progress` : "All Stays Selected!"}</p>
+                                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-0.5 md:mb-1">Status</p>
+                                            <p className="text-slate-300 text-xs md:text-sm font-bold">{currentDay <= totalDays ? `Day ${currentDay} in progress` : "All Stays Selected!"}</p>
                                         </div>
                                     </div>
                                     {currentDay <= totalDays ? (
-                                        <Button className="rounded-[24px] px-12 py-7 font-black uppercase text-[10px] tracking-widest bg-white text-slate-900 hover:bg-primary hover:text-white transition-all shadow-xl gap-2 h-auto relative z-10" onClick={() => {
+                                        <Button className="w-full md:w-auto rounded-2xl md:rounded-[24px] px-8 md:px-12 py-5 md:py-7 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-white text-slate-900 hover:bg-primary hover:text-white transition-all shadow-xl gap-2 h-auto relative z-10" onClick={() => {
                                             const n = activeStayEndDay ? activeStayEndDay + 1 : currentDay + 1;
                                             if (n <= totalDays) { setCurrentDay(n); setActiveStayEndDay(null); setManualStep('stay'); }
                                             else { setCurrentDay(totalDays + 1); setManualStep('activity'); }
                                         }}>Next Destination <ArrowRight className="size-4" /></Button>
-                                    ) : <Badge className="bg-primary/20 text-primary rounded-full px-6 py-2 border-none font-black text-[10px]">PLANNING ACTIVITIES & MORE</Badge>}
+                                    ) : <Badge className="bg-primary/20 text-primary rounded-full px-4 md:px-6 py-1.5 md:py-2 border-none font-black text-[9px] md:text-[10px]">ACTIVITIES MODE</Badge>}
                                 </div>
                             </div>
                         ) : (

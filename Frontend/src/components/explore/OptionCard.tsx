@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VoteButton } from "./VoteButton";
 import { cn } from "@/lib/utils";
+import { getOptionImages } from "@/lib/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import type { RankedOption, OptionCategory } from "@/types";
 
 interface OptionCardProps {
@@ -35,16 +37,6 @@ const CATEGORY_COLORS: Record<OptionCategory, string> = {
   transport: "bg-green-100 text-green-800",
 };
 
-function getImageUrl(option: RankedOption["option"]): string | null {
-  if (option.image_path) {
-    return `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/api/uploads/options/${option.image_path}`;
-  }
-  if (option.image_url) {
-    return option.image_url;
-  }
-  return null;
-}
-
 export function OptionCard({
   rankedOption,
   memberCount,
@@ -60,7 +52,8 @@ export function OptionCard({
   const userVote = voters.find((v) => v.user_id === currentUserId);
   const pricePerPerson = memberCount > 0 ? option.price / memberCount : option.price;
   const canDelete = option.added_by === currentUserId;
-  const imageUrl = getImageUrl(option);
+  const imageUrls = getOptionImages(option);
+  const imageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
   const category = option.category || "stay";
   const isFinalized = option.is_finalized;
 
@@ -81,6 +74,13 @@ export function OptionCard({
 
   const dateRange = formatDateRange();
 
+  const CATEGORY_ICONS_DATA: Record<OptionCategory, any> = {
+    stay: Home,
+    activity: Ticket,
+    food: Utensils,
+    transport: Car,
+  };
+
   return (
     <Card
       className={cn(
@@ -90,22 +90,14 @@ export function OptionCard({
       )}
     >
       <div className="relative h-40 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center overflow-hidden">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={option.title}
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        ) : (
-          <span className="text-4xl font-bold text-primary/20">
-            {option.title.charAt(0).toUpperCase()}
-          </span>
-        )}
+        <SafeImage 
+          src={imageUrl} 
+          alt={option.title} 
+          fallbackIcon={CATEGORY_ICONS_DATA[category]}
+          className="group-hover:scale-110 transition-transform duration-700" 
+        />
         
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-20">
           {isFinalized && (
             <Badge className="bg-green-600 text-white">
               <CheckCircle2 className="h-3 w-3 mr-1" />

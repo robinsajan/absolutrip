@@ -26,6 +26,9 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import axios from "@/lib/api/client";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
+import { SafeImage } from "@/components/common/SafeImage";
+import { getAuthenticatedImageUrl, getOptionImages } from "@/lib/image";
+import { cn } from "@/lib/utils";
 
 // Helper components
 function BudgetHeader({ budget, used, perPerson }: { budget: number, used: number, perPerson: number }) {
@@ -146,18 +149,29 @@ function BudgetInner() {
     const addSelection = (option: any) => {
         const newItem = {
             ...option,
-            start_day: currentDay,
-            end_day: option.category === 'stay' ? currentDay + (option.duration_days || 1) : currentDay
+            start_day: option.category === 'stay' ? 1 : currentDay,
+            end_day: option.category === 'stay' ? (totalDays + 1) : currentDay,
+            duration_days: option.category === 'stay' ? totalDays : (option.duration_days || 1)
         };
 
-        setSelections([...selections, newItem]);
-
         if (option.category === 'stay') {
-            const nextDay = currentDay + (option.duration_days || 1);
-            setCurrentDay(nextDay);
+            // Find if ANY stay is already selected
+            const existingStayIdx = selections.findIndex(s => s.category === 'stay');
+            
+            if (existingStayIdx !== -1) {
+                const newSelections = [...selections];
+                newSelections[existingStayIdx] = newItem;
+                setSelections(newSelections);
+                toast.success(`Updated stay to ${option.title}`);
+            } else {
+                setSelections([...selections, newItem]);
+                toast.success(`Selected ${option.title} as your trip stay`);
+            }
+        } else {
+            // Activities can be multiple per day
+            setSelections([...selections, newItem]);
+            toast.success(`Added ${option.title} to Day ${currentDay}`);
         }
-
-        toast.success(`Added ${option.title} to trip`);
     };
 
     const removeSelection = (idx: number) => {
@@ -234,8 +248,10 @@ function BudgetInner() {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                        <span className="size-8 rounded-xl bg-primary text-white flex items-center justify-center font-black italic">{currentDay}</span>
-                                        Select Your Next Stay
+                                        <div className="size-8 rounded-xl bg-primary text-white flex items-center justify-center font-black italic">
+                                            <Hotel className="size-4" />
+                                        </div>
+                                        Select Your Trip Stay
                                     </h3>
                                     <div className="flex gap-2">
                                         <Button variant="ghost" className="rounded-full text-slate-400 hover:text-primary">Stays</Button>
@@ -244,29 +260,56 @@ function BudgetInner() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {options.filter(o => o.category === 'stay').slice(0, 4).map((opt) => (
-                                        <Card key={opt.id} className="rounded-3xl overflow-hidden border-primary/10 hover:border-primary transition-all group shadow-sm bg-white dark:bg-slate-900">
-                                            <div className="h-40 bg-slate-200 relative">
-                                                {opt.image_url ? (
-                                                    <img src={opt.image_url} alt={opt.title} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                        <Hotel className="size-12" />
-                                                    </div>
+                                    {options.filter(o => o.category === 'stay').slice(0, 4).map((opt) => {
+                                        const isSelected = selections.some(s => 
+                                            String(s.id) === String(opt.id) && 
+                                            s.category === 'stay'
+                                        );
+                                        const imageUrl = getOptionImages(opt)[0];
+                                        return (
+                                            <Card 
+                                                key={opt.id} 
+                                                className={cn(
+                                                    "rounded-3xl overflow-hidden transition-all group shadow-sm bg-white dark:bg-slate-900 border-2",
+                                                    isSelected 
+                                                        ? "border-green-500 ring-4 ring-green-500/10 shadow-lg shadow-green-500/5 scale-[1.02]" 
+                                                        : "border-primary/5 hover:border-primary"
                                                 )}
-                                                <div className="absolute top-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black text-primary">
-                                                    ₹{opt.price.toLocaleString()}/night
+                                            >
+                                                <div className="h-40 bg-slate-200 relative">
+                                                    <SafeImage 
+                                                        src={imageUrl} 
+                                                        alt={opt.title} 
+                                                        fallbackIcon={Hotel} 
+                                                    />
+                                                    <div className="absolute top-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black text-primary z-20">
+                                                        ₹{opt.price.toLocaleString()}/night
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-20 shadow-lg flex items-center gap-1 animate-in zoom-in duration-300">
+                                                            <CheckCircle2 className="size-3" />
+                                                            Selected
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                            <CardHeader className="p-5">
-                                                <CardTitle className="text-lg line-clamp-1">{opt.title}</CardTitle>
-                                                <CardDescription className="line-clamp-1">{opt.destination}</CardDescription>
-                                            </CardHeader>
-                                            <CardFooter className="p-5 pt-0">
-                                                <Button className="w-full rounded-xl" onClick={() => addSelection(opt)}>Add to Trip</Button>
-                                            </CardFooter>
-                                        </Card>
-                                    ))}
+                                                <CardHeader className="p-5">
+                                                    <CardTitle className="text-lg line-clamp-1">{opt.title}</CardTitle>
+                                                    <CardDescription className="line-clamp-1">{opt.destination}</CardDescription>
+                                                </CardHeader>
+                                                <CardFooter className="p-5 pt-0">
+                                                    <Button 
+                                                        className={cn(
+                                                            "w-full rounded-xl transition-all font-black uppercase tracking-widest text-[10px]",
+                                                            isSelected ? "bg-green-500 hover:bg-green-600 text-white" : ""
+                                                        )} 
+                                                        onClick={() => addSelection(opt)}
+                                                    >
+                                                        {isSelected ? "Change Stay" : "Select Stay"}
+                                                    </Button>
+                                                </CardFooter>
+                                            </Card>
+                                        );
+                                    })}
                                     {options.length === 0 && (
                                         <Card className="col-span-full border-dashed border-2 py-12 flex flex-col items-center justify-center text-slate-400 bg-transparent">
                                             <Hotel className="size-12 mb-4 opacity-20" />
@@ -284,19 +327,68 @@ function BudgetInner() {
                                         Add Activities for Day {currentDay}
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {options.filter(o => o.category === 'activity').slice(0, 3).map((opt) => (
-                                            <Card key={opt.id} className="rounded-3xl border-emerald-500/10 hover:border-emerald-500 transition-all cursor-pointer bg-white dark:bg-slate-900 shadow-sm p-4 flex items-center gap-4" onClick={() => addSelection(opt)}>
-                                                <div className="bg-emerald-500/10 p-3 rounded-2xl text-emerald-500">
-                                                    <Bike className="size-5" />
-                                                </div>
-                                                <div className="grow">
-                                                    <p className="font-bold text-sm leading-tight">{opt.title}</p>
-                                                    <p className="text-xs text-emerald-600 font-bold">₹{opt.price.toLocaleString()}</p>
-                                                </div>
-                                                <Plus className="size-4 text-slate-300 group-hover:text-emerald-500" />
-                                            </Card>
-                                        ))}
+                                        {options.filter(o => (o.category || 'activity') !== 'stay').slice(0, 6).map((opt) => {
+                                            const isSelected = selections.some(s => 
+                                                String(s.id) === String(opt.id) && 
+                                                s.start_day === currentDay
+                                            );
+                                            const imageUrl = getOptionImages(opt)[0];
+                                            return (
+                                                <Card 
+                                                    key={opt.id} 
+                                                    className={cn(
+                                                        "rounded-3xl transition-all cursor-pointer bg-white dark:bg-slate-900 shadow-sm p-4 flex items-center gap-4 relative overflow-hidden border-2",
+                                                        isSelected 
+                                                            ? "border-green-500 ring-4 ring-green-500/5 bg-green-50/30 shadow-md" 
+                                                            : "border-slate-100 hover:border-primary"
+                                                    )} 
+                                                    onClick={() => addSelection(opt)}
+                                                >
+                                                    <div className={cn(
+                                                        "p-3 rounded-2xl transition-colors",
+                                                        isSelected ? "bg-green-500 text-white" : "bg-primary/5 text-primary"
+                                                    )}>
+                                                        <Bike className="size-5" />
+                                                    </div>
+                                                    <div className="grow">
+                                                        <p className="font-bold text-sm leading-tight line-clamp-1">{opt.title}</p>
+                                                        <p className={cn(
+                                                            "text-xs font-bold",
+                                                            isSelected ? "text-green-600" : "text-primary/60"
+                                                        )}>₹{opt.price.toLocaleString()}</p>
+                                                    </div>
+                                                    {isSelected ? (
+                                                        <CheckCircle2 className="size-4 text-green-500" />
+                                                    ) : (
+                                                        <Plus className="size-4 text-slate-300 group-hover:text-primary" />
+                                                    )}
+                                                </Card>
+                                            );
+                                        })}
                                     </div>
+                                </div>
+
+                                <div className="pt-10 flex justify-center">
+                                    {currentDay < totalDays ? (
+                                        <Button 
+                                            className="rounded-full px-12 py-7 text-lg font-black uppercase tracking-widest gap-3 shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all"
+                                            onClick={() => setCurrentDay(prev => prev + 1)}
+                                        >
+                                            Proceed to Day {currentDay + 1}
+                                            <ArrowRight className="size-5" />
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            className="rounded-full px-12 py-7 text-lg font-black uppercase tracking-widest gap-3 shadow-xl bg-green-500 hover:bg-green-600 shadow-green-500/20 hover:-translate-y-1 transition-all"
+                                            onClick={() => {
+                                                // Logic for committing the trip
+                                                toast.success("Congratulations! Your trip plan is ready. ✨");
+                                            }}
+                                        >
+                                            Complete Trip Plan
+                                            <Sparkles className="size-5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </>
