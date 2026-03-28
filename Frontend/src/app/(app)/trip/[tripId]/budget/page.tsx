@@ -5,7 +5,7 @@ import { TripBudgetPlanner } from "@/components/budget/TripBudgetPlanner";
 
 export default function BudgetOverviewPage() {
   const params = useParams();
-  const tripId = Number(params.tripId);
+  const tripId = params.tripId as string;
 
   return (
     <div className="max-w-7xl mx-auto p-6 md:p-12 space-y-12 bg-slate-50 dark:bg-slate-950 min-h-screen">
