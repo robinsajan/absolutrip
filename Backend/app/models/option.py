@@ -6,7 +6,7 @@ class StayOption(db.Model):
     __tablename__ = 'stay_options'
 
     id = db.Column(db.Integer, primary_key=True)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=True) # Optional for global catalog
+    trip_id = db.Column(db.String(36), db.ForeignKey('trips.id'), nullable=True) # Optional for global catalog
     title = db.Column(db.String(200), nullable=False)
     link = db.Column(db.String(500), nullable=True)
     price = db.Column(db.Numeric(10, 2), nullable=True)

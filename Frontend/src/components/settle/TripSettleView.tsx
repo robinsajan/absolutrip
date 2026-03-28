@@ -39,7 +39,7 @@ function getInitials(name: string) {
 
 type PersonAmount = { user_id: number; user_name: string; amount: number };
 
-export function TripSettleView({ tripId }: { tripId: number }) {
+export function TripSettleView({ tripId }: { tripId: string }) {
   const { user } = useAuth();
   const { members } = useTripMembers(tripId);
   const { balances, settlements, isLoading, mutate: mutateSettle } = useSettlement(tripId);

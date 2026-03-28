@@ -267,7 +267,7 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
 }
 
 // ── MAIN COMPONENT ──────────────────────────────────────────────────────────
-export function TripBudgetPlanner({ tripId }: { tripId: number }) {
+export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     const [trip, setTrip] = useState<Trip | null>(null);
     const [selections, setSelections] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

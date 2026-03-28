@@ -6,7 +6,7 @@ export interface User {
 }
 
 export interface Trip {
-  id: number;
+  id: string;
   name: string;
   start_date: string;
   end_date: string;
@@ -25,7 +25,7 @@ export interface Trip {
 
 export interface TripMember {
   id: number;
-  trip_id: number;
+  trip_id: string;
   user_id: number;
   user_name: string;
   user_email: string;
@@ -36,7 +36,7 @@ export interface TripMember {
 
 export interface JoinRequest {
   id: number;
-  trip_id: number;
+  trip_id: string;
   trip_name?: string;
   user_id: number;
   user_name: string;
@@ -57,7 +57,7 @@ export interface ExpenseSplit {
 
 export interface Expense {
   id: number;
-  trip_id: number;
+  trip_id: string;
   paid_by: number;
   payer_name: string;
   amount: number;
@@ -95,7 +95,7 @@ export interface ExpenseActivity {
 
 export interface StayOption {
   id: number;
-  trip_id: number;
+  trip_id: string;
   title: string;
   link: string;
   price: number;

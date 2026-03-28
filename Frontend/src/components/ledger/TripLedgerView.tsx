@@ -44,7 +44,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-export function TripLedgerView({ tripId }: { tripId: number }) {
+export function TripLedgerView({ tripId }: { tripId: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const { activeTrip } = useAppStore();

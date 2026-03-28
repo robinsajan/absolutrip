@@ -68,17 +68,17 @@ export const trips = {
     return res.data;
   },
 
-  get: async (tripId: number) => {
+  get: async (tripId: string) => {
     const res = await api.get<{ trip: Trip }>(`/trips/${tripId}`);
     return res.data;
   },
 
-  update: async (tripId: number, data: Partial<{ name: string; start_date: string; end_date: string; google_maps_url: string }>) => {
+  update: async (tripId: string, data: Partial<{ name: string; start_date: string; end_date: string; google_maps_url: string }>) => {
     const res = await api.put<{ message: string; trip: Trip }>(`/trips/${tripId}`, data);
     return res.data;
   },
 
-  delete: async (tripId: number) => {
+  delete: async (tripId: string) => {
     const res = await api.delete<{ message: string }>(`/trips/${tripId}`);
     return res.data;
   },
@@ -88,29 +88,29 @@ export const trips = {
     return res.data;
   },
 
-  getMembers: async (tripId: number) => {
+  getMembers: async (tripId: string) => {
     const res = await api.get<{ members: TripMember[] }>(`/trips/${tripId}/members`);
     return res.data;
   },
 
-  removeMember: async (tripId: number, userId: number) => {
+  removeMember: async (tripId: string, userId: number) => {
     const res = await api.delete<{ message: string }>(`/trips/${tripId}/members/${userId}`);
     return res.data;
   },
 
-  getJoinRequests: async (tripId: number) => {
+  getJoinRequests: async (tripId: string) => {
     const res = await api.get<{ requests: JoinRequest[] }>(`/trips/${tripId}/join-requests`);
     return res.data;
   },
 
-  approveJoinRequest: async (tripId: number, requestId: number) => {
+  approveJoinRequest: async (tripId: string, requestId: number) => {
     const res = await api.post<{ message: string; member: TripMember }>(
       `/trips/${tripId}/join-requests/${requestId}/approve`
     );
     return res.data;
   },
 
-  rejectJoinRequest: async (tripId: number, requestId: number) => {
+  rejectJoinRequest: async (tripId: string, requestId: number) => {
     const res = await api.post<{ message: string }>(
       `/trips/${tripId}/join-requests/${requestId}/reject`
     );
@@ -124,13 +124,13 @@ export const trips = {
 };
 
 export const expenses = {
-  list: async (tripId: number) => {
+  list: async (tripId: string) => {
     const res = await api.get<{ expenses: Expense[] }>(`/trips/${tripId}/expenses`);
     return res.data;
   },
 
   create: async (
-    tripId: number,
+    tripId: string,
     data: {
       amount: number;
       description: string;
@@ -147,18 +147,18 @@ export const expenses = {
     return res.data;
   },
 
-  get: async (tripId: number, expenseId: number) => {
+  get: async (tripId: string, expenseId: number) => {
     const res = await api.get<{ expense: Expense }>(`/trips/${tripId}/expenses/${expenseId}`);
     return res.data;
   },
 
-  delete: async (tripId: number, expenseId: number) => {
+  delete: async (tripId: string, expenseId: number) => {
     const res = await api.delete<{ message: string }>(`/trips/${tripId}/expenses/${expenseId}`);
     return res.data;
   },
 
   update: async (
-    tripId: number,
+    tripId: string,
     expenseId: number,
     data: {
       amount?: number;
@@ -177,22 +177,22 @@ export const expenses = {
     return res.data;
   },
 
-  getBudget: async (tripId: number) => {
+  getBudget: async (tripId: string) => {
     const res = await api.get<{ budget: Budget }>(`/trips/${tripId}/budget`);
     return res.data;
   },
 
-  getSettlement: async (tripId: number) => {
+  getSettlement: async (tripId: string) => {
     const res = await api.get<SettlementData>(`/trips/${tripId}/settlement`);
     return res.data;
   },
 
-  getPersonalSettlement: async (tripId: number, userId: number) => {
+  getPersonalSettlement: async (tripId: string, userId: number) => {
     const res = await api.get<PersonalSettlementData>(`/trips/${tripId}/settlement/${userId}`);
     return res.data;
   },
 
-  getByDate: async (tripId: number) => {
+  getByDate: async (tripId: string) => {
     const res = await api.get<{
       expenses_by_date: ExpensesByDate[];
       trip_start: string | null;
@@ -201,7 +201,7 @@ export const expenses = {
     return res.data;
   },
 
-  getBudgetByDate: async (tripId: number) => {
+  getBudgetByDate: async (tripId: string) => {
     const res = await api.get<{
       budget_by_date: BudgetByDate[];
       overall_total: number;
@@ -213,7 +213,7 @@ export const expenses = {
     return res.data;
   },
 
-  settle: async (tripId: number, data: { amount: number; from_user_id: number; to_user_id: number; date?: string }) => {
+  settle: async (tripId: string, data: { amount: number; from_user_id: number; to_user_id: number; date?: string }) => {
     const res = await api.post<{ message: string; expense: Expense }>(`/trips/${tripId}/settle`, data);
     return res.data;
   },
@@ -235,14 +235,14 @@ export const expenses = {
 };
 
 export const options = {
-  list: async (tripId: number, sort?: 'created_at' | 'price' | 'votes') => {
+  list: async (tripId: string, sort?: 'created_at' | 'price' | 'votes') => {
     const params = sort ? { sort } : {};
     const res = await api.get<{ options: StayOption[] }>(`/trips/${tripId}/options`, { params });
     return res.data;
   },
 
   create: async (
-    tripId: number,
+    tripId: string,
     data: {
       title: string;
       link: string;
@@ -278,7 +278,7 @@ export const options = {
     return res.data;
   },
 
-  getRanked: async (tripId: number) => {
+  getRanked: async (tripId: string) => {
     const res = await api.get<{ ranked_options: RankedOption[] }>(`/trips/${tripId}/options/ranked`);
     return res.data;
   },
@@ -309,7 +309,7 @@ export const options = {
     return res.data;
   },
 
-  getByDate: async (tripId: number) => {
+  getByDate: async (tripId: string) => {
     const res = await api.get<{
       options_by_date: OptionsByDate[];
       trip_start: string | null;

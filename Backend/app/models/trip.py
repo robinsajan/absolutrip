@@ -3,10 +3,12 @@ from datetime import datetime
 from ..extensions import db
 
 
+import uuid
+
 class Trip(db.Model):
     __tablename__ = 'trips'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(200), nullable=False)
     destination = db.Column(db.String(200), nullable=True)
     start_date = db.Column(db.Date, nullable=True)
@@ -57,7 +59,7 @@ class TripMember(db.Model):
     __tablename__ = 'trip_members'
 
     id = db.Column(db.Integer, primary_key=True)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=False)
+    trip_id = db.Column(db.String(36), db.ForeignKey('trips.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     role = db.Column(db.String(20), default='member')
     status = db.Column(db.String(20), default='approved')  # pending, approved, rejected
@@ -87,7 +89,7 @@ class BudgetPlan(db.Model):
     __tablename__ = 'budget_plans'
 
     id = db.Column(db.Integer, primary_key=True)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=False)
+    trip_id = db.Column(db.String(36), db.ForeignKey('trips.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), default='Budget Scenario')
     selections = db.Column(db.JSON, nullable=False)  # List of selected options with metadata

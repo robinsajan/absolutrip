@@ -6,7 +6,7 @@ class Expense(db.Model):
     __tablename__ = 'expenses'
 
     id = db.Column(db.Integer, primary_key=True)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=False)
+    trip_id = db.Column(db.String(36), db.ForeignKey('trips.id'), nullable=False)
     paid_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)  # Total in Trip's primary currency
     base_amount = db.Column(db.Numeric(10, 2), nullable=True)  # Amount in original currency

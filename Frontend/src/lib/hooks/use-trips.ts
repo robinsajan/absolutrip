@@ -16,7 +16,7 @@ export function useTrips() {
   };
 }
 
-export function useTrip(tripId: number | null) {
+export function useTrip(tripId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ trip: Trip }>(
     tripId ? `/trips/${tripId}` : null,
     () => trips.get(tripId!)
@@ -30,7 +30,7 @@ export function useTrip(tripId: number | null) {
   };
 }
 
-export function useTripMembers(tripId: number | null) {
+export function useTripMembers(tripId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ members: TripMember[] }>(
     tripId ? `/trips/${tripId}/members` : null,
     () => trips.getMembers(tripId!)

@@ -29,7 +29,7 @@ import {
 export type BudgetTab = "overview" | "breakdown";
 
 interface BudgetDashboardProps {
-  tripId: number;
+  tripId: string;
   /**
    * Kept for compatibility with the route, but the
    * new design is a single overview page.

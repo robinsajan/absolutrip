@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import { expenses } from '@/lib/api/endpoints';
 import type { Expense, Budget, SettlementData, PersonalSettlementData } from '@/types';
 
-export function useExpenses(tripId: number | null) {
+export function useExpenses(tripId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ expenses: Expense[] }>(
     tripId ? `/trips/${tripId}/expenses` : null,
     () => expenses.list(tripId!)
@@ -16,7 +16,7 @@ export function useExpenses(tripId: number | null) {
   };
 }
 
-export function useBudget(tripId: number | null) {
+export function useBudget(tripId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<{ budget: Budget }>(
     tripId ? `/trips/${tripId}/budget` : null,
     () => expenses.getBudget(tripId!)
@@ -30,7 +30,7 @@ export function useBudget(tripId: number | null) {
   };
 }
 
-export function useSettlement(tripId: number | null) {
+export function useSettlement(tripId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<SettlementData>(
     tripId ? `/trips/${tripId}/settlement` : null,
     () => expenses.getSettlement(tripId!)
