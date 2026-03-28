@@ -1,4 +1,4 @@
-import os
+﻿import os
 import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN, InvalidOperation
@@ -24,7 +24,7 @@ def get_receipt_upload_folder():
     return upload_folder
 
 
-@bp.route('/trips/<int:trip_id>/expenses', methods=['POST'])
+@bp.route('/trips/<trip_id>/expenses', methods=['POST'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -228,7 +228,7 @@ def record_expense(trip_id, trip, membership):
     }), 201
 
 
-@bp.route('/trips/<int:trip_id>/expenses', methods=['GET'])
+@bp.route('/trips/<trip_id>/expenses', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -254,7 +254,7 @@ def list_expenses(trip_id, trip, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/expenses/<int:expense_id>', methods=['GET'])
+@bp.route('/trips/<trip_id>/expenses/<int:expense_id>', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -278,7 +278,7 @@ def get_expense(trip_id, expense_id, trip, membership):
     return jsonify({'expense': expense.to_dict(include_splits=True)}), 200
 
 
-@bp.route('/trips/<int:trip_id>/expenses/<int:expense_id>', methods=['PUT'])
+@bp.route('/trips/<trip_id>/expenses/<int:expense_id>', methods=['PUT'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -461,7 +461,7 @@ def update_expense(trip_id, expense_id, trip, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/expenses/<int:expense_id>/comments', methods=['GET', 'POST'])
+@bp.route('/trips/<trip_id>/expenses/<int:expense_id>/comments', methods=['GET', 'POST'])
 @trip_member_required
 def expense_comments(trip_id, expense_id, trip, membership):
     expense = Expense.query.filter_by(id=expense_id, trip_id=trip_id).first()
@@ -494,7 +494,7 @@ def expense_comments(trip_id, expense_id, trip, membership):
     return jsonify(comments), 200
 
 
-@bp.route('/trips/<int:trip_id>/expenses/<int:expense_id>/activities', methods=['GET'])
+@bp.route('/trips/<trip_id>/expenses/<int:expense_id>/activities', methods=['GET'])
 @trip_member_required
 def expense_activities(trip_id, expense_id, trip, membership):
     expense = Expense.query.filter_by(id=expense_id, trip_id=trip_id).first()
@@ -505,7 +505,7 @@ def expense_activities(trip_id, expense_id, trip, membership):
     return jsonify(activities), 200
 
 
-@bp.route('/trips/<int:trip_id>/expenses/<int:expense_id>', methods=['DELETE'])
+@bp.route('/trips/<trip_id>/expenses/<int:expense_id>', methods=['DELETE'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -535,7 +535,7 @@ def delete_expense(trip_id, expense_id, trip, membership):
     return jsonify({'message': 'Expense deleted successfully'}), 200
 
 
-@bp.route('/trips/<int:trip_id>/budget', methods=['GET'])
+@bp.route('/trips/<trip_id>/budget', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -556,7 +556,7 @@ def get_budget(trip_id, trip, membership):
     return jsonify({'budget': summary}), 200
 
 
-@bp.route('/trips/<int:trip_id>/settlement', methods=['GET'])
+@bp.route('/trips/<trip_id>/settlement', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -594,7 +594,7 @@ def get_settlement(trip_id, trip, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/settlement/<int:user_id>', methods=['GET'])
+@bp.route('/trips/<trip_id>/settlement/<int:user_id>', methods=['GET'])
 @trip_member_required
 def get_personal_settlement(trip_id, user_id, trip, membership):
     settlements = SettlementService.calculate_settlements(trip_id)
@@ -624,7 +624,7 @@ def get_personal_settlement(trip_id, user_id, trip, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/settle', methods=['POST'])
+@bp.route('/trips/<trip_id>/settle', methods=['POST'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -772,7 +772,7 @@ def serve_receipt(filename):
     return send_from_directory(get_receipt_upload_folder(), filename)
 
 
-@bp.route('/trips/<int:trip_id>/expenses/by-date', methods=['GET'])
+@bp.route('/trips/<trip_id>/expenses/by-date', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],
@@ -833,7 +833,7 @@ def get_expenses_by_date(trip_id, trip, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/budget/by-date', methods=['GET'])
+@bp.route('/trips/<trip_id>/budget/by-date', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Expenses'],

@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from flasgger import swag_from
@@ -100,7 +100,7 @@ def list_trips():
     return jsonify({'trips': trips}), 200
 
 
-@bp.route('/<int:trip_id>', methods=['GET'])
+@bp.route('/<trip_id>', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Trips'],
@@ -121,7 +121,7 @@ def get_trip(trip_id, trip, membership):
     return jsonify({'trip': trip.to_dict(include_members=True)}), 200
 
 
-@bp.route('/<int:trip_id>', methods=['PUT'])
+@bp.route('/<trip_id>', methods=['PUT'])
 @trip_member_required
 @swag_from({
     'tags': ['Trips'],
@@ -185,7 +185,7 @@ def update_trip(trip_id, trip, membership):
     }), 200
 
 
-@bp.route('/<int:trip_id>', methods=['DELETE'])
+@bp.route('/<trip_id>', methods=['DELETE'])
 @trip_owner_required
 @swag_from({
     'tags': ['Trips'],
@@ -270,7 +270,7 @@ def join_trip(invite_code):
     }), 200
 
 
-@bp.route('/<int:trip_id>/join-requests', methods=['GET'])
+@bp.route('/<trip_id>/join-requests', methods=['GET'])
 @trip_owner_required
 @swag_from({
     'tags': ['Trips'],
@@ -291,7 +291,7 @@ def list_join_requests(trip_id, trip, membership):
     return jsonify({'requests': [m.to_dict() for m in pending]}), 200
 
 
-@bp.route('/<int:trip_id>/join-requests/<int:request_id>/approve', methods=['POST'])
+@bp.route('/<trip_id>/join-requests/<int:request_id>/approve', methods=['POST'])
 @trip_owner_required
 @swag_from({
     'tags': ['Trips'],
@@ -326,7 +326,7 @@ def approve_join_request(trip_id, request_id, trip, membership):
     }), 200
 
 
-@bp.route('/<int:trip_id>/join-requests/<int:request_id>/reject', methods=['POST'])
+@bp.route('/<trip_id>/join-requests/<int:request_id>/reject', methods=['POST'])
 @trip_owner_required
 @swag_from({
     'tags': ['Trips'],
@@ -377,7 +377,7 @@ def my_join_requests():
     return jsonify({'requests': requests}), 200
 
 
-@bp.route('/<int:trip_id>/members', methods=['GET'])
+@bp.route('/<trip_id>/members', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Trips'],
@@ -399,7 +399,7 @@ def list_members(trip_id, trip, membership):
     return jsonify({'members': members}), 200
 
 
-@bp.route('/<int:trip_id>/members/<int:user_id>', methods=['DELETE'])
+@bp.route('/<trip_id>/members/<int:user_id>', methods=['DELETE'])
 @trip_owner_required
 @swag_from({
     'tags': ['Trips'],

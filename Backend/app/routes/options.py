@@ -1,4 +1,4 @@
-import os
+﻿import os
 import uuid
 from datetime import datetime
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
@@ -26,7 +26,7 @@ def get_upload_folder():
     return upload_folder
 
 
-@bp.route('/trips/<int:trip_id>/options', methods=['POST'])
+@bp.route('/trips/<trip_id>/options', methods=['POST'])
 @trip_member_required
 @swag_from({
     'tags': ['Options'],
@@ -119,7 +119,7 @@ def create_option(trip_id, trip, membership):
     }), 201
 
 
-@bp.route('/trips/<int:trip_id>/options', methods=['GET'])
+@bp.route('/trips/<trip_id>/options', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Options'],
@@ -500,7 +500,7 @@ def unfinalize_option(option_id, option, membership):
     }), 200
 
 
-@bp.route('/trips/<int:trip_id>/options/by-date', methods=['GET'])
+@bp.route('/trips/<trip_id>/options/by-date', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Options'],

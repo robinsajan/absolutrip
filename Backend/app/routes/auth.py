@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+﻿from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from flasgger import swag_from
 from ..extensions import db

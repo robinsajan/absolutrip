@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+﻿from flask import Blueprint, request, jsonify
 from flask_login import current_user
 from flasgger import swag_from
 from ..extensions import db
@@ -86,7 +86,7 @@ def cast_vote(option_id, option, membership):
     }), 201
 
 
-@bp.route('/trips/<int:trip_id>/options/ranked', methods=['GET'])
+@bp.route('/trips/<trip_id>/options/ranked', methods=['GET'])
 @trip_member_required
 @swag_from({
     'tags': ['Votes'],

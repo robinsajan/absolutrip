@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+﻿from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import current_user, login_required
 from ..extensions import db
@@ -32,7 +32,7 @@ def ai_trip_planner():
     if total_days <= 0:
         return jsonify({'error': 'Trip must be at least 1 day'}), 400
 
-    # ── 1. Fetch trip-specific options ──────────────────────────────────────
+    # â”€â”€ 1. Fetch trip-specific options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # ONLY use options specifically added to this trip's comparison hub.
     options = []
     if trip_id:
@@ -47,7 +47,7 @@ def ai_trip_planner():
     if not stays:
         return jsonify({'error': 'No stay options found to cover the trip.'}), 404
 
-    # ── 2. Find all combinations of stays that cover the trip duration ──────
+    # â”€â”€ 2. Find all combinations of stays that cover the trip duration â”€â”€â”€â”€â”€â”€
     def get_stay_cost_pp(stay):
         if stay.price_per_day_pp: return float(stay.price_per_day_pp) * (stay.duration_days or 1)
         if stay.price: return (float(stay.price) / travelers) * (stay.duration_days or 1)
@@ -78,7 +78,7 @@ def ai_trip_planner():
         if key not in deduped_combos:
             deduped_combos[key] = combo
 
-    # ── 3. For each stay combo, find the best subset of activities ──────────
+    # â”€â”€ 3. For each stay combo, find the best subset of activities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     all_potential_plans = []
 
     for key, combo in deduped_combos.items():
@@ -143,7 +143,7 @@ def ai_trip_planner():
             'distance': abs(total_plan_cost - budget)
         })
 
-    # ── 4. Return top 2 plans closest to budget ─────────────────────────────
+    # â”€â”€ 4. Return top 2 plans closest to budget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if not all_potential_plans:
         return jsonify({'error': 'Could not generate any valid trip plans.'}), 404
 
@@ -177,7 +177,7 @@ def get_global_options():
     options = query.all()
     return jsonify({'options': [o.to_dict() for o in options]}), 200
 
-@bp.route('/promote/<int:trip_id>', methods=['POST'])
+@bp.route('/promote/<trip_id>', methods=['POST'])
 @trip_member_required
 def promote_trip(trip_id, trip, membership):
     """Promote a trip to the explore page."""
@@ -196,7 +196,7 @@ def list_promoted_trips():
     return jsonify({'trips': [t.to_dict(include_members=True) for t in trips]}), 200
 
 
-@bp.route('/plans/<int:trip_id>', methods=['GET', 'OPTIONS'])
+@bp.route('/plans/<trip_id>', methods=['GET', 'OPTIONS'])
 @trip_member_required
 def get_budget_plans(trip_id, trip, membership):
     """Get all saved budget plans for a trip."""
@@ -204,7 +204,7 @@ def get_budget_plans(trip_id, trip, membership):
     return jsonify({'plans': [p.to_dict() for p in plans]}), 200
 
 
-@bp.route('/plans/<int:trip_id>', methods=['POST', 'OPTIONS'])
+@bp.route('/plans/<trip_id>', methods=['POST', 'OPTIONS'])
 @trip_member_required
 def save_budget_plan(trip_id, trip, membership):
     """Save the current budget scenario as a plan."""
