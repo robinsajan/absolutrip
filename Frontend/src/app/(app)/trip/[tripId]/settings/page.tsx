@@ -29,7 +29,7 @@ import { format } from "date-fns";
 export default function SettingsPage() {
   const params = useParams();
   const router = useRouter();
-  const tripId = Number(params.tripId);
+  const tripId = params.tripId as string;
   const { user, activeTrip, setActiveTrip } = useAppStore();
   const { mutate: mutateTrips } = useTrips();
   const [isDeleting, setIsDeleting] = useState(false);

@@ -15,7 +15,7 @@ export default function TripLayout({
   const params = useParams();
   const tripId = params.tripId as string;
   const pathname = usePathname();
-  const { trip, isLoading } = useTrip(Number(tripId));
+  const { trip, isLoading } = useTrip(tripId);
   const setActiveTrip = useAppStore((state) => state.setActiveTrip);
 
   useEffect(() => {

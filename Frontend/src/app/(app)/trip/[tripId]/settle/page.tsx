@@ -5,7 +5,7 @@ import { TripSettleView } from "@/components/settle/TripSettleView";
 
 export default function SettlePage() {
   const params = useParams();
-  const tripId = Number(params.tripId);
+  const tripId = params.tripId as string;
 
   return <TripSettleView tripId={tripId} />;
 }

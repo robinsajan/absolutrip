@@ -27,7 +27,7 @@ import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 export default function MembersPage() {
   const params = useParams();
-  const tripId = Number(params.tripId);
+  const tripId = params.tripId as string;
   const { members, isLoading, mutate: mutateMembers } = useTripMembers(tripId);
   const { user, activeTrip } = useAppStore();
   const [removingMember, setRemovingMember] = useState<number | null>(null);

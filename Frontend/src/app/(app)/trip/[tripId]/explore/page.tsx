@@ -81,7 +81,7 @@ function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string })
 export default function ExplorePage() {
   const params = useParams();
   const router = useRouter();
-  const tripId = Number(params.tripId);
+  const tripId = params.tripId as string;
   const { user, logout } = useAuth();
   const { trip: activeTrip } = useTrip(tripId);
   const { rankedOptions, isLoading, mutate } = useRankedOptions(tripId);

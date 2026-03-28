@@ -34,7 +34,7 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
 
   const { data: requestsData } = useSWR(
     isOwner && tripId ? `join-requests-${tripId}` : null,
-    () => tripsApi.getJoinRequests(Number(tripId))
+    () => tripsApi.getJoinRequests(tripId)
   );
 
   const pendingCount = requestsData?.requests?.length || 0;
