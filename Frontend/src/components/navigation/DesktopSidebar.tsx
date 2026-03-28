@@ -65,7 +65,7 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
             <span className="material-symbols-outlined">travel_explore</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold font-serif text-primary leading-tight">AbsoluTrip</h1>
+            <h1 className="text-xl font-bold font-serif text-primary leading-tight">absoluTrip</h1>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Manage Trip</p>
           </div>
         </div>
@@ -111,19 +111,7 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
                 )}
               >
                 <span className="material-symbols-outlined text-sm">receipt_long</span>
-                Ledger
-              </Link>
-              <Link
-                href={`/trip/${tripId}/settle`}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors rounded-md",
-                  pathname.includes("/settle")
-                    ? "text-primary font-bold bg-primary/5"
-                    : "text-slate-500 hover:text-primary"
-                )}
-              >
-                <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
-                Settle
+                Expense
               </Link>
             </div>
           </div>

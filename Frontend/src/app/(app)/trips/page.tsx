@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
+import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
@@ -355,10 +356,7 @@ export default function TripsPage() {
 
         {/* Trips Grid */}
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-4">
-            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Curating your adventures...</p>
-          </div>
+          <FullPageLoader />
         ) : trips && trips.length > 0 ? (
           <div className="space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">

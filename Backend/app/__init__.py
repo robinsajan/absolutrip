@@ -58,22 +58,25 @@ def create_app(config_name=None):
 
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
     CORS(app, 
-         origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:3000"],
          supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+         resources={r"/api/*": {
+             "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+             "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+         }})
 
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     Swagger(app, template=swagger_template, config=swagger_config)
 
-    from .routes import auth, trips, options, votes, expenses
+    from .routes import auth, trips, options, votes, expenses, budget
     app.register_blueprint(auth.bp)
     app.register_blueprint(trips.bp)
     app.register_blueprint(options.bp)
     app.register_blueprint(votes.bp)
     app.register_blueprint(expenses.bp)
+    app.register_blueprint(budget.bp)
 
     @app.route('/health')
     def health_check():

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Users, Crown, Clock, Check, X, UserMinus } from "lucide-react";
 import type { JoinRequest } from "@/types";
+import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 export default function MembersPage() {
   const params = useParams();
@@ -87,11 +88,7 @@ export default function MembersPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <FullPageLoader />;
   }
 
   return (

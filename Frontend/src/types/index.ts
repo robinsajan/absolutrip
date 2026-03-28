@@ -16,6 +16,10 @@ export interface Trip {
   google_maps_url?: string;
   image_url?: string;
   description?: string;
+  destination?: string;
+  budget?: number;
+  num_travelers?: number;
+  is_promoted?: boolean;
   members?: TripMember[];
 }
 
@@ -114,6 +118,9 @@ export interface StayOption {
   is_per_night?: boolean;
   price_per_day_pp?: number;
   total_price?: number;
+  duration_days?: number;
+  destination?: string;
+  is_global?: boolean;
 }
 
 export interface OptionsByDate {

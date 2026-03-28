@@ -404,6 +404,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
               memberCount={memberCount}
               expenseCount={budget.expense_count}
               personalBalance={personalBalance}
+              expectedPrice={combinedAdminPickPerPerson}
               whoShouldPayNext={budget.who_should_pay_next}
             />
 
@@ -631,22 +632,32 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
             <Card className="bg-slate-100/50 dark:bg-slate-800/50 border-none">
               <CardHeader className="pb-2">
                 <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  Trip Budget (Per Person)
+                  Trip Cost Estimate (Per Person)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Admin Proposed Share
-                  </span>
-                  <span className="text-sm font-bold">
-                    ${combinedAdminPickPerPerson.toFixed(0)}
-                  </span>
+                {/* Admin's Expected Price — Primary figure */}
+                <div className="bg-black dark:bg-white rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/50 dark:text-black/50 block mb-0.5">
+                      Admin's Expected Price
+                    </span>
+                    <span className="text-[9px] text-white/30 dark:text-black/30 font-medium">
+                      From finalized options
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-[#ccff00] dark:text-primary">
+                      ₹{combinedAdminPickPerPerson.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
                 </div>
+
+                {/* User's Selected Scenario */}
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Planned Options
+                      Your Planned Cost
                     </span>
                     <span className="text-[8px] text-muted-foreground uppercase font-medium">Selected Scenarios</span>
                   </div>
@@ -657,16 +668,17 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                       <TrendingDown className="h-4 w-4 text-slate-900 dark:text-white" />
                     )}
                     <span className="text-sm font-bold">
-                      ${(stayScenarioTotal + activityScenarioTotal).toFixed(0)}
+                      ₹{(stayScenarioTotal + activityScenarioTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </span>
                   </div>
                 </div>
+
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
                   <span className="text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">
                     Your Total Est.
                   </span>
                   <span className="text-lg font-black text-black dark:text-white">
-                    ${(baseTotal + stayScenarioTotal + activityScenarioTotal).toFixed(0)}
+                    ₹{(baseTotal + stayScenarioTotal + activityScenarioTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </CardContent>

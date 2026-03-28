@@ -29,13 +29,15 @@ export function Header() {
     return (
         <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-primary/10 h-20">
             <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-                {/* Left Section: Logo */}
-                <Link href="/trips" className="flex items-center gap-2 group transition-all hover:scale-105 active:scale-95">
-                    <div className="bg-primary p-2.5 rounded-xl text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-                        <span className="material-symbols-outlined outline-icon text-xl">flight_takeoff</span>
-                    </div>
-                    <span className="text-xl font-black tracking-tight text-black dark:text-white lowercase">absolutrip</span>
-                </Link>
+                <div className="flex items-center gap-8">
+                    <Link href="/trips" className="flex items-center gap-2 group transition-all hover:scale-105 active:scale-95">
+                        <div className="bg-primary p-2.5 rounded-xl text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                            <span className="material-symbols-outlined outline-icon text-xl">flight_takeoff</span>
+                        </div>
+                        <span className="text-xl font-black tracking-tight text-black dark:text-white lowercase">absolutrip</span>
+                    </Link>
+
+                </div>
 
                 {/* Right Section: Actions */}
                 <div className="flex items-center gap-3 md:gap-5">

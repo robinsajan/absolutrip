@@ -5,6 +5,7 @@ import { useParams, usePathname } from "next/navigation";
 import { MobileTabBar, DesktopSidebar, TripHeader } from "@/components/navigation";
 import { useTrip } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
+import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 export default function TripLayout({
   children,
@@ -27,11 +28,7 @@ export default function TripLayout({
   }, [trip, setActiveTrip]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <FullPageLoader />;
   }
 
   return (

@@ -237,23 +237,23 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
           </p>
         </div>
 
-        {/* Dates component upgraded to DateRange */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground">Dates</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className={cn(
-                  "w-full justify-start rounded-lg border-border bg-background px-4 py-2 text-left font-normal",
-                  !dateSelection?.from && "text-muted-foreground"
-                )}
-                disabled={isLoading}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                {category === "stay" ? (
-                  dateSelection?.from ? (
+        {/* Dates component upgraded to DateRange - Only for stays */}
+        {category === "stay" && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-foreground">Dates</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start rounded-lg border-border bg-background px-4 py-2 text-left font-normal",
+                    !dateSelection?.from && "text-muted-foreground"
+                  )}
+                  disabled={isLoading}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {dateSelection?.from ? (
                     dateSelection.to ? (
                       <>
                         {format(dateSelection.from, "MMM d")} - {format(dateSelection.to, "MMM d")}
@@ -263,14 +263,10 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                     )
                   ) : (
                     "Select dates"
-                  )
-                ) : (
-                  dateSelection?.from ? format(dateSelection.from, "MMM d") : "Select date"
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              {category === "stay" ? (
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
                 <CalendarComponent
                   mode="range"
                   selected={dateSelection}
@@ -286,20 +282,10 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   initialFocus
                   numberOfMonths={1}
                 />
-              ) : (
-                <CalendarComponent
-                  mode="single"
-                  selected={dateSelection?.from}
-                  onSelect={(val: any) => setDateSelection(val ? { from: val, to: undefined } : undefined)}
-                  disabled={isDateDisabled}
-                  defaultMonth={dateSelection?.from || tripDateRange?.start}
-                  initialFocus
-                  numberOfMonths={1}
-                />
-              )}
-            </PopoverContent>
-          </Popover>
-        </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
 
         {/* Images Selection */}
         <div className="space-y-2">

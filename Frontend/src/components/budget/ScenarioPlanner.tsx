@@ -187,14 +187,14 @@ export function ScenarioPlanner({
 
               <div className="text-right shrink-0">
                 <p className={`font-bold text-sm md:text-base ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
-                  ${ppTotal.toFixed(2)}
+                  ₹{ppTotal.toFixed(2)}
                 </p>
                 <div className="flex flex-col text-[10px] text-muted-foreground leading-tight">
                   <p>
-                    ${unitPrice.toFixed(0)} / PN
+                    ₹{unitPrice.toFixed(0)} / PN
                   </p>
                   <p>
-                    Grp: ${groupTotal.toFixed(0)}
+                    Grp: ₹{groupTotal.toFixed(0)}
                   </p>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function ScenarioPlanner({
         {selectedOptionIds.length > 0 && (
           <div className="pt-3 border-t flex items-center justify-between">
             <span className="text-sm font-medium">Extra Scenario Total (/ Person)</span>
-            <span className="font-bold text-primary">${totalSelectedPrice.toFixed(2)}</span>
+            <span className="font-bold text-primary">₹{totalSelectedPrice.toFixed(2)}</span>
           </div>
         )}
       </CardContent>

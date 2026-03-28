@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Info } from "lucide-react";
+import { Users, Info, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -15,6 +15,7 @@ interface BudgetHeaderProps {
   memberCount: number;
   expenseCount: number;
   personalBalance?: number;
+  expectedPrice?: number;
   whoShouldPayNext?: {
     user_id: number;
     user_name: string;
@@ -29,6 +30,7 @@ export function BudgetHeader({
   memberCount,
   expenseCount,
   personalBalance,
+  expectedPrice,
   whoShouldPayNext,
 }: BudgetHeaderProps) {
   return (
@@ -43,9 +45,9 @@ export function BudgetHeader({
                 : "bg-black/5 border-black/10 text-black/70"
               }`}>
               {personalBalance > 0.01 ? (
-                <>Others owe you ${personalBalance.toFixed(2)}</>
+                <>Others owe you ₹{personalBalance.toFixed(2)}</>
               ) : personalBalance < -0.01 ? (
-                <>You owe others ${Math.abs(personalBalance).toFixed(2)}</>
+                <>You owe others ₹{Math.abs(personalBalance).toFixed(2)}</>
               ) : (
                 <>You're all settled up!</>
               )}
@@ -78,13 +80,29 @@ export function BudgetHeader({
             </TooltipProvider>
           </div>
           <p className="text-5xl font-black mt-1 tracking-tight">
-            ${perPersonAverage.toFixed(2)}
+            ₹{perPersonAverage.toFixed(2)}
           </p>
         </div>
 
+        {expectedPrice !== undefined && expectedPrice > 0 && (
+          <div className="mt-5 mx-1 bg-black/10 rounded-2xl px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 opacity-70" />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Admin&apos;s Expected Price</p>
+                <p className="text-[9px] text-black/50 font-medium">Based on finalized options</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black tracking-tight">₹{expectedPrice.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+              <p className="text-[9px] font-bold uppercase opacity-60">/ person</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-black/10">
           <div className="text-center">
-            <p className="text-2xl font-black">${totalExpenses.toFixed(0)}</p>
+            <p className="text-2xl font-black">₹{totalExpenses.toFixed(0)}</p>
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Total</p>
           </div>
           <div className="text-center">
@@ -95,7 +113,7 @@ export function BudgetHeader({
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Members</p>
           </div>
           <div className="text-center border-l border-black/10">
-            <p className="text-2xl font-black">${(totalExpenses / Math.max(memberCount, 1)).toFixed(0)}</p>
+            <p className="text-2xl font-black">₹{(totalExpenses / Math.max(memberCount, 1)).toFixed(0)}</p>
             <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Avg</p>
           </div>
         </div>

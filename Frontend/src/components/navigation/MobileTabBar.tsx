@@ -12,8 +12,7 @@ interface MobileTabBarProps {
 const tabs = [
   { name: "Explore", href: "explore", icon: Compass },
   { name: "Budget", href: "budget", icon: Calculator },
-  { name: "Ledger", href: "ledger", icon: Receipt },
-  { name: "Settle", href: "settle", icon: Wallet },
+  { name: "Expense", href: "ledger", icon: Receipt },
 ];
 
 export function MobileTabBar({ tripId }: MobileTabBarProps) {

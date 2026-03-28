@@ -268,37 +268,39 @@ export default function SettingsPage() {
                 <div className="p-10">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-3xl font-black tracking-tight">Wait! Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-6 pt-4">
-                      <p className="text-slate-500 font-medium">
-                        Deleting <strong>&quot;{activeTrip?.name}&quot;</strong> will permanently remove all data for everyone. This cannot be undone.
-                      </p>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-6 pt-4">
+                        <p className="text-slate-500 font-medium">
+                          Deleting <strong>&quot;{activeTrip?.name}&quot;</strong> will permanently remove all data for everyone. This cannot be undone.
+                        </p>
 
-                      <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
-                        <ul className="space-y-3">
-                          {[
-                            "All stay options and community votes",
-                            "Entire expense ledger and balances",
-                            "All member and invitation data"
-                          ].map((item, i) => (
-                            <li key={i} className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                              <span className="material-symbols-outlined text-red-500 text-sm">cancel</span>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                          <ul className="space-y-3">
+                            {[
+                              "All stay options and community votes",
+                              "Entire expense ledger and balances",
+                              "All member and invitation data"
+                            ].map((item, i) => (
+                              <li key={i} className="flex items-center gap-3 text-xs font-bold text-slate-400">
+                                <span className="material-symbols-outlined text-red-500 text-sm">cancel</span>
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                      <div className="pt-4 space-y-3">
-                        <Label htmlFor="confirm-name" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
-                          Type <span className="text-black dark:text-white">{activeTrip?.name}</span> below to confirm
-                        </Label>
-                        <Input
-                          id="confirm-name"
-                          value={confirmName}
-                          onChange={(e) => setConfirmName(e.target.value)}
-                          placeholder="Type trip name here"
-                          className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-red-600 focus:ring-4 focus:ring-red-600/5 transition-all font-bold"
-                        />
+                        <div className="pt-4 space-y-3">
+                          <Label htmlFor="confirm-name" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
+                            Type <span className="text-black dark:text-white">{activeTrip?.name}</span> below to confirm
+                          </Label>
+                          <Input
+                            id="confirm-name"
+                            value={confirmName}
+                            onChange={(e) => setConfirmName(e.target.value)}
+                            placeholder="Type trip name here"
+                            className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-red-600 focus:ring-4 focus:ring-red-600/5 transition-all font-bold"
+                          />
+                        </div>
                       </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>

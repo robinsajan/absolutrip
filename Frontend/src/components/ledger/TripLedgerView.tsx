@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Wallet } from "lucide-react";
 import { useAuth, useExpenses, useSettlement, useTripMembers, useRankedOptions, useBudget } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
 import { expenses as expensesApi } from "@/lib/api/endpoints";
@@ -44,6 +45,7 @@ function getInitials(name: string) {
 }
 
 export function TripLedgerView({ tripId }: { tripId: number }) {
+  const router = useRouter();
   const { user } = useAuth();
   const { activeTrip } = useAppStore();
   const { expenses, isLoading: expensesLoading, mutate: mutateExpenses } = useExpenses(tripId);
@@ -178,23 +180,32 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">ledger log</h1>
+            <h1 className="text-3xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">expense log</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-2 font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
               {activeTrip?.name || "Trip"} • {expenses.length} transactions
             </p>
           </div>
 
-          {/* Desktop Add Button */}
-          <button
-            onClick={() => {
-              setEditingExpense(null);
-              setShowAddExpense(true);
-            }}
-            className="hidden md:flex bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5 animate-in fade-in slide-in-from-right-4 duration-700"
-          >
-            <span className="material-symbols-outlined text-xl">add</span>
-            add expense
-          </button>
+          {/* Desktop Actions */}
+          <div className="flex gap-4 items-center animate-in fade-in slide-in-from-right-4 duration-700">
+            <button
+              onClick={() => router.push(`/trip/${tripId}/settle`)}
+              className="hidden md:flex bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 px-6 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:bg-emerald-100 transition-all shadow-sm"
+            >
+              <Wallet className="size-4" />
+              Settle Up
+            </button>
+            <button
+              onClick={() => {
+                setEditingExpense(null);
+                setShowAddExpense(true);
+              }}
+              className="hidden md:flex bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5"
+            >
+              <span className="material-symbols-outlined text-xl">add</span>
+              add expense
+            </button>
+          </div>
         </div>
 
         {/* Mobile FAB */}
@@ -210,7 +221,7 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Main Ledger Area */}
+          {/* Main Expense Area */}
           <div className="lg:col-span-8 space-y-12">
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-3 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -228,22 +239,25 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
+              <div 
+                className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01] cursor-pointer"
+                onClick={() => router.push(`/trip/${tripId}/settle`)}
+              >
                 <div>
                   <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 lowercase">you owe</p>
                   <h2 className="text-xl sm:text-2xl md:text-5xl font-black text-rose-500 tracking-tighter">{money(youOwe)}</h2>
                   <p className="hidden sm:flex text-rose-500/60 text-[8px] font-black uppercase tracking-widest mt-2 items-center gap-1">
-                    <span className="material-symbols-outlined text-xs material-symbols-filled">trending_down</span>
-                    settle up soon
+                    <span className="material-symbols-outlined text-xs material-symbols-filled">account_balance_wallet</span>
+                    settle all debts
                   </p>
                 </div>
                 <div className="w-8 h-8 md:w-16 md:h-16 bg-rose-50 dark:bg-rose-900/20 rounded-xl md:rounded-2xl flex items-center justify-center text-rose-500 transform -rotate-3 transition-transform group-hover:-rotate-6 shrink-0">
-                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">call_received</span>
+                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">payments</span>
                 </div>
               </div>
             </div>
 
-            {/* Ledger Table Container */}
+            {/* Expense Table Container */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
               <div className="p-6 md:p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex flex-col text-center md:text-left">
@@ -470,14 +484,14 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
                   <button className="w-full bg-emerald-500 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between active:scale-95 transition-transform">
                     <div className="flex items-center gap-3">
                       <span className="material-symbols-outlined text-xl material-symbols-filled">insights</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest">View Ledger Insights</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">View Expense Insights</span>
                     </div>
                     <span className="material-symbols-outlined">expand_more</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] bg-[#fbfbf8] dark:bg-slate-950 rounded-t-[3rem] p-8 overflow-y-auto border-none">
                   <SheetHeader className="mb-8">
-                    <SheetTitle className="text-3xl font-black lowercase serif-title italic">ledger insights</SheetTitle>
+                    <SheetTitle className="text-3xl font-black lowercase serif-title italic">expense insights</SheetTitle>
                   </SheetHeader>
                   <div className="space-y-8">
                     {/* Spending Progress */}
@@ -572,7 +586,7 @@ export function TripLedgerView({ tripId }: { tripId: number }) {
               <div className="bg-emerald-500 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 text-white">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-white text-xl material-symbols-filled">insights</span>
-                  <h4 className="font-black text-[10px] uppercase tracking-widest text-white/80">Ledger Insights</h4>
+                  <h4 className="font-black text-[10px] uppercase tracking-widest text-white/80">Expense Insights</h4>
                 </div>
                 <p className="text-xs font-bold leading-relaxed">
                   Total group spending has reached {money(actualExpenses)}.

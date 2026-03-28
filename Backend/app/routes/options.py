@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
 from flask_login import current_user
 from flasgger import swag_from
 from werkzeug.utils import secure_filename
@@ -9,6 +9,7 @@ from ..extensions import db
 from ..models import StayOption
 from ..utils.decorators import trip_member_required, option_access_required
 from ..services.scraper import LinkScraperService
+from ..services.supabase_storage import SupabaseStorage
 
 bp = Blueprint('options', __name__, url_prefix='/api')
 
@@ -98,7 +99,8 @@ def create_option(trip_id, trip, membership):
         check_out_date=check_out_date,
         category=data.get('category', 'stay'),
         is_per_person=data.get('is_per_person', False),
-        is_per_night=data.get('is_per_night', False)
+        is_per_night=data.get('is_per_night', False),
+        duration_days=data.get('duration_days')
     )
     db.session.add(option)
     db.session.flush()
@@ -273,12 +275,9 @@ def update_option(option_id, option, membership):
 })
 def delete_option(option_id, option, membership):
     if option.image_path:
-        try:
-            image_file = os.path.join(get_upload_folder(), option.image_path)
-            if os.path.exists(image_file):
-                os.remove(image_file)
-        except Exception:
-            pass
+        paths = option.image_path.split(',')
+        for p in paths:
+            SupabaseStorage.delete_file(p)
 
     db.session.delete(option)
     db.session.commit()
@@ -320,21 +319,55 @@ def upload_option_image(option_id, option, membership):
     if not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp'}), 400
 
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(get_upload_folder(), filename)
-    file.save(filepath)
-
-    if option.image_path:
-        option.image_path = f"{option.image_path},{filename}"
+    # Try Supabase upload first
+    result = SupabaseStorage.upload_file(file)
+    
+    if not result:
+        # Fallback to local storage if Supabase is not configured yet or fails
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(get_upload_folder(), filename)
+        file.save(filepath)
+        
+        # In local fallback, URL is served by the app
+        new_url = f"/uploads/options/{filename}"
+        new_path = filename
     else:
-        option.image_path = filename
+        new_path = result["filename"]
+        # Use a proxy route for private Supabase images
+        new_url = f"/options/{option.id}/images/{new_path}"
+
+    # Handle multiple images (stored as comma-separated paths and URLs)
+    if option.image_path:
+        option.image_path = f"{option.image_path},{new_path}"
+        option.image_url = f"{option.image_url or ''},{new_url}".strip(',')
+    else:
+        option.image_path = new_path
+        option.image_url = new_url
+    
     db.session.commit()
 
     return jsonify({
         'message': 'Image uploaded successfully',
         'option': option.to_dict(include_votes=True)
     }), 200
+
+
+@bp.route('/options/<int:option_id>/images/<path:filename>', methods=['GET'])
+@option_access_required
+def serve_option_supabase_image(option_id, option, membership, filename):
+    # This acts as our secure bridge to private Supabase images
+    # 1. We authenticate via @option_access_required
+    # 2. We generate a temporary signed URL (expires in 60s)
+    # 3. We redirect the browser to it
+    signed_url = SupabaseStorage.get_signed_url(filename, expires_in=60)
+    
+    if not signed_url:
+        return jsonify({'error': 'Could not generate access for this image'}), 400
+    
+    from flask import redirect
+    return redirect(signed_url)
+
 
 
 @bp.route('/options/<int:option_id>/image', methods=['DELETE'])
@@ -353,14 +386,23 @@ def upload_option_image(option_id, option, membership):
 })
 def delete_option_image(option_id, option, membership):
     if option.image_path:
-        try:
-            filepath = os.path.join(get_upload_folder(), option.image_path)
-            if os.path.exists(filepath):
-                os.remove(filepath)
-        except Exception:
-            pass
+        paths = option.image_path.split(',')
+        urls = (option.image_url or '').split(',')
+        
+        # Remove the latest image or all? Current logic deletes ALL for simplicity or could be refined
+        for p in paths:
+            if "/" in p: # Supabase path
+                SupabaseStorage.delete_file(p)
+            else: # Local path fallback
+                try:
+                    filepath = os.path.join(get_upload_folder(), p)
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                except:
+                    pass
 
         option.image_path = None
+        option.image_url = None
         db.session.commit()
 
     return jsonify({

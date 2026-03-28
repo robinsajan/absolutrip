@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/hooks";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
+import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,6 +30,10 @@ export default function RegisterPage() {
       router.replace("/trips");
     }
   }, [authLoading, isAuthenticated, router]);
+
+  if (authLoading || isAuthenticated) {
+    return <FullPageLoader />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

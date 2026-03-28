@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FullPageLoader } from "@/components/common/FullPageLoader";
 
 function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -73,7 +74,6 @@ export default function ExplorePage() {
   const [extractedData, setExtractedData] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -217,15 +217,8 @@ export default function ExplorePage() {
   }, [rankedOptions, selectedDate]);
 
   const activities = useMemo(() => {
-    let list = (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
-    if (selectedDate) {
-      list = list.filter(ro => {
-        if (!ro.option.check_in_date) return false;
-        return isSameDay(parseISO(ro.option.check_in_date), selectedDate);
-      });
-    }
-    return list;
-  }, [rankedOptions, selectedDate]);
+    return (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
+  }, [rankedOptions]);
 
   if (!mounted) return null;
 
@@ -236,10 +229,13 @@ export default function ExplorePage() {
     const isStay = ro.option.category === "stay";
 
     let imageUrls = ["https://images.unsplash.com/photo-1530789253388-582c481c54b0?q=80&w=2070&auto=format&fit=crop"];
-    if (ro.option.image_path) {
+    if (ro.option.image_url) {
+      imageUrls = ro.option.image_url.split(',').map((u: string) => {
+        const url = u.trim();
+        return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${url}`;
+      });
+    } else if (ro.option.image_path) {
       imageUrls = ro.option.image_path.split(',').map((u: string) => `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${u.trim()}`);
-    } else if (ro.option.image_url) {
-      imageUrls = ro.option.image_url.split(',').map((u: string) => u.trim());
     }
 
     const nights = ro.option.check_in_date && ro.option.check_out_date
@@ -303,7 +299,7 @@ export default function ExplorePage() {
             {ro.option.notes || ro.option.link_description || "Explore this amazing possibility."}
           </p>
           <div className="mt-auto">
-            {ro.option.check_in_date && (
+            {isStay && ro.option.check_in_date && (
               <div className="flex items-center gap-1.5 mb-2 md:mb-3 p-2 md:p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg md:rounded-xl border border-slate-100 dark:border-slate-800/50">
                 <span className="material-symbols-outlined text-xs md:text-sm text-primary">calendar_today</span>
                 <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300">
@@ -402,10 +398,7 @@ export default function ExplorePage() {
             )}
 
             {isLoading ? (
-              <div className="py-20 flex flex-col items-center justify-center gap-4">
-                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Comparing...</p>
-              </div>
+              <FullPageLoader />
             ) : rankedOptions?.length === 0 ? (
               <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800">
                 <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>

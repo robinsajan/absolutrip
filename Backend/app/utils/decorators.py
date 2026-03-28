@@ -1,13 +1,18 @@
 from functools import wraps
-from flask import jsonify
-from flask_login import current_user, login_required
+from flask import jsonify, request
+from flask_login import current_user
 from ..models import Trip, TripMember
 
 
 def trip_member_required(f):
     @wraps(f)
-    @login_required
     def decorated_function(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return '', 200
+
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+
         trip_id = kwargs.get('trip_id')
         if not trip_id:
             return jsonify({'error': 'Trip ID is required'}), 400
@@ -33,8 +38,13 @@ def trip_member_required(f):
 
 def trip_owner_required(f):
     @wraps(f)
-    @login_required
     def decorated_function(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return '', 200
+
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+
         trip_id = kwargs.get('trip_id')
         if not trip_id:
             return jsonify({'error': 'Trip ID is required'}), 400
@@ -60,8 +70,13 @@ def trip_owner_required(f):
 
 def option_access_required(f):
     @wraps(f)
-    @login_required
     def decorated_function(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return '', 200
+
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+
         from ..models import StayOption
 
         option_id = kwargs.get('option_id')
@@ -85,3 +100,7 @@ def option_access_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+
+

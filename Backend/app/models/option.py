@@ -6,12 +6,12 @@ class StayOption(db.Model):
     __tablename__ = 'stay_options'
 
     id = db.Column(db.Integer, primary_key=True)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=False)
+    trip_id = db.Column(db.Integer, db.ForeignKey('trips.id'), nullable=True) # Optional for global catalog
     title = db.Column(db.String(200), nullable=False)
     link = db.Column(db.String(500), nullable=True)
     price = db.Column(db.Numeric(10, 2), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    added_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    added_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     image_path = db.Column(db.String(500), nullable=True)
@@ -27,6 +27,11 @@ class StayOption(db.Model):
     is_per_night = db.Column(db.Boolean, default=False)
     price_per_day_pp = db.Column(db.Numeric(10, 2), nullable=True)
     total_price = db.Column(db.Numeric(10, 2), nullable=True)
+
+    # Added for PRD Budget Planner
+    is_global = db.Column(db.Boolean, default=False)
+    destination = db.Column(db.String(200), nullable=True)
+    duration_days = db.Column(db.Integer, nullable=True) # Recommended duration for the stay
 
     trip = db.relationship('Trip', back_populates='options')
     added_by_user = db.relationship('User', back_populates='added_options')
@@ -74,7 +79,7 @@ class StayOption(db.Model):
             'price': float(self.price) if self.price else None,
             'notes': self.notes,
             'added_by': self.added_by,
-            'added_by_name': self.added_by_user.name,
+            'added_by_name': self.added_by_user.name if self.added_by_user else 'System',
             'created_at': self.created_at.isoformat(),
             'image_path': self.image_path,
             'image_url': self.image_url,
@@ -87,7 +92,10 @@ class StayOption(db.Model):
             'is_per_person': self.is_per_person,
             'is_per_night': self.is_per_night,
             'price_per_day_pp': float(self.price_per_day_pp) if self.price_per_day_pp else None,
-            'total_price': float(self.total_price) if self.total_price else None
+            'total_price': float(self.total_price) if self.total_price else None,
+            'is_global': self.is_global,
+            'destination': self.destination,
+            'duration_days': self.duration_days
         }
         if include_votes:
             data['votes'] = [v.to_dict() for v in self.votes]
