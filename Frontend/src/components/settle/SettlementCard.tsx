@@ -25,7 +25,7 @@ import type { Settlement } from "@/types";
 interface SettlementCardProps {
   settlement: Settlement;
   type: "pay" | "receive";
-  tripId?: number;
+  tripId?: string;
   onSettled?: () => void;
 }
 

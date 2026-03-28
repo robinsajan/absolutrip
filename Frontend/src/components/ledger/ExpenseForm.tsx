@@ -44,7 +44,7 @@ interface SplitDataItem {
 }
 
 interface ExpenseFormProps {
-  tripId?: number;
+  tripId?: string;
   members: TripMember[];
   currentUserId?: number;
   onSubmit: (data: {
