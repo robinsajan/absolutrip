@@ -93,11 +93,7 @@ const categories: { value: ExpenseCategory; label: string; icon: React.ReactNode
 ];
 
 const currencies = [
-  { code: 'USD', symbol: '$' },
-  { code: 'EUR', symbol: '€' },
-  { code: 'GBP', symbol: '£' },
   { code: 'INR', symbol: '₹' },
-  { code: 'JPY', symbol: '¥' },
 ];
 
 export function ExpenseForm({
@@ -137,7 +133,7 @@ export function ExpenseForm({
   const [splitData, setSplitData] = useState<Record<number, Partial<SplitDataItem>>>({});
 
   // Metadata
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [exchangeRate, setExchangeRate] = useState("1.0");
   const [baseAmount, setBaseAmount] = useState("");
   const [receiptUrl, setReceiptUrl] = useState("");
@@ -178,24 +174,13 @@ export function ExpenseForm({
     };
   }, [members.length]);
 
-  // FX Conversion Logic
   useEffect(() => {
-    if (currency === 'USD') {
-      setExchangeRate("1.0");
-      setBaseAmount(amount);
-    } else {
-      const rate = parseFloat(exchangeRate) || 0;
-      const base = parseFloat(baseAmount) || 0;
-      if (rate > 0 && base > 0) {
-        setAmount((base * rate).toFixed(2));
-      }
-    }
+    setExchangeRate("1.0");
+    setBaseAmount(amount);
   }, [currency, exchangeRate, baseAmount]);
 
   useEffect(() => {
-    if (currency === 'USD') {
-      setBaseAmount(amount);
-    }
+    setBaseAmount(amount);
   }, [amount, currency]);
 
   const isEditMode = !!editExpense;
@@ -225,7 +210,7 @@ export function ExpenseForm({
       setCategory(editExpense.category);
       setPaidBy(editExpense.paid_by);
       setSplitType(editExpense.split_type);
-      setCurrency(editExpense.currency || 'USD');
+      setCurrency(editExpense.currency || 'INR');
       setExchangeRate(editExpense.exchange_rate?.toString() || "1.0");
       setBaseAmount(editExpense.base_amount?.toString() || editExpense.amount.toString());
       setReceiptUrl(editExpense.receipt_url || "");
@@ -266,7 +251,7 @@ export function ExpenseForm({
     setSplitType("equally");
     setSelectedSplitUsers(members.map((m) => m.user_id));
     setSplitData({});
-    setCurrency("USD");
+    setCurrency("INR");
     setExchangeRate("1.0");
 
     if (!selectedStayOptionId) return;
@@ -296,7 +281,7 @@ export function ExpenseForm({
     setSelectedSplitUsers(members.map(m => m.user_id));
     setSplitData({});
     setExpenseDate(new Date());
-    setCurrency('USD');
+    setCurrency('INR');
     setReceiptUrl("");
     setSelectedStayOptionId(null);
   };
@@ -505,52 +490,23 @@ export function ExpenseForm({
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 block px-1">
-                      {currency === 'USD' ? 'total amount' : `amount in ${currency}`}
+                      total amount in INR
                     </Label>
                     <div className="flex items-center">
-                      <span className="text-2xl md:text-5xl font-black text-gray-300 mr-2 md:mr-3 tracking-tighter">$</span>
+                      <span className="text-2xl md:text-5xl font-black text-gray-300 mr-2 md:mr-3 tracking-tighter">₹</span>
                       <Input
                         type="number"
                         placeholder="0.00"
-                        value={currency === 'USD' ? amount : baseAmount}
-                        onChange={(e) => {
-                          if (currency === 'USD') setAmount(e.target.value);
-                          else setBaseAmount(e.target.value);
-                        }}
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
                         className="text-2xl md:text-5xl font-black h-10 md:h-16 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
                         disabled={isLoading}
                       />
                     </div>
-                    {currency !== 'USD' && (
-                      <div className="mt-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center gap-1.5 bg-accent-lime text-black px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
-                          <span>Total:</span>
-                          <span>${amount} USD</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-100 dark:border-gray-700 text-[10px] font-bold">
-                          <span className="material-symbols-outlined text-[14px]">language</span>
-                          <span className="text-gray-400 uppercase tracking-widest">Rate:</span>
-                          <input
-                            type="number"
-                            value={exchangeRate}
-                            onChange={(e) => setExchangeRate(e.target.value)}
-                            className="w-12 bg-transparent border-none focus:ring-0 p-0 font-black"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/* FX row removed – INR only */}
                   </div>
 
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="w-24 h-14 rounded-2xl border-none bg-white dark:bg-gray-800 shadow-xl font-black text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-2xl">
-                      {currencies.map(c => (
-                        <SelectItem key={c.code} value={c.code} className="rounded-xl font-bold">{c.code}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Currency is fixed to INR – no selector needed */}
                 </div>
               </div>
 
@@ -602,7 +558,7 @@ export function ExpenseForm({
                             ) : (
                               stayOptions.map((o: any) => (
                                 <SelectItem key={o.id} value={o.id.toString()} className="rounded-xl font-bold py-3">
-                                  {o.title} • ${Number(o.price).toLocaleString()}
+                                  {o.title} • ₹{Number(o.price).toLocaleString('en-IN')}
                                 </SelectItem>
                               ))
                             )}
@@ -682,7 +638,7 @@ export function ExpenseForm({
                         >
                           <span className="truncate font-extrabold uppercase tracking-tight">{member.user_name}</span>
                           <span className="font-black text-primary ml-2">
-                            ${((parseFloat(amount) || 0) / Math.max(members.length, 1)).toFixed(2)}
+                            ₹{((parseFloat(amount) || 0) / Math.max(members.length, 1)).toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -701,7 +657,7 @@ export function ExpenseForm({
                         %
                       </TabsTrigger>
                       <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                        $
+                        ₹
                       </TabsTrigger>
                     </TabsList>
 
@@ -753,7 +709,7 @@ export function ExpenseForm({
                               )}
                               {splitType === 'exact' && (
                                 <div className="relative w-full">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">$</span>
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
                                   <Input
                                     type="number"
                                     placeholder="0.00"
@@ -768,7 +724,7 @@ export function ExpenseForm({
 
                           {selectedSplitUsers.includes(member.user_id) && splitType === 'equally' && (
                             <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-full uppercase tracking-tighter animate-in fade-in duration-300">
-                              ${((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
+                              ₹{((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
                             </span>
                           )}
                         </div>

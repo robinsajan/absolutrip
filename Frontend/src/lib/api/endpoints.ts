@@ -55,6 +55,10 @@ export const auth = {
     const res = await api.post<{ message: string }>('/auth/reset-password', data);
     return res.data;
   },
+  updateTour: async (show_budget_tour: boolean) => {
+    const res = await api.post<{ message: string; user: User }>('/auth/update-tour', { show_budget_tour });
+    return res.data;
+  },
 };
 
 export const trips = {

@@ -32,19 +32,19 @@ const getOptionImageUrl = (opt: any) => {
     if (!opt) return null;
     const urlStr = opt.image_url || '';
     const pathStr = opt.image_path || '';
-    
+
     // Split and get the first image
     const singleUrl = urlStr ? urlStr.split(',')[0].trim() : null;
     const singlePath = pathStr ? pathStr.split(',')[0].trim() : null;
-    
+
     if (singleUrl) {
         return singleUrl.startsWith('http') ? singleUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${singleUrl}`;
     }
-    
+
     if (singlePath) {
         return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/options/${singlePath}`;
     }
-    
+
     return null;
 };
 
@@ -94,10 +94,10 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any)
                         </div>
                     </div>
                     {opt.notes && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">About</p>
-                        <p className="text-sm text-slate-600 leading-relaxed">{opt.notes}</p>
-                      </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">About</p>
+                            <p className="text-sm text-slate-600 leading-relaxed">{opt.notes}</p>
+                        </div>
                     )}
                 </div>
                 <div className="p-5 border-t">
@@ -111,7 +111,7 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any)
 function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: any) {
     const diff = perPerson - adminEstimate;
     return (
-        <div className="space-y-3">
+        <div id="budget-header" className="space-y-3">
             <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-xl space-y-4 md:space-y-6">
                 <div className="flex items-end justify-between gap-2 md:gap-4">
                     <div className="space-y-1">
@@ -123,7 +123,7 @@ function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: 
                         <p className="text-lg md:text-2xl font-black text-slate-900 dark:text-white leading-none">₹{adminEstimate.toLocaleString('en-IN')}</p>
                     </div>
                 </div>
-                
+
                 <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
                 <div className="space-y-1">
@@ -137,14 +137,14 @@ function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: 
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                    <Button 
+                    <Button
                         className="flex-1 rounded-2xl bg-slate-950 dark:bg-slate-800 text-white hover:bg-slate-900 dark:hover:bg-slate-700 py-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-black/10"
                         onClick={onSave}
                     >
                         Save Plan
                     </Button>
-                    <Button 
-                        variant="ghost" 
+                    <Button
+                        variant="ghost"
                         className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 py-6 font-black uppercase text-[10px] tracking-widest"
                         onClick={onReset}
                     >
@@ -152,10 +152,10 @@ function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: 
                     </Button>
                 </div>
             </div>
-            
+
             <div className="flex justify-end px-2">
-                 <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     className="rounded-xl px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed transition-all text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] gap-2 border border-slate-100 dark:border-slate-800 shadow-sm"
                     disabled
                 >
@@ -171,7 +171,7 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
     const activities = selections.filter((s: any) => s.category !== 'stay').sort((a: any, b: any) => a.planned_day - b.planned_day);
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] md:rounded-[40px] border border-primary/10 shadow-sm space-y-6 md:space-y-10">
+        <div id="trip-timeline" className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] md:rounded-[40px] border border-primary/10 shadow-sm space-y-6 md:space-y-10">
             {/* Stays Section */}
             <div className="space-y-4 md:space-y-6">
                 <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
@@ -251,9 +251,10 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
             {selections.length > 0 && (
                 <div className="pt-4 md:pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
                     <p className="text-[8px] font-bold text-slate-400 max-w-[140px] leading-tight">Saving will update your trip's primary itinerary.</p>
-                    <Button 
+                    <Button
+                        id="commit-button"
                         size="sm"
-                        className="rounded-xl md:rounded-2xl px-4 md:px-6 py-4 md:py-5 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 transition-all shadow-lg gap-1.5 md:gap-2 h-auto" 
+                        className="rounded-xl md:rounded-2xl px-4 md:px-6 py-4 md:py-5 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 transition-all shadow-lg gap-1.5 md:gap-2 h-auto"
                         onClick={onSave}
                         disabled={loading}
                     >
@@ -291,7 +292,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
             setTrip(tRes.trip);
             const hubOptions = oRes.options || [];
             setReservedOptions(hubOptions);
-            
+
             // Fetch plans and global fallback in parallel to main load, without blocking 'loading' state if possible
             axios.get(`/budget/plans/${tripId}`).then(sRes => {
                 if (sRes.data.plans?.[0]?.selections) {
@@ -299,20 +300,20 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                     const ls = [...sRes.data.plans[0].selections].filter(s => s.category === 'stay').sort((a, b) => b.end_day - a.end_day)[0];
                     setCurrentDay(ls ? ls.end_day + 1 : 1);
                 }
-            }).catch(() => {});
+            }).catch(() => { });
 
             if (hubOptions.length < 5) {
                 const dest = tRes.trip?.destination || tRes.trip?.name;
                 if (dest) {
                     axios.get(`/budget/options?destination=${dest}`).then(globalRes => {
                         setAllOptions(globalRes.data.options || []);
-                    }).catch(() => {});
+                    }).catch(() => { });
                 }
             }
-        } catch (err) { 
-            toast.error("Failed to load planner data"); 
-        } finally { 
-            setLoading(false); 
+        } catch (err) {
+            toast.error("Failed to load planner data");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -329,7 +330,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     };
 
     const addSelection = (opt: any) => {
-        let dur = opt.duration_days || 1;
+        let dur = Math.max(1, opt.duration_days || 1);
         if (opt.category === 'stay' && opt.check_in_date && opt.check_out_date) {
             dur = Math.max(1, differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)));
         }
@@ -338,15 +339,15 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
         const e = opt.category === 'stay' ? (s + dur - 1) : s;
         const up = getUnitPrice(opt, trip);
         const tp = opt.total_price || (up * dur * (trip?.num_travelers || 1));
-        
+
         const newItem = { ...opt, planned_day: s, end_day: e, total_price: tp, unit_price: up, duration_days: dur };
 
         if (opt.category === 'stay') {
             // Find if there's already a stay covering this specific planning day
-            const existingStayIdx = selections.findIndex(sel => 
+            const existingStayIdx = selections.findIndex(sel =>
                 sel.category === 'stay' && currentDay >= sel.planned_day && currentDay <= (sel.end_day || sel.planned_day)
             );
-            
+
             if (existingStayIdx !== -1) {
                 const newSelections = [...selections];
                 newSelections[existingStayIdx] = newItem;
@@ -396,20 +397,33 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
 
     const totalDays = trip.start_date && trip.end_date ? Math.max(1, Math.round((new Date(trip.end_date).getTime() - new Date(trip.start_date).getTime()) / 86400000) + 1) : 1;
     const perPerson = (selections.reduce((a, c) => a + (parseFloat(c.total_price) || 0), 0)) / Math.max(trip.num_travelers || 1, 1);
-    
+
     // Admin Estimate Calculation
     const adminPicks = (reservedOptions || []).filter(o => o.is_finalized);
-    const adminEst = adminPicks.length > 0 
-        ? adminPicks.reduce((acc, o) => acc + (getUnitPrice(o, trip) * (o.duration_days || 1)), 0)
-        : allOptions.reduce((acc, o) => acc + getUnitPrice(o, trip), 0);
+    const memberCount = Math.max(trip.num_travelers || 1, 1);
+
+    const computePrice = (o: any) => {
+        if (o.total_price !== undefined && o.total_price !== null) {
+            return parseFloat(o.total_price) / memberCount;
+        }
+        const up = getUnitPrice(o, trip);
+        return o.category === 'stay' ? up * (o.duration_days || 1) : up;
+    };
+
+    let adminEst = 0;
+    if (adminPicks.length > 0) {
+        adminEst = adminPicks.reduce((acc, o) => acc + computePrice(o), 0);
+    } else {
+        adminEst = allOptions.reduce((acc, o) => acc + computePrice(o), 0);
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            <BudgetHeader 
-                adminEstimate={adminEst} 
-                perPerson={perPerson} 
-                onReset={() => { if(confirm("Are you sure? This will clear your current timeline selections.")) { setSelections([]); setCurrentDay(1); setActiveStayEndDay(null); setManualStep('stay'); }}} 
-                onSave={saveScenario} 
+            <BudgetHeader
+                adminEstimate={adminEst}
+                perPerson={perPerson}
+                onReset={() => { if (confirm("Are you sure? This will clear your current timeline selections.")) { setSelections([]); setCurrentDay(1); setActiveStayEndDay(null); setManualStep('stay'); } }}
+                onSave={saveScenario}
                 onAiClick={() => { setPlanningMode('ai'); setAiStep('budget'); setAiResults(null); }}
             />
 
@@ -430,15 +444,18 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                             <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary">
                                                 {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
                                             </p>
+                                            <p className="text-[12px] md:text-[16px] font ">
+                                                {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Activities Catalog"}
+                                            </p>
                                             <div className="flex items-center gap-4">
                                                 <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
-                                                    {currentDay <= totalDays 
-                                                        ? (activeStayEndDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
+                                                    {currentDay <= totalDays
+                                                        ? (activeStayEndDay && activeStayEndDay >= currentDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
                                                         : "Enhance Your Trip"
                                                     }
                                                 </h2>
-                                                <Button 
-                                                    variant="ghost" 
+                                                <Button
+                                                    variant="ghost"
                                                     size="icon"
                                                     className="size-7 md:size-10 rounded-full text-slate-300 hover:text-primary transition-colors"
                                                     onClick={fetchTripData}
@@ -457,16 +474,16 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {reservedOptions.filter(o => (currentDay > totalDays ? o.category !== 'stay' : o.category === manualStep) && matchesDay(o)).map((opt: any) => {
-                                        const isSelected = selections.some(s => 
-                                            s.id === opt.id && 
-                                            (s.category === 'stay' 
+                                        const isSelected = selections.some(s =>
+                                            s.id === opt.id &&
+                                            (s.category === 'stay'
                                                 ? (currentDay >= s.planned_day && currentDay <= (s.end_day || s.planned_day))
                                                 : (s.planned_day === currentDay))
                                         );
                                         return (
-                                            <Card 
-                                                key={opt.id} 
-                                                className={`rounded-[32px] md:rounded-[40px] transition-all p-3 flex flex-row gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative border-2 ${isSelected ? 'border-green-500 ring-4 ring-green-500/10' : 'border-primary/5 hover:border-primary'}`} 
+                                            <Card
+                                                key={opt.id}
+                                                className={`rounded-[32px] md:rounded-[40px] transition-all p-3 flex flex-row gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative border-2 ${isSelected ? 'border-green-500 ring-4 ring-green-500/10' : 'border-primary/5 hover:border-primary'}`}
                                                 onClick={() => addSelection(opt)}
                                             >
                                                 <button className="absolute bottom-4 right-4 z-20 size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-primary shadow-sm" onClick={e => { e.stopPropagation(); setInfoOpt(opt); }}><ChevronsRight className="size-4" /></button>
@@ -495,7 +512,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                         )}
                                                     </div>
                                                     <div className="space-y-0 md:space-y-0.5 mt-auto">
-                                                        <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate/pp</p>
+                                                        <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate Per Person Per Night</p>
                                                         <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, trip).toLocaleString()}</p>
                                                     </div>
                                                 </div>
@@ -524,7 +541,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                             const n = activeStayEndDay ? activeStayEndDay + 1 : currentDay + 1;
                                             if (n <= totalDays) { setCurrentDay(n); setActiveStayEndDay(null); setManualStep('stay'); }
                                             else { setCurrentDay(totalDays + 1); setManualStep('activity'); }
-                                        }}>Next Destination <ArrowRight className="size-4" /></Button>
+                                        }}>Next STAY <ArrowRight className="size-4" /></Button>
                                     ) : <Badge className="bg-primary/20 text-primary rounded-full px-4 md:px-6 py-1.5 md:py-2 border-none font-black text-[9px] md:text-[10px]">ACTIVITIES MODE</Badge>}
                                 </div>
                             </div>
@@ -584,9 +601,9 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                 </div>
 
                 <div className="space-y-8">
-                    <TripTimeline 
-                        selections={selections} 
-                        onRemove={(i: number) => setSelections(p => p.filter((_, idx) => idx !== i))} 
+                    <TripTimeline
+                        selections={selections}
+                        onRemove={(i: number) => setSelections(p => p.filter((_, idx) => idx !== i))}
                         totalDays={totalDays}
                         startDate={trip.start_date}
                         travelers={trip.num_travelers}

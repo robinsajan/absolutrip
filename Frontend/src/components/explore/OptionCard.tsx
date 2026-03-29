@@ -67,7 +67,7 @@ export function OptionCard({
     const checkInStr = format(checkIn, "MMM d");
     if (option.check_out_date) {
       const checkOut = parseISO(option.check_out_date);
-      return `${checkInStr} - ${format(checkOut, "MMM d")}`;
+      return `₹{checkInStr} - ₹{format(checkOut, "MMM d")}`;
     }
     return checkInStr;
   };
@@ -90,13 +90,13 @@ export function OptionCard({
       )}
     >
       <div className="relative h-40 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center overflow-hidden">
-        <SafeImage 
-          src={imageUrl} 
-          alt={option.title} 
+        <SafeImage
+          src={imageUrl}
+          alt={option.title}
           fallbackIcon={CATEGORY_ICONS_DATA[category]}
-          className="group-hover:scale-110 transition-transform duration-700" 
+          className="group-hover:scale-110 transition-transform duration-700"
         />
-        
+
         <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-20">
           {isFinalized && (
             <Badge className="bg-green-600 text-white">
@@ -172,9 +172,9 @@ export function OptionCard({
 
         <div className="flex items-center justify-between pt-2 border-t">
           <div>
-            <p className="text-lg font-bold">${option.price?.toFixed(2) || "0.00"}</p>
+            <p className="text-lg font-bold">₹{option.price?.toFixed(2) || "0.00"}</p>
             <p className="text-xs text-muted-foreground">
-              ${pricePerPerson?.toFixed(2) || "0.00"}/person
+              ₹{pricePerPerson?.toFixed(2) || "0.00"} per person
             </p>
           </div>
 

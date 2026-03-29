@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from flasgger import swag_from
 from ..extensions import db
@@ -305,3 +305,39 @@ def reset_password():
     db.session.commit()
 
     return jsonify({'message': 'Your password has been reset successfully. You can now login.'}), 200
+
+@bp.route('/update-tour', methods=['POST'])
+@login_required
+@swag_from({
+    'tags': ['Auth'],
+    'summary': 'Update user tour status',
+    'parameters': [{
+        'name': 'body',
+        'in': 'body',
+        'required': True,
+        'schema': {
+            'type': 'object',
+            'required': ['show_budget_tour'],
+            'properties': {
+                'show_budget_tour': {'type': 'boolean', 'example': False}
+            }
+        }
+    }],
+    'responses': {
+        200: {'description': 'Tour status updated successfully'},
+        400: {'description': 'Missing show_budget_tour field'},
+        401: {'description': 'Not authenticated'}
+    }
+})
+def update_tour():
+    data = request.get_json()
+    if 'show_budget_tour' not in data:
+        return jsonify({'error': 'show_budget_tour is required'}), 400
+    
+    current_user.show_budget_tour = data['show_budget_tour']
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Tour status updated successfully',
+        'user': current_user.to_dict()
+    }), 200

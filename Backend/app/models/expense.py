@@ -10,7 +10,7 @@ class Expense(db.Model):
     paid_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)  # Total in Trip's primary currency
     base_amount = db.Column(db.Numeric(10, 2), nullable=True)  # Amount in original currency
-    currency = db.Column(db.String(3), default='USD')
+    currency = db.Column(db.String(3), default='INR')
     exchange_rate = db.Column(db.Numeric(10, 4), default=1.0)
     description = db.Column(db.String(300), nullable=False)
     category = db.Column(db.String(50), nullable=True)
@@ -37,7 +37,7 @@ class Expense(db.Model):
             'payer_name': self.payer.name,
             'amount': float(self.amount),
             'base_amount': float(self.base_amount) if self.base_amount else float(self.amount),
-            'currency': self.currency or 'USD',
+            'currency': self.currency or 'INR',
             'exchange_rate': float(self.exchange_rate) if self.exchange_rate else 1.0,
             'description': self.description,
             'category': self.category,

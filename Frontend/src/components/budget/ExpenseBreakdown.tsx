@@ -62,7 +62,7 @@ export function ExpenseBreakdown({
                       </span>
                       <span className="capitalize text-xs font-semibold">{category}</span>
                     </div>
-                    <span className="font-bold">${amount.toFixed(0)}</span>
+                    <span className="font-bold">₹{amount.toFixed(0)}</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div
@@ -91,7 +91,7 @@ export function ExpenseBreakdown({
                 <div key={payer} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span>{payer}</span>
-                    <span className="font-medium">${amount.toFixed(2)}</span>
+                    <span className="font-medium">₹{amount.toFixed(2)}</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div

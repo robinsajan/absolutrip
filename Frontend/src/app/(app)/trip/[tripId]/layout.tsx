@@ -35,7 +35,7 @@ export default function TripLayout({
     <div className="min-h-screen bg-background flex flex-col">
       <TripHeader trip={trip} />
 
-      <main className="flex-1 pb-20 lg:pb-0">
+      <main className="flex-1 font-sans pb-32 md:pb-0">
         {children}
       </main>
 

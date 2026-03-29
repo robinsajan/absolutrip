@@ -105,15 +105,11 @@ export function ExpenseDetails({ expense, isOpen, onClose }: ExpenseDetailsProps
                             {splitTypeIcons[expense.split_type as keyof typeof splitTypeIcons] || <Hash className="h-3 w-3" />}
                             {expense.split_type} split
                         </Badge>
-                        {expense.currency && expense.currency !== 'USD' && (
-                            <Badge variant="outline" className="font-mono">
-                                {expense.currency} • {expense.exchange_rate?.toFixed(4)}
-                            </Badge>
-                        )}
+
                     </div>
                     <SheetTitle className="text-2xl font-serif">{expense.description}</SheetTitle>
                     <SheetDescription className="flex items-center gap-2 text-primary font-bold text-lg">
-                        ${expense.amount.toFixed(2)}
+                    ₹{expense.amount.toFixed(2)}
                         <span className="text-xs text-muted-foreground font-normal">
                             paid by {expense.payer_name}
                         </span>

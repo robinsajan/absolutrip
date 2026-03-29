@@ -379,12 +379,12 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Personal Share</span>
-            <span className="text-2xl font-black italic serif-title leading-none">${displayPerPerson.toFixed(2)}</span>
+            <span className="text-2xl font-black italic serif-title leading-none">₹{displayPerPerson.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-5">
             <div className="flex flex-col items-end">
               <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Group Total</span>
-              <span className="text-sm font-bold leading-none">${displayGroupTotal.toFixed(0)}</span>
+              <span className="text-sm font-bold leading-none">₹{displayGroupTotal.toFixed(0)}</span>
             </div>
             <div className="h-6 w-px bg-black/10" />
             <div className="flex items-center gap-1.5">
@@ -418,7 +418,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                       Selection Breakdown
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-[#ccff00] dark:text-primary font-black">${displayPerPerson.toFixed(0)}</span>
+                      <span className="text-[#ccff00] dark:text-primary font-black">₹{displayPerPerson.toFixed(0)}</span>
                       <ChevronDown className="size-5" />
                     </div>
                   </button>
@@ -428,7 +428,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                     <SheetHeader className="pb-6 border-b border-white/10 p-0">
                       <SheetTitle className="text-2xl font-black italic serif-title text-white flex items-center justify-between">
                         breakdown
-                        <span className="text-[#ccff00] font-black text-3xl italic">${displayPerPerson.toFixed(0)}</span>
+                        <span className="text-[#ccff00] font-black text-3xl italic">₹{displayPerPerson.toFixed(0)}</span>
                       </SheetTitle>
                     </SheetHeader>
                     <div className="space-y-4 pt-8 overflow-y-auto flex-1 pr-2">
@@ -447,7 +447,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                             </div>
                             <div className="flex flex-col items-end">
                               <span className="text-xl font-black text-[#ccff00]">
-                                ${item.total.toFixed(0)}
+                                ₹{item.total.toFixed(0)}
                               </span>
                               <span className="text-[10px] text-white/20 uppercase font-black tracking-tighter">
                                 {item.nights ? `${item.nights} nights` : '1 unit'}
@@ -489,7 +489,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
 
                           <div className="flex flex-col items-end">
                             <span className="text-sm font-black text-[#ccff00]">
-                              ${item.total.toFixed(0)}
+                              ₹{item.total.toFixed(0)}
                             </span>
                             <span className="text-[10px] text-white/20 uppercase font-black tracking-tighter">
                               {item.nights ? `${item.nights} nights` : '1 unit'}
@@ -503,9 +503,9 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                       <span className="text-[10px] font-black uppercase tracking-widest text-white/30">Total PP</span>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-black text-[#ccff00]">
-                          ${selectedBreakdown.reduce((sum, item) => sum + item.total, 0).toFixed(0)}
+                          ₹{selectedBreakdown.reduce((sum, item) => sum + item.total, 0).toFixed(0)}
                         </span>
-                        <span className="text-[10px] font-bold text-white/30 uppercase">USD</span>
+                        <span className="text-[10px] font-bold text-white/30 uppercase">INR</span>
                       </div>
                     </div>
                   </div>

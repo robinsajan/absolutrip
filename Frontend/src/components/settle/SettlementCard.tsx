@@ -114,7 +114,7 @@ export function SettlementCard({
               "text-3xl font-black tracking-tighter",
               type === "pay" ? "text-red-500" : "text-green-500"
             )}>
-              ${Math.round(settlement.amount).toLocaleString()}
+              ₹{Math.round(settlement.amount).toLocaleString('en-IN')}
             </p>
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pending</p>
           </div>
@@ -165,7 +165,7 @@ export function SettlementCard({
                   type === "pay" ? "text-red-500" : "text-green-500"
                 )}
               >
-                ${settlement.amount.toFixed(2)}
+                ₹{settlement.amount.toFixed(2)}
               </p>
             </div>
 
@@ -177,7 +177,7 @@ export function SettlementCard({
               </p>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-lg">
-                  ${settlement.amount.toFixed(2)}
+                  ₹{settlement.amount.toFixed(2)}
                 </span>
                 <Button
                   variant="outline"

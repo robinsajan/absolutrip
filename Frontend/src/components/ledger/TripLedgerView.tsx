@@ -27,7 +27,7 @@ function toDate(d?: string) {
 }
 
 function money(n: number) {
-  return `$${n.toFixed(2)}`;
+  return `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 function titleCase(s: string) {
@@ -522,7 +522,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                                 </div>
                                 <span className="text-xs font-bold">{spender.name}</span>
                               </div>
-                              <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
+                              <span className="text-xs font-black">₹{Math.round(spender.amount).toLocaleString('en-IN')}</span>
                             </div>
                             <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
                               <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
@@ -569,7 +569,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                           </div>
                           <span className="text-xs font-bold">{spender.name}</span>
                         </div>
-                        <span className="text-xs font-black">${Math.round(spender.amount).toLocaleString()}</span>
+                        <span className="text-xs font-black">₹{Math.round(spender.amount).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
                         <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>

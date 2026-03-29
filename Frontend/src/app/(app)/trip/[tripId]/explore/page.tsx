@@ -49,13 +49,13 @@ function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string })
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
       )}
-      <img 
-        alt={alt} 
+      <img
+        alt={alt}
         className={cn(
           "w-full h-full object-cover font-sans transition-all duration-700",
           isImageLoading ? "opacity-0 scale-100" : "opacity-100 scale-100 group-hover:scale-105"
         )}
-        src={imageUrls[currentIndex]} 
+        src={imageUrls[currentIndex]}
         onLoad={() => setIsImageLoading(false)}
         onError={() => setIsImageLoading(false)}
       />
@@ -328,11 +328,11 @@ export default function ExplorePage() {
               <div className="flex justify-between items-end">
                 <div>
                   <p className="text-[7px] md:text-[8px] uppercase font-black text-gray-400 tracking-widest mb-0.5">Total</p>
-                  <p className="text-sm md:text-lg font-bold text-gray-800 dark:text-gray-200 leading-none">${Math.round(groupTotal).toLocaleString()}</p>
+                  <p className="text-sm md:text-lg font-bold text-gray-800 dark:text-gray-200 leading-none">₹{Math.round(groupTotal).toLocaleString('en-IN')}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[7px] md:text-[8px] uppercase font-black text-primary/70 tracking-widest mb-0.5">PP/N</p>
-                  <p className="text-base md:text-xl font-black text-primary leading-none">${Math.round(ppPerDay).toLocaleString()}</p>
+                  <p className="text-[7px] md:text-[8px] uppercase font-black text-primary/70 tracking-widest mb-0.5">Per Person Per Night</p>
+                  <p className="text-base md:text-xl font-black text-primary leading-none">₹{Math.round(ppPerDay).toLocaleString('en-IN')}</p>
                 </div>
               </div>
             </div>

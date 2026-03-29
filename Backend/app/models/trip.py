@@ -20,7 +20,7 @@ class Trip(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     google_maps_url = db.Column(db.String(500), nullable=True)
-    default_currency = db.Column(db.String(3), default='USD')
+    default_currency = db.Column(db.String(3), default='INR')
 
     creator = db.relationship('User', back_populates='created_trips')
     members = db.relationship('TripMember', back_populates='trip', lazy='dynamic',

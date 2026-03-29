@@ -113,13 +113,9 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
                         <p className="font-medium text-sm">
                           <span className="text-primary font-bold">{expense.payer_name}</span>
                           {expense.category === 'settlement' ? " settled " : " paid "}
-                          <span className="font-bold opacity-90">${expense.amount.toFixed(2)}</span>
+                          <span className="font-bold opacity-90">₹{expense.amount.toFixed(2)}</span>
                         </p>
-                        {expense.currency && expense.currency !== 'USD' && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-mono">
-                            {expense.currency}
-                          </Badge>
-                        )}
+
                         <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 gap-0.5 opacity-70">
                           {splitTypeIcons[expense.split_type as keyof typeof splitTypeIcons]}
                           <span className="capitalize">{expense.split_type}</span>
@@ -201,7 +197,7 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
                           >
                             <span className="truncate font-medium">{split.user_name || `User ${split.user_id}`}</span>
                             <span className="font-bold text-primary ml-2">
-                              ${split.amount.toFixed(2)}
+                              ₹{split.amount.toFixed(2)}
                             </span>
                           </div>
                         ))}

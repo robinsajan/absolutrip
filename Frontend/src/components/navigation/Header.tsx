@@ -27,7 +27,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-primary/10 h-20">
+        <header className="sticky top-0 z-50 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 h-20">
             <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
                 <div className="flex items-center gap-8">
                     <Link href="/trips" className="flex items-center gap-2 group transition-all hover:scale-105 active:scale-95">

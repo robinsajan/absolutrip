@@ -133,7 +133,7 @@ class SettlementService:
             'user_id': debtor['user_id'],
             'user_name': debtor['user_name'],
             'amount_owed': abs(debtor['balance']),
-            'suggestion': f"Hey {debtor['user_name']}, you owe the group ${abs(debtor['balance']):.2f}. You should pay for the next expense to get back to zero."
+            'suggestion': f"Hey {debtor['user_name']}, you owe the group ₹{abs(debtor['balance']):.2f}. You should pay for the next expense to get back to zero."
         }
 
     @staticmethod

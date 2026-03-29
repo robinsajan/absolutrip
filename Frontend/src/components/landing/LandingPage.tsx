@@ -66,40 +66,21 @@ export function LandingPage() {
           <Link className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors" href="/login">
             log in
           </Link>
-          <Link href="/register">
+          <Link href="/register" className="hidden md:flex">
             <button className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:scale-105 transition-transform">
               get started
               <span className="material-symbols-outlined text-sm">north_east</span>
             </button>
           </Link>
 
-          {/* Mobile Menu Trigger */}
+          {/* Mobile Sign In link */}
           <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <button className="p-2 text-slate-900 dark:text-slate-100">
-                  <Menu className="h-6 w-6" />
-                </button>
-              </SheetTrigger>
-              <SheetContent side="right" className="bg-background-light dark:bg-background-dark border-slate-200 dark:border-slate-800">
-                <SheetHeader className="text-left mb-8">
-                  <SheetTitle className="text-2xl font-bold">absoluTrip</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-6">
-                  <Link href="/" className="text-xl font-bold hover:text-primary">home</Link>
-                  <Link href="#features" className="text-xl font-bold hover:text-primary">features</Link>
-                  <Link href="#how-it-works" className="text-xl font-bold hover:text-primary">how it works</Link>
-                  <Link href="#testimonials" className="text-xl font-bold hover:text-primary">testimonials</Link>
-                  <div className="h-px bg-slate-200 dark:bg-slate-800 my-4" />
-                  <Link href="/login" className="text-xl font-bold hover:text-primary">log in</Link>
-                  <Link href="/register">
-                    <button className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-lg">
-                      get started
-                    </button>
-                  </Link>
-                </div>
-              </SheetContent>
-            </Sheet>
+            <Link
+              href="/login"
+              className="text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-primary transition-colors"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
       </nav>

@@ -50,6 +50,13 @@ export function useAuth() {
     }
   };
 
+  const updateTourStatus = async (show_budget_tour: boolean) => {
+    const result = await auth.updateTour(show_budget_tour);
+    setUser(result.user);
+    await mutate({ user: result.user }, { revalidate: false });
+    return result;
+  };
+
   return {
     user: data?.user ?? user,
     isLoading,
@@ -58,6 +65,7 @@ export function useAuth() {
     login,
     register,
     logout,
+    updateTourStatus,
     mutate,
   };
-}
+};

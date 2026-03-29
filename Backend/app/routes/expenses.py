@@ -1,4 +1,4 @@
-﻿import os
+import os
 import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN, InvalidOperation
@@ -57,7 +57,7 @@ def get_receipt_upload_folder():
                             }
                         }
                     },
-                    'currency': {'type': 'string', 'example': 'USD'},
+                    'currency': {'type': 'string', 'example': 'INR'},
                     'exchange_rate': {'type': 'number', 'example': 1.0},
                     'base_amount': {'type': 'number'},
                     'receipt_url': {'type': 'string'}
@@ -120,7 +120,7 @@ def record_expense(trip_id, trip, membership):
         paid_by=paid_by,
         amount=total_amount,
         base_amount=Decimal(str(data.get('base_amount', amount_val))),
-        currency=data.get('currency', 'USD'),
+        currency=data.get('currency', 'INR'),
         exchange_rate=Decimal(str(data.get('exchange_rate', 1.0))),
         description=description,
         category=data.get('category'),
@@ -216,7 +216,7 @@ def record_expense(trip_id, trip, membership):
         expense_id=expense.id,
         user_id=current_user.id,
         activity_type='created',
-        details=f"Added {description} (${total_amount})"
+        details=f"Added {description} (₹{total_amount})"
     )
     db.session.add(activity)
 
@@ -341,7 +341,7 @@ def update_expense(trip_id, expense_id, trip, membership):
             if new_amount <= 0:
                 return jsonify({'error': 'Amount must be positive'}), 400
             if new_amount != expense.amount:
-                changes.append(f"Amount changed from ${expense.amount} to ${new_amount}")
+                changes.append(f"Amount changed from ₹{expense.amount} to ₹{new_amount}")
                 expense.amount = new_amount
         except (ValueError, TypeError, InvalidOperation):
             return jsonify({'error': 'Invalid amount format'}), 400

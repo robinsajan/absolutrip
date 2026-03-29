@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 
 function money(n: number) {
-  return `$${n.toFixed(2)}`;
+  return `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 function getInitials(name: string) {
@@ -113,18 +113,18 @@ export function TripSettleView({ tripId }: { tripId: string }) {
           <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center truncate">Owed by you</p>
             <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
-              ${Math.round(totalOwedByMe).toLocaleString()}
+              ₹{Math.round(totalOwedByMe).toLocaleString('en-IN')}
             </h2>
           </div>
           <div className="bg-slate-100/50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-700">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center truncate">Owed to you</p>
             <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
-              ${Math.round(totalOwedToMe).toLocaleString()}
+              ₹{Math.round(totalOwedToMe).toLocaleString('en-IN')}
             </h2>
           </div>
         </div>
 
-        <div className="space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="space-y-12 pb-48 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           {/* Section: Owed by Me */}
           {owedByMe.length > 0 && (
             <section>
@@ -150,7 +150,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-[9px]">Awaiting settlement</p>
                       </div>
                     </div>
-                    <span className="text-lg font-black text-slate-900 dark:text-white">${Math.round(s.amount).toLocaleString()}</span>
+                    <span className="text-lg font-black text-slate-900 dark:text-white">₹{Math.round(s.amount).toLocaleString('en-IN')}</span>
                   </div>
                 ))}
               </div>
@@ -184,7 +184,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-[9px]">Pending Payment</p>
                       </div>
                     </div>
-                    <span className="text-lg font-black text-slate-900 dark:text-white">${Math.round(s.amount).toLocaleString()}</span>
+                    <span className="text-lg font-black text-slate-900 dark:text-white">₹{Math.round(s.amount).toLocaleString('en-IN')}</span>
                   </div>
                 ))}
               </div>
@@ -211,25 +211,18 @@ export function TripSettleView({ tripId }: { tripId: string }) {
                       <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{b.expenses_paid} total expenses</p>
                     </div>
                   </div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white">$0</span>
+                  <span className="text-xs font-black text-slate-900 dark:text-white">₹0</span>
                 </div>
               ))}
             </div>
           </section>
         </div>
 
-        {/* Bottom Actions Fixed Bar */}
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50">
-          <div className="max-w-2xl mx-auto grid grid-cols-2 gap-4">
+        {/* Bottom Actions Fixed Bar - Raised above mobile nav bar */}
+        <div className="fixed md:bottom-0 bottom-[calc(env(safe-area-inset-bottom,0)+4.5rem)] left-0 right-0 p-4 md:p-6 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50">
+          <div className="max-w-2xl mx-auto px-2">
             <Button
-              variant="outline"
-              className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
-              onClick={() => (window.location.href = `/trip/${tripId}/budget?tab=breakdown`)}
-            >
-              Split Expense
-            </Button>
-            <Button
-              className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90 shadow-xl shadow-black/10 transition-all active:scale-95"
+              className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90 shadow-xl shadow-black/10 transition-all active:scale-95"
               onClick={() => {
                 if (owedByMe.length > 0) {
                   const first = owedByMe[0];
@@ -287,7 +280,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
               </div>
               <div className="text-center pt-4">
                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Confirm Amount</p>
-                <h3 className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">${amount}</h3>
+                <h3 className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">₹{amount}</h3>
               </div>
             </div>
 

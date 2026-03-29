@@ -72,7 +72,7 @@ export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{config.message}</p>
               <div className="flex items-center gap-2 mt-1">
-                <h2 className="text-5xl font-black tracking-tighter">${Math.round(amount).toLocaleString()}</h2>
+                <h2 className="text-5xl font-black tracking-tighter">₹{Math.round(amount).toLocaleString('en-IN')}</h2>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -108,11 +108,11 @@ export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-1">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">You Paid</p>
-              <p className="text-2xl font-black text-green-500 tracking-tighter">${Math.round(balance.total_paid).toLocaleString()}</p>
+              <p className="text-2xl font-black text-green-500 tracking-tighter">₹{Math.round(balance.total_paid).toLocaleString('en-IN')}</p>
             </div>
             <div className="space-y-1 border-x border-gray-50 dark:border-gray-800 px-8">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Share</p>
-              <p className="text-2xl font-black text-orange-500 tracking-tighter">${Math.round(balance.total_share).toLocaleString()}</p>
+              <p className="text-2xl font-black text-orange-500 tracking-tighter">₹{Math.round(balance.total_share).toLocaleString('en-IN')}</p>
             </div>
             <div className="space-y-1 text-right">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Net Balance</p>
@@ -120,7 +120,7 @@ export function DebtSummary({ balance, userName, explanation }: DebtSummaryProps
                 "text-2xl font-black tracking-tighter",
                 balance.balance >= 0 ? "text-green-500" : "text-red-500"
               )}>
-                {balance.balance >= 0 ? "+" : ""}${Math.round(balance.balance).toLocaleString()}
+                {balance.balance >= 0 ? "+" : ""}₹{Math.round(balance.balance).toLocaleString('en-IN')}
               </p>
             </div>
           </div>

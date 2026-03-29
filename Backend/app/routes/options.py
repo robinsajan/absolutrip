@@ -1,4 +1,4 @@
-﻿import os
+import os
 import uuid
 from datetime import datetime
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
@@ -354,12 +354,11 @@ def upload_option_image(option_id, option, membership):
 
 
 @bp.route('/options/<int:option_id>/images/<path:filename>', methods=['GET'])
-@option_access_required
-def serve_option_supabase_image(option_id, option, membership, filename):
+def serve_option_supabase_image(option_id, filename):
     # This acts as our secure bridge to private Supabase images
-    # 1. We authenticate via @option_access_required
-    # 2. We generate a temporary signed URL (expires in 60s)
-    # 3. We redirect the browser to it
+    # Since we moved to JWT auth via headers, browser <img> tags cannot pass the token easily.
+    # The filename acts as an unguessable UUID.
+    # We generate a temporary signed URL (expires in 60s) and redirect the browser to it.
     signed_url = SupabaseStorage.get_signed_url(filename, expires_in=60)
     
     if not signed_url:

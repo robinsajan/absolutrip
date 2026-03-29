@@ -2,6 +2,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  show_budget_tour: boolean;
   created_at: string;
 }
 
