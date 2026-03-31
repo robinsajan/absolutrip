@@ -100,6 +100,14 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
             <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900" align="center">
               <div className="flex flex-col gap-1">
                 <Link
+                  href={`/trip/${tripId}/itinerary`}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">route</span>
+                  Itinerary
+                </Link>
+                <Link
                   href={`/trip/${tripId}/members`}
                   onClick={() => setIsSettingsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"

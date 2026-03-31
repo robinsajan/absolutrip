@@ -76,6 +76,14 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
           <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 mb-2" side="top" align="center">
             <div className="flex flex-col gap-1">
               <Link
+                href={`/trip/${tripId}/itinerary`}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+              >
+                <Compass className="h-4 w-4" />
+                Itinerary
+              </Link>
+              <Link
                 href={`/trip/${tripId}/members`}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"

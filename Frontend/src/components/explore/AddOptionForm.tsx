@@ -72,6 +72,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   const [isPerNight, setIsPerNight] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.image_url ? [initialData.image_url] : []);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tripDateRange = useMemo(() => {
@@ -235,11 +236,13 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
 
         </div>
 
-        {/* Dates component upgraded to DateRange - Only for stays */}
-        {category === "stay" && (
+        {/* Dates component upgraded to DateRange - For stays and activities */}
+        {(category === "stay" || category === "activity") && (
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-foreground">Dates</Label>
-            <Popover>
+            <Label className="text-sm font-semibold text-foreground">
+              {category === "stay" ? "Check-in / Check-out" : "Activity Date"}
+            </Label>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   type="button"
@@ -252,34 +255,53 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                 >
                   <Calendar className="mr-2 h-4 w-4" />
                   {dateSelection?.from ? (
-                    dateSelection.to ? (
+                    category === "stay" && dateSelection.to ? (
                       <>
                         {format(dateSelection.from, "MMM d")} - {format(dateSelection.to, "MMM d")}
                       </>
                     ) : (
-                      format(dateSelection.from, "MMM d")
+                      format(dateSelection.from, "MMM d, yyyy")
                     )
                   ) : (
-                    "Select dates"
+                    category === "stay" ? "Select check-in/out dates" : "Select activity date"
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 z-[200]" align="start">
-                <CalendarComponent
-                  mode="range"
-                  selected={dateSelection}
-                  onSelect={(range, selectedDay) => {
-                    if (dateSelection?.from && dateSelection?.to) {
-                      setDateSelection({ from: selectedDay, to: undefined });
-                    } else {
-                      setDateSelection(range);
-                    }
-                  }}
-                  disabled={isDateDisabled}
-                  defaultMonth={dateSelection?.from || tripDateRange?.start}
-                  initialFocus
-                  numberOfMonths={1}
-                />
+                {category === "stay" ? (
+                  <CalendarComponent
+                    mode="range"
+                    selected={dateSelection}
+                    onSelect={(range, selectedDay) => {
+                      if (dateSelection?.from && dateSelection?.to) {
+                        setDateSelection({ from: selectedDay, to: undefined });
+                      } else {
+                        setDateSelection(range);
+                        if (range?.to) {
+                          setIsCalendarOpen(false);
+                        }
+                      }
+                    }}
+                    disabled={isDateDisabled}
+                    defaultMonth={dateSelection?.from || tripDateRange?.start}
+                    initialFocus
+                    numberOfMonths={1}
+                  />
+                ) : (
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateSelection?.from}
+                    onSelect={(date) => {
+                      setDateSelection({ from: date, to: undefined });
+                      if (date) {
+                        setIsCalendarOpen(false);
+                      }
+                    }}
+                    disabled={isDateDisabled}
+                    defaultMonth={dateSelection?.from || tripDateRange?.start}
+                    initialFocus
+                  />
+                )}
               </PopoverContent>
             </Popover>
           </div>
