@@ -162,45 +162,43 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-8 pb-24">
-      <div className="flex flex-col gap-1 px-1">
+    <div className="p-4 max-w-2xl mx-auto space-y-4 pb-24">
+      <div className="flex flex-col gap-0.5 px-1">
         <h2 className="text-2xl font-black tracking-tight flex items-center gap-3 lowercase italic serif-title">
           <span className="material-symbols-outlined text-primary text-2xl">settings</span>
           Trip Settings
         </h2>
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Control your trip parameters</p>
+        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Control trip parameters</p>
       </div>
 
       {isOwner && (
         <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
-          <CardHeader className="p-6 pb-2 border-b border-slate-50 dark:border-slate-800">
-            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-base">edit</span>
-              Edit Trip Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-5">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Name</Label>
+          <CardContent className="p-3 pt-2 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="material-symbols-outlined text-primary text-[10px]">edit</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Basic Info</span>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Name</Label>
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
+                  className="h-11 rounded-xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
                   placeholder="E.g. Summer Vacation"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Location Map URL</Label>
+              <div className="space-y-1">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Location Map URL</Label>
                 <Input
                   value={editLocation}
                   onChange={(e) => setEditLocation(e.target.value)}
-                  className="h-14 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
+                  className="h-11 rounded-xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
                   placeholder="https://maps.google.com/..."
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Dates</Label>
+              <div className="space-y-1">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Dates</Label>
                 <DatePickerWithRange
                   date={editDateRange}
                   setDate={setEditDateRange}
@@ -211,7 +209,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleUpdateTrip}
               disabled={isUpdating}
-              className="w-full py-7 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20"
+              className="w-full h-11 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-primary/10"
             >
               {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
@@ -220,29 +218,26 @@ export default function SettingsPage() {
       )}
 
       <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
-        <CardHeader className="p-6 pb-2 border-b border-slate-50 dark:border-slate-800">
-          <CardTitle className="text-sm font-black uppercase tracking-widest">Invite Crew</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 pt-2 space-y-4">
+          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Invite Crew</div>
           <div>
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Invite Code</Label>
-            <div className="flex items-center gap-3 mt-3">
-              <code className="flex-1 px-6 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-mono text-xl font-bold border border-slate-100 dark:border-slate-800 tracking-widest text-primary">
+            <div className="flex items-center gap-2 mt-1">
+              <code className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-base font-black border border-slate-100 dark:border-slate-800 tracking-wider text-primary text-center">
                 {activeTrip?.invite_code}
               </code>
-              <Button size="icon" className="size-14 rounded-2xl bg-primary hover:scale-105 active:scale-95 transition-all text-white shadow-xl shadow-primary/20" onClick={copyInviteCode}>
-                <span className="material-symbols-outlined">content_copy</span>
+              <Button variant="outline" size="icon" onClick={copyInviteCode} className="size-11 shrink-0 rounded-xl border border-slate-200 text-slate-400 hover:text-primary hover:bg-primary/5 transition-all">
+                <Copy className="size-4" />
               </Button>
             </div>
           </div>
-          <Button variant="outline" className="w-full py-7 rounded-2xl border-2 border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm" onClick={shareInviteLink}>
-            <span className="material-symbols-outlined mr-2">share</span>
-            Share Invite Link
+          <Button variant="outline" className="w-full h-12 rounded-xl border border-slate-200 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm" onClick={shareInviteLink}>
+            <Share2 className="size-4 mr-2" />
+            Share Link
           </Button>
-          <div className="flex items-center gap-2 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-            <span className="material-symbols-outlined text-sm text-primary">info</span>
-            <p className="text-[10px] font-bold text-primary/70 uppercase tracking-tight">
-              Admins must approve new members before they can access trip data.
+          <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+            <span className="material-symbols-outlined text-xs text-primary">info</span>
+            <p className="text-[9px] font-bold text-primary/70 uppercase tracking-tight">
+              Admins must approve new members.
             </p>
           </div>
         </CardContent>
@@ -250,15 +245,13 @@ export default function SettingsPage() {
 
       {isOwner && (
         <Card className="border border-red-100 dark:border-red-900/50 shadow-sm bg-red-50/10 dark:bg-red-950/10 rounded-2xl overflow-hidden">
-          <CardHeader className="p-6 pb-2 border-b border-red-50 dark:border-red-900/20">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-red-600">Danger Zone</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-3 pt-2">
+            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-red-600 mb-2">Danger Zone</div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="w-full py-8 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-red-600/20 transition-all hover:-translate-y-1">
-                  <span className="material-symbols-outlined mr-2">delete_forever</span>
-                  Delete this Trip
+                <Button className="w-full h-14 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-red-600/10 active:scale-95 transition-all">
+                  <Trash2 className="size-4 mr-2" />
+                  Delete Trip
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
