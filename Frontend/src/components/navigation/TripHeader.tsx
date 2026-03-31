@@ -39,7 +39,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
     : "Dates not set";
 
   return (
-    <div className="sticky top-20 z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-6 py-3">
+    <div className="hidden md:block sticky top-20 z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-6 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex flex-col min-w-0">
           <h2 className="text-lg font-black text-black dark:text-white truncate tracking-tight lowercase">

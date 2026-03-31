@@ -232,9 +232,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             disabled={isLoading}
             className="rounded-lg border-border bg-background px-4 py-2"
           />
-          <p className="text-xs text-muted-foreground">
-            Will try to fetch title & image from link
-          </p>
+
         </div>
 
         {/* Dates component upgraded to DateRange - Only for stays */}
@@ -266,7 +264,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 z-[200]" align="start">
                 <CalendarComponent
                   mode="range"
                   selected={dateSelection}
