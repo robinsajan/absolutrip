@@ -520,22 +520,40 @@ export default function ExplorePage() {
                     </div>
                   )}
                 </div>
+                {/* Like Button in Modal */}
+                <button
+                  onClick={() => {
+                    const userVote = viewingOption.voters.find(v => v.user_id === user?.id);
+                    const hasVoted = !!userVote && userVote.score > 0;
+                    handleVote(viewingOption.option.id, hasVoted ? 0 : 1);
+                  }}
+                  className={cn(
+                    "absolute bottom-4 right-4 flex items-center justify-center transition-all hover:scale-125 active:scale-90 z-20",
+                    viewingOption.voters.some(v => v.user_id === user?.id && v.score > 0) ? "text-red-500 drop-shadow-sm" : "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                  )}
+                >
+                  <span className={cn("material-symbols-outlined text-2xl md:text-3xl", viewingOption.voters.some(v => v.user_id === user?.id && v.score > 0) && "material-symbols-filled")}>favorite</span>
+                  {viewingOption.vote_count > 0 && (
+                    <span className="absolute -bottom-1 -right-1 bg-white text-black text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                      {viewingOption.vote_count}
+                    </span>
+                  )}
+                </button>
               </div>
 
               <div className="px-8 py-8 space-y-6">
                 <div>
-                  <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic">{viewingOption.option.title}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed">
+                  <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic">{viewingOption.option.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
                     {viewingOption.option.notes || viewingOption.option.link_description || "No additional description provided."}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   {viewingOption.option.check_in_date && (
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Dates</p>
                       <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-sm text-primary">calendar_today</span>
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                           {viewingOption.option.category === 'stay' ? (
                             <>
@@ -549,15 +567,15 @@ export default function ExplorePage() {
                     </div>
                   )}
                   {viewingOption.option.link && (
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 col-span-2">
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Web Link</p>
                       <a
                         href={viewingOption.option.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline font-bold text-sm"
+                        className="flex items-center gap-2 text-primary hover:underline font-bold text-xs"
                       >
-                        <span className="material-symbols-outlined text-sm">public</span>
+                        <span className="material-symbols-outlined text-xs">public</span>
                         View Website
                       </a>
                     </div>
@@ -576,19 +594,19 @@ export default function ExplorePage() {
                 </div>
 
 
-                <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
+                <div className="p-5 bg-primary/5 rounded-[1.5rem] border border-primary/10">
                   <div className="flex justify-between items-end mb-4">
                     <div>
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Total Group Price</p>
-                      <p className="text-2xl font-black text-slate-900 dark:text-white">₹{Math.round(
+                      <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1">Total Group Price</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white">₹{Math.round(
                         (viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))) *
                         Math.max(1, members?.length || 0) *
                         (viewingOption.option.check_in_date && viewingOption.option.check_out_date ? Math.max(1, differenceInDays(parseISO(viewingOption.option.check_out_date), parseISO(viewingOption.option.check_in_date))) : 1)
                       ).toLocaleString('en-IN')}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] uppercase font-black text-primary/70 tracking-widest mb-1">Per Person</p>
-                      <p className="text-3xl font-black text-primary">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
+                      <p className="text-[9px] uppercase font-black text-primary/70 tracking-widest mb-1">Per Person</p>
+                      <p className="text-2xl font-black text-primary">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
                     </div>
                   </div>
                 </div>
