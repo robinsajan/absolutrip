@@ -162,25 +162,24 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-12 pb-24">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 lowercase italic serif-title">
-          <span className="material-symbols-outlined text-primary text-3xl">settings</span>
+    <div className="p-4 max-w-2xl mx-auto space-y-8 pb-24">
+      <div className="flex flex-col gap-1 px-1">
+        <h2 className="text-2xl font-black tracking-tight flex items-center gap-3 lowercase italic serif-title">
+          <span className="material-symbols-outlined text-primary text-2xl">settings</span>
           Trip Settings
         </h2>
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Control your trip parameters</p>
+        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Control your trip parameters</p>
       </div>
 
       {isOwner && (
-        <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
-          <CardHeader className="p-10 pb-4">
-            <CardTitle className="text-xl font-extrabold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">edit</span>
+        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+          <CardHeader className="p-6 pb-2 border-b border-slate-50 dark:border-slate-800">
+            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base">edit</span>
               Edit Trip Info
             </CardTitle>
-            <CardDescription className="font-bold text-xs uppercase tracking-tight text-slate-400">Update destination and dates</CardDescription>
           </CardHeader>
-          <CardContent className="p-10 pt-4 space-y-6">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Trip Name</Label>
@@ -220,12 +219,11 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
-        <CardHeader className="p-10 pb-4">
-          <CardTitle className="text-xl font-extrabold">Invite Crew</CardTitle>
-          <CardDescription className="font-bold text-xs uppercase tracking-tight text-slate-400">Share with the squad</CardDescription>
+      <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+        <CardHeader className="p-6 pb-2 border-b border-slate-50 dark:border-slate-800">
+          <CardTitle className="text-sm font-black uppercase tracking-widest">Invite Crew</CardTitle>
         </CardHeader>
-        <CardContent className="p-10 pt-4 space-y-8">
+        <CardContent className="p-6 space-y-6">
           <div>
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Invite Code</Label>
             <div className="flex items-center gap-3 mt-3">
@@ -251,12 +249,11 @@ export default function SettingsPage() {
       </Card>
 
       {isOwner && (
-        <Card className="border-none shadow-2xl shadow-red-500/5 bg-red-50/20 dark:bg-red-950/20 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-red-100/50 dark:border-red-900/50">
-          <CardHeader className="p-10 pb-4">
-            <CardTitle className="text-xl font-extrabold text-red-600">Danger Zone</CardTitle>
-            <CardDescription className="font-bold text-xs uppercase tracking-tight text-red-600/50">Final & Irreversible</CardDescription>
+        <Card className="border border-red-100 dark:border-red-900/50 shadow-sm bg-red-50/10 dark:bg-red-950/10 rounded-2xl overflow-hidden">
+          <CardHeader className="p-6 pb-2 border-b border-red-50 dark:border-red-900/20">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-red-600">Danger Zone</CardTitle>
           </CardHeader>
-          <CardContent className="p-10 pt-4">
+          <CardContent className="p-6">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="w-full py-8 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-red-600/20 transition-all hover:-translate-y-1">

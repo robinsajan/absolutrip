@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
   const tripId = params.tripId as string;
   const { user } = useAuth();
   const { setShowAddOption } = useAppStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const copyInviteCode = async () => {
     if (!trip) return;
@@ -78,6 +80,44 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
               </Link>
             );
           })}
+
+          <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+                  pathname.includes("/members") || pathname.includes("/settings")
+                    ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
+                    : "text-slate-500 hover:text-primary"
+                )}
+              >
+                <span className={cn("material-symbols-outlined text-sm", (pathname.includes("/members") || pathname.includes("/settings")) ? "material-symbols-filled" : "outline-icon")}>
+                  settings
+                </span>
+                Settings
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900" align="center">
+              <div className="flex flex-col gap-1">
+                <Link
+                  href={`/trip/${tripId}/members`}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">group</span>
+                  Members
+                </Link>
+                <Link
+                  href={`/trip/${tripId}/settings`}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">settings</span>
+                  Settings
+                </Link>
+              </div>
+            </PopoverContent>
+          </Popover>
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">

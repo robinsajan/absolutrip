@@ -58,25 +58,6 @@ export function Header() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                {tripId && (
-                                    <>
-                                        <Link
-                                            href={`/trip/${tripId}/members`}
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xl outline-icon">group</span>
-                                            Members
-                                        </Link>
-                                        <Link
-                                            href={`/trip/${tripId}/settings`}
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xl outline-icon">settings</span>
-                                            Settings
-                                        </Link>
-                                        <div className="h-px bg-slate-50 dark:bg-slate-800 my-1 mx-2" />
-                                    </>
-                                )}
 
                                 <button
                                     onClick={handleLogout}

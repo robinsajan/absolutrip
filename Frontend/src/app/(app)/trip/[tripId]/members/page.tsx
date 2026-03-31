@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Crown, Clock, Check, X, UserMinus } from "lucide-react";
+import { Users, Crown, Clock, Check, X, UserMinus, Copy, Share2 } from "lucide-react";
 import type { JoinRequest } from "@/types";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
 
@@ -78,6 +78,33 @@ export default function MembersPage() {
     }
   };
 
+  const copyInviteCode = async () => {
+    if (!activeTrip) return;
+    await navigator.clipboard.writeText(activeTrip.invite_code);
+    toast.success("Invite code copied!");
+  };
+
+  const shareInviteLink = async () => {
+    if (!activeTrip) return;
+    const inviteUrl = `${window.location.origin}/trips/join?code=${activeTrip.invite_code}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${activeTrip.name}`,
+          text: `You're invited to join the trip "${activeTrip.name}"`,
+          url: inviteUrl,
+        });
+      } catch {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied!");
+      }
+    } else {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast.success("Invite link copied!");
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -92,13 +119,42 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-8">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-3xl">group</span>
-          Trip Members
-        </h2>
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Manage access and group roles</p>
+    <div className="p-4 max-w-2xl mx-auto space-y-4">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-2xl font-black tracking-tight flex items-center gap-3 lowercase">
+            <span className="material-symbols-outlined text-primary text-2xl">group</span>
+            Trip Members
+          </h2>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Manage access and roles</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyInviteCode}
+            className="h-9 px-3 rounded-xl border border-slate-200 text-slate-500 hover:text-primary hover:bg-primary/5 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-wider"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Code</span>
+          </Button>
+          <Button
+            size="sm"
+            onClick={shareInviteLink}
+            className="h-9 px-3 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/20"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Invite</span>
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 px-1 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+        <span className="material-symbols-outlined text-xs text-slate-400 ml-2">info</span>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+          Copy <span className="text-primary italic">code</span> for manual entry or share <span className="text-primary italic">invite link</span> for direct access.
+        </p>
       </div>
 
       {
@@ -151,15 +207,11 @@ export default function MembersPage() {
         )
       }
 
-      <Card className="border-none shadow-2xl shadow-black/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
-        <CardHeader className="p-8 pb-4">
-          <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Members ({members.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 pt-4 space-y-4">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all hover:shadow-lg"
+              className="flex items-center justify-between py-2.5 transition-all hover:bg-slate-50/50 dark:hover:bg-slate-800/50 px-2"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black uppercase tracking-tighter">
@@ -193,8 +245,7 @@ export default function MembersPage() {
               )}
             </div>
           ))}
-        </CardContent>
-      </Card>
+      </div>
 
       <AlertDialog open={removingMember !== null} onOpenChange={() => setRemovingMember(null)}>
         <AlertDialogContent>
