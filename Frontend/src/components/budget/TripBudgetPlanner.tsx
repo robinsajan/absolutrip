@@ -14,7 +14,9 @@ import {
     ArrowRight,
     Loader2,
     RefreshCcw,
-    ChevronsRight
+    ChevronsRight,
+    Info,
+    MoveRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +28,7 @@ import { format, addDays, parseISO, differenceInDays } from "date-fns";
 import axios from "@/lib/api/client";
 import { trips as tripsApi, options as optionsApi } from "@/lib/api/endpoints";
 import type { Trip } from "@/types";
+import { useTripMembers, useAuth } from "@/lib/hooks";
 
 // ── Utility ──────────────────────────────────────────────────────────────────
 const getOptionImageUrl = (opt: any) => {
@@ -48,20 +51,47 @@ const getOptionImageUrl = (opt: any) => {
     return null;
 };
 
-const getUnitPrice = (opt: any, trip: Trip | null) => {
+const getUnitPrice = (opt: any, travelers: number) => {
     if (opt.price_per_day_pp) return parseFloat(opt.price_per_day_pp);
-    const base = parseFloat(opt.price) || 0;
-    const travelers = trip?.num_travelers || 1;
-    return opt.category === 'stay' ? base / (opt.duration_days || 1) / travelers : (opt.is_per_person ? (base / travelers) : base);
+    let price = parseFloat(opt.price) || 0;
+    const duration = Math.max(1, opt.duration_days || 1);
+
+    if (opt.category === 'stay') {
+        // If not already per person, divide by travelers to get per-person rate
+        if (!opt.is_per_person) price = price / travelers;
+        // If not already per night, divide by duration to get nightly rate
+        if (!opt.is_per_night) price = price / duration;
+        return price;
+    } else {
+        // For activities/other
+        // If not already per person, divide by travelers
+        if (!opt.is_per_person) price = price / travelers;
+        return price;
+    }
 };
 
 // ── Sub-components for Stability ───────────────────────────────────────────
 
-function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any) {
+function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travelers }: any) {
     if (!opt) return null;
+
+    // Calculate effective duration from dates for stays
+    let effectiveDuration = opt.duration_days || 1;
+    if (opt.category === 'stay' && opt.check_in_date && opt.check_out_date) {
+        try {
+            effectiveDuration = Math.max(1, differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)));
+        } catch (e) {
+            effectiveDuration = 1;
+        }
+    }
+
+    const unitPrice = opt.price_per_day_pp || getUnitPrice(opt, travelers);
+    const perPersonTotal = unitPrice * effectiveDuration;
+    const groupGrandTotal = perPersonTotal * travelers;
+
     return (
         <Sheet open={open} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full max-w-md p-0 overflow-hidden flex flex-col">
+            <SheetContent side="right" className="w-full max-w-md p-0 overflow-hidden flex flex-col z-[200]">
                 <SheetHeader className="sr-only">
                     <SheetTitle>{opt.title}</SheetTitle>
                     <SheetDescription>Details about {opt.title}</SheetDescription>
@@ -87,10 +117,36 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any)
                             </p>
                         </div>
                     )}
-                    <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Price</p>
-                            <p className="text-2xl font-black">₹{parseFloat(opt.price_per_day_pp || opt.price || 0).toLocaleString()}</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50 space-y-4">
+                        <div className="flex flex-col gap-3">
+                            {/* Nightly Rate (Only for Stays) */}
+                            {opt.category === 'stay' && (
+                                <div className="flex justify-between items-center p-5 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100/50 dark:border-slate-800/50 group/price">
+                                    <div className="flex flex-col">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">per person / night</p>
+                                        <span className="text-[10px] text-slate-400 font-bold">Standard Rate</span>
+                                    </div>
+                                    <p className="text-xl font-black text-slate-900 dark:text-white italic">₹{unitPrice.toLocaleString()}</p>
+                                </div>
+                            )}
+
+                            {/* Per Person Total for this Stay */}
+                            <div className="flex justify-between items-center p-5 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100/50 dark:border-slate-800/50 overflow-hidden">
+                                <div className="flex flex-col">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-primary">personal grand total</p>
+                                    <span className="text-[10px] text-slate-400 font-bold">For {effectiveDuration} {opt.category === 'stay' ? 'nights' : 'unit'}</span>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    <p className="text-2xl font-black text-primary truncate">
+                                        ₹{perPersonTotal.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-400 pt-2 px-2">
+                             <Info className="size-3" />
+                             <p className="text-[8px] uppercase font-bold tracking-widest">Comprehensive Trip Calculation</p>
                         </div>
                     </div>
                     {opt.notes && (
@@ -108,44 +164,64 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination }: any)
     );
 }
 
-function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: any) {
-    const diff = perPerson - adminEstimate;
+function BudgetHeader({ perPerson, adminTarget, onReset, onSave }: any) {
+    const diff = adminTarget ? perPerson - adminTarget : null;
+
     return (
         <div id="budget-header" className="space-y-3">
-            <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-xl space-y-4 md:space-y-6">
-                <div className="flex items-end justify-between gap-2 md:gap-4">
+            {/* Main summary card */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[28px] p-5 md:p-7 shadow-md space-y-4">
+
+                {/* Two-column totals */}
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400">Your Plan Total:</p>
-                        <p className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white leading-none">₹{perPerson.toLocaleString('en-IN')}</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400">Target (Admin Pick):</p>
-                        <p className="text-lg md:text-2xl font-black text-slate-900 dark:text-white leading-none">₹{adminEstimate.toLocaleString('en-IN')}</p>
-                    </div>
-                </div>
-
-                <div className="h-px bg-slate-100 dark:bg-slate-800" />
-
-                <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Difference:</p>
-                    <div className="flex items-center gap-2">
-                        <p className={`text-2xl md:text-4xl font-black ${diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                            {diff > 0 ? '+' : ''}₹{diff.toLocaleString()}
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Your Plan Total:
                         </p>
-                        <ArrowRight className={`size-5 md:size-8 ${diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />
+                        <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-none">
+                            ₹{perPerson.toLocaleString('en-IN')}
+                        </p>
                     </div>
+
+                    {adminTarget != null && adminTarget > 0 && (
+                        <div className="space-y-1 text-right">
+                            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                Target (Admin Pick):
+                            </p>
+                            <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-none">
+                                ₹{Math.round(adminTarget).toLocaleString('en-IN')}
+                            </p>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">per person</p>
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                {/* Difference row */}
+                {diff !== null && (
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                            Difference:
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <p className={`text-2xl font-black leading-none ${diff === 0 ? 'text-emerald-500' : diff < 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                ₹{Math.abs(diff).toLocaleString('en-IN')}
+                            </p>
+                            <MoveRight className={`size-4 ${diff === 0 ? 'text-emerald-500' : diff < 0 ? 'text-emerald-500' : 'text-rose-500'}`} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-3 pt-1">
                     <Button
-                        className="flex-1 rounded-2xl bg-slate-950 dark:bg-slate-800 text-white hover:bg-slate-900 dark:hover:bg-slate-700 py-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-black/10"
+                        className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-5 font-black uppercase text-[10px] tracking-widest shadow-sm transition-all"
                         onClick={onSave}
                     >
                         Save Plan
                     </Button>
                     <Button
                         variant="ghost"
-                        className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 py-6 font-black uppercase text-[10px] tracking-widest"
+                        className="flex-1 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-500 border-none py-5 font-black uppercase text-[10px] tracking-widest transition-all"
                         onClick={onReset}
                     >
                         Reset
@@ -153,14 +229,15 @@ function BudgetHeader({ adminEstimate, perPerson, onReset, onSave, onAiClick }: 
                 </div>
             </div>
 
-            <div className="flex justify-end px-2">
-                <Button
-                    variant="ghost"
-                    className="rounded-xl px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed transition-all text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] gap-2 border border-slate-100 dark:border-slate-800 shadow-sm"
+            {/* AI pill */}
+            <div className="flex justify-center px-2">
+                <button
                     disabled
+                    className="cursor-not-allowed flex items-center gap-2 rounded-full px-5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-slate-400 text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] shadow-sm opacity-80"
                 >
-                    <Sparkles className="size-3 opacity-50" /> Let AI Plan Your Trip (Coming Soon)
-                </Button>
+                    <Sparkles className="size-3 opacity-60" />
+                    Let AI Plan Your Trip (Coming Soon)
+                </button>
             </div>
         </div>
     );
@@ -250,7 +327,7 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
 
             {selections.length > 0 && (
                 <div className="pt-4 md:pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                    <p className="text-[8px] font-bold text-slate-400 max-w-[140px] leading-tight">Saving will update your trip's primary itinerary.</p>
+                    <p className="text-[8px] font-bold text-slate-400 max-w-[140px] leading-tight">Saving will update your personal budget plan.</p>
                     <Button
                         id="commit-button"
                         size="sm"
@@ -269,9 +346,12 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
 
 // ── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export function TripBudgetPlanner({ tripId }: { tripId: string }) {
+    const { user } = useAuth();
     const [trip, setTrip] = useState<Trip | null>(null);
     const [selections, setSelections] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    // null = loading, false = no plan yet, true = has existing plan
+    const [hasPlan, setHasPlan] = useState<boolean | null>(null);
     const [planningMode, setPlanningMode] = useState<'manual' | 'ai'>('manual');
     const [aiStep, setAiStep] = useState<'budget' | 'results'>('budget');
     const [aiResults, setAiResults] = useState<any | null>(null);
@@ -283,24 +363,34 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     const [infoOpt, setInfoOpt] = useState<any | null>(null);
     const [allOptions, setAllOptions] = useState<any[]>([]);
 
+    const { members } = useTripMembers(tripId);
     useEffect(() => { fetchTripData(); }, [tripId]);
 
     const fetchTripData = async () => {
         setLoading(true);
         try {
-            const [tRes, oRes] = await Promise.all([tripsApi.get(tripId), optionsApi.list(tripId)]);
+            const [tRes, oRes, plansRes] = await Promise.all([
+                tripsApi.get(tripId),
+                optionsApi.list(tripId),
+                axios.get(`/budget/plans/${tripId}`).catch(() => ({ data: { plans: [] } }))
+            ]);
             setTrip(tRes.trip);
             const hubOptions = oRes.options || [];
             setReservedOptions(hubOptions);
 
-            // Fetch plans and global fallback in parallel to main load, without blocking 'loading' state if possible
-            axios.get(`/budget/plans/${tripId}`).then(sRes => {
-                if (sRes.data.plans?.[0]?.selections) {
-                    setSelections(sRes.data.plans[0].selections);
-                    const ls = [...sRes.data.plans[0].selections].filter(s => s.category === 'stay').sort((a, b) => b.end_day - a.end_day)[0];
-                    setCurrentDay(ls ? ls.end_day + 1 : 1);
-                }
-            }).catch(() => { });
+            // Strictly load only the current user's plan
+            const userPlans = plansRes.data.plans || [];
+            if (userPlans.length > 0 && userPlans[0].selections?.length > 0) {
+                setSelections(userPlans[0].selections);
+                const ls = [...userPlans[0].selections]
+                    .filter((s: any) => s.category === 'stay')
+                    .sort((a: any, b: any) => b.end_day - a.end_day)[0];
+                setCurrentDay(ls ? ls.end_day + 1 : 1);
+                setHasPlan(true);
+            } else {
+                // No plan exists for this user yet
+                setHasPlan(false);
+            }
 
             if (hubOptions.length < 5) {
                 const dest = tRes.trip?.destination || tRes.trip?.name;
@@ -322,7 +412,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
         try {
             const res = await axios.post('/budget/planner/ai', {
                 trip_id: tripId, start_date: trip?.start_date, end_date: trip?.end_date, budget: trip?.budget || 0,
-                travelers: trip?.num_travelers || 1, ai_budget: parseFloat(aiBudget) || 0
+                travelers: travelersCount, ai_budget: parseFloat(aiBudget) || 0
             });
             setAiResults(res.data);
             setAiStep('results');
@@ -337,8 +427,10 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
 
         const s = currentDay;
         const e = opt.category === 'stay' ? (s + dur - 1) : s;
-        const up = getUnitPrice(opt, trip);
-        const tp = opt.total_price || (up * dur * (trip?.num_travelers || 1));
+        const up = getUnitPrice(opt, travelersCount);
+        // Always recompute from per-person unit price — opt.total_price may be a
+        // group-level total from the Comparison Hub and must not be trusted here.
+        const tp = up * dur * travelersCount;
 
         const newItem = { ...opt, planned_day: s, end_day: e, total_price: tp, unit_price: up, duration_days: dur };
 
@@ -378,12 +470,12 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                 name: "Primary Budget Plan",
                 selections: selections
             });
-            toast.success("Budget scenario saved successfully!");
+            setHasPlan(true);
+            toast.success("Your personal budget plan saved!");
         } catch (err) {
             toast.error("Failed to save budget plan");
         } finally {
             setLoading(false);
-            fetchTripData();
         }
     };
 
@@ -395,36 +487,67 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     if (loading && !trip) return <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-primary size-10" /></div>;
     if (!trip) return null;
 
-    const totalDays = trip.start_date && trip.end_date ? Math.max(1, Math.round((new Date(trip.end_date).getTime() - new Date(trip.start_date).getTime()) / 86400000) + 1) : 1;
-    const perPerson = (selections.reduce((a, c) => a + (parseFloat(c.total_price) || 0), 0)) / Math.max(trip.num_travelers || 1, 1);
-
-    // Admin Estimate Calculation
-    const adminPicks = (reservedOptions || []).filter(o => o.is_finalized);
-    const memberCount = Math.max(trip.num_travelers || 1, 1);
-
-    const computePrice = (o: any) => {
-        if (o.total_price !== undefined && o.total_price !== null) {
-            return parseFloat(o.total_price) / memberCount;
-        }
-        const up = getUnitPrice(o, trip);
-        return o.category === 'stay' ? up * (o.duration_days || 1) : up;
-    };
-
-    let adminEst = 0;
-    if (adminPicks.length > 0) {
-        adminEst = adminPicks.reduce((acc, o) => acc + computePrice(o), 0);
-    } else {
-        adminEst = allOptions.reduce((acc, o) => acc + computePrice(o), 0);
+    // ── Gate: No plan yet for this user — show Create Budget screen ──────────
+    if (hasPlan === false) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-10 animate-in fade-in duration-700">
+                <div className="flex flex-col items-center gap-4 text-center max-w-md">
+                    <div className="size-20 rounded-[32px] bg-primary/10 flex items-center justify-center">
+                        <Save className="size-10 text-primary" />
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black italic text-slate-900 dark:text-white tracking-tight">
+                        Your Personal Budget
+                    </h2>
+                    <p className="text-slate-500 font-medium text-sm">
+                        You haven't created a budget plan for this trip yet. Your plan is <strong>private</strong> — only you can see and edit it.
+                    </p>
+                    <div className="flex items-center gap-2 bg-primary/5 rounded-2xl px-5 py-3 border border-primary/10">
+                        <Info className="size-4 text-primary shrink-0" />
+                        <p className="text-xs font-bold text-primary/80">Each member creates their own independent budget.</p>
+                    </div>
+                </div>
+                <Button
+                    className="rounded-[24px] px-12 py-7 font-black uppercase text-[11px] tracking-widest bg-black text-white hover:bg-primary transition-all shadow-xl gap-3 h-auto"
+                    onClick={() => setHasPlan(true)}
+                >
+                    <Plus className="size-5" /> Create My Budget Plan
+                </Button>
+            </div>
+        );
     }
+
+    const travelersCount = 1;
+    const totalDays = trip.start_date && trip.end_date ? Math.max(1, Math.round((new Date(trip.end_date).getTime() - new Date(trip.start_date).getTime()) / 86400000) + 1) : 1;
+    // Per-person plan total:
+    //  - Prefer unit_price × duration_days (always per-person, set by addSelection)
+    //  - Fall back to total_price / travelersCount for legacy saved plans
+    const perPerson = selections.reduce((a, c) => {
+        const up = parseFloat(c.unit_price) || 0;
+        const dur = parseFloat(c.duration_days) || 1;
+        if (up > 0) return a + up * dur;
+        return a + (parseFloat(c.total_price) || 0) / travelersCount;
+    }, 0);
+
+    // Admin's pick per-person: sum of all finalized hub options using per-person unit price
+    const finalizedOptions = reservedOptions.filter((o: any) => o.is_finalized);
+    const adminPickPerPerson = finalizedOptions.length > 0
+        ? finalizedOptions.reduce((a: number, o: any) => {
+            const up = getUnitPrice(o, travelersCount);
+            let dur = Math.max(1, o.duration_days || 1);
+            if (o.category === 'stay' && o.check_in_date && o.check_out_date) {
+                try { dur = Math.max(1, differenceInDays(parseISO(o.check_out_date), parseISO(o.check_in_date))); } catch (_) {}
+            }
+            return a + up * dur;
+        }, 0)
+        : (trip.budget ?? null);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
             <BudgetHeader
-                adminEstimate={adminEst}
                 perPerson={perPerson}
+                adminTarget={adminPickPerPerson}
                 onReset={() => { if (confirm("Are you sure? This will clear your current timeline selections.")) { setSelections([]); setCurrentDay(1); setActiveStayEndDay(null); setManualStep('stay'); } }}
                 onSave={saveScenario}
-                onAiClick={() => { setPlanningMode('ai'); setAiStep('budget'); setAiResults(null); }}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -513,7 +636,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                     </div>
                                                     <div className="space-y-0 md:space-y-0.5 mt-auto">
                                                         <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate Per Person Per Night</p>
-                                                        <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, trip).toLocaleString()}</p>
+                                                        <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, travelersCount).toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             </Card>
@@ -606,13 +729,13 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                         onRemove={(i: number) => setSelections(p => p.filter((_, idx) => idx !== i))}
                         totalDays={totalDays}
                         startDate={trip.start_date}
-                        travelers={trip.num_travelers}
+                        travelers={travelersCount}
                         onSave={saveScenario}
                         loading={loading}
                     />
                 </div>
             </div>
-            <OptionInfoSheet opt={infoOpt} open={!!infoOpt} onClose={() => setInfoOpt(null)} onSelect={addSelection} tripDestination={trip.destination} />
+            <OptionInfoSheet opt={infoOpt} open={!!infoOpt} onClose={() => setInfoOpt(null)} onSelect={addSelection} tripDestination={trip.destination} travelers={travelersCount} />
         </div>
     );
 }

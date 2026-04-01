@@ -120,9 +120,7 @@ export function ScenarioPlanner({
               onClick={() => !hideSelectionIndicator && onSelectOption(option.id)}
               className={`flex items-start md:items-center justify-between p-4 rounded-xl border-2 transition-all ${hideSelectionIndicator ? "cursor-default" : "cursor-pointer"} ${isSelected
                 ? "border-primary bg-primary/5"
-                : isFinalized
-                  ? "border-green-500 bg-green-50 hover:bg-green-100"
-                  : "border-muted hover:border-muted-foreground/50 hover:bg-muted/50"
+                : "border-muted hover:border-muted-foreground/50 hover:bg-muted/50"
                 }`}
             >
               <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -135,12 +133,6 @@ export function ScenarioPlanner({
                 <div className="min-w-0">
                   <span className="font-bold flex flex-wrap items-center gap-2 text-sm md:text-base leading-tight">
                     {option.title}
-                    {isFinalized && (
-                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 text-green-700 border-green-500 gap-1 shrink-0">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Admin Pick
-                      </Badge>
-                    )}
                   </span>
 
                   {/* Mobile Mobile Dates */}
@@ -186,15 +178,12 @@ export function ScenarioPlanner({
               </div>
 
               <div className="text-right shrink-0">
-                <p className={`font-bold text-sm md:text-base ${isSelected ? "text-primary" : isFinalized ? "text-green-700" : ""}`}>
+                <p className={`font-bold text-sm md:text-base ${isSelected ? "text-primary" : ""}`}>
                   ₹{ppTotal.toFixed(2)}
                 </p>
                 <div className="flex flex-col text-[10px] text-muted-foreground leading-tight">
                   <p>
                     ₹{unitPrice.toFixed(0)} / PN
-                  </p>
-                  <p>
-                    Grp: ₹{groupTotal.toFixed(0)}
                   </p>
                 </div>
               </div>

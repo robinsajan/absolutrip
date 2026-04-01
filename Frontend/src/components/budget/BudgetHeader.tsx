@@ -100,21 +100,17 @@ export function BudgetHeader({
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-black/10">
-          <div className="text-center">
-            <p className="text-2xl font-black">₹{totalExpenses.toFixed(0)}</p>
-            <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Total</p>
+        <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-black/10">
+          <div className="text-center border-r border-black/10">
+            <p className="text-2xl font-black">{expenseCount}</p>
+            <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Total Items</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-black flex items-center justify-center gap-1">
               <Users className="h-5 w-5" />
               {memberCount}
             </p>
-            <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Members</p>
-          </div>
-          <div className="text-center border-l border-black/10">
-            <p className="text-2xl font-black">₹{(totalExpenses / Math.max(memberCount, 1)).toFixed(0)}</p>
-            <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Group Avg</p>
+            <p className="text-[10px] uppercase font-bold opacity-70 tracking-tighter">Trip Members</p>
           </div>
         </div>
       </CardContent>

@@ -383,13 +383,11 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
           </div>
           <div className="flex items-center gap-5">
             <div className="flex flex-col items-end">
-              <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Group Total</span>
-              <span className="text-sm font-bold leading-none">₹{displayGroupTotal.toFixed(0)}</span>
-            </div>
-            <div className="h-6 w-px bg-black/10" />
-            <div className="flex items-center gap-1.5">
-              <Users className="size-4" />
-              <span className="text-sm font-bold leading-none">{memberCount}</span>
+              <span className="text-[9.5px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">Members Joined</span>
+              <div className="flex items-center gap-1.5 font-bold">
+                <Users className="size-4" />
+                <span className="text-sm">{memberCount}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -426,10 +424,15 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                 <SheetContent side="bottom" className="bg-black border-none rounded-t-[2.5rem] p-0 overflow-hidden h-[70vh] [&>button]:text-white">
                   <div className="p-8 text-white h-full flex flex-col">
                     <SheetHeader className="pb-6 border-b border-white/10 p-0">
-                      <SheetTitle className="text-2xl font-black italic serif-title text-white flex items-center justify-between">
-                        breakdown
-                        <span className="text-[#ccff00] font-black text-3xl italic">₹{displayPerPerson.toFixed(0)}</span>
-                      </SheetTitle>
+                      <div className="flex flex-col gap-1">
+                        <SheetTitle className="text-2xl font-black italic serif-title text-white flex items-center justify-between px-0">
+                          breakdown
+                          <span className="text-[#ccff00] font-black text-3xl italic px-0">₹{displayPerPerson.toFixed(0)}</span>
+                        </SheetTitle>
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
+                          <span>Individual Trip Forecast</span>
+                        </div>
+                      </div>
                     </SheetHeader>
                     <div className="space-y-4 pt-8 overflow-y-auto flex-1 pr-2">
                       {selectedBreakdown.length === 0 ? (
@@ -499,13 +502,21 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
                       ))}
                     </div>
 
-                    <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30">Total PP</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-[#ccff00]">
-                          ₹{selectedBreakdown.reduce((sum, item) => sum + item.total, 0).toFixed(0)}
-                        </span>
-                        <span className="text-[10px] font-bold text-white/30 uppercase">INR</span>
+                    <div className="mt-auto pt-4 border-t border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Total Per Person</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-black text-[#ccff00]">
+                            ₹{selectedBreakdown.reduce((sum, item) => sum + item.total, 0).toFixed(0)}
+                          </span>
+                          <span className="text-[8px] font-bold text-white/30 uppercase">INR</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Trip Population</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">{memberCount} Joined</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -631,56 +642,32 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
           <div className="space-y-4">
             <Card className="bg-slate-100/50 dark:bg-slate-800/50 border-none">
               <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  Trip Cost Estimate (Per Person)
+                <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">
+                  Private Budget Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Admin's Expected Price — Primary figure */}
-                <div className="bg-black dark:bg-white rounded-2xl p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/50 dark:text-black/50 block mb-0.5">
-                      Admin's Expected Price
-                    </span>
-                    <span className="text-[9px] text-white/30 dark:text-black/30 font-medium">
-                      From finalized options
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-black text-[#ccff00] dark:text-primary">
-                      ₹{combinedAdminPickPerPerson.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                    </span>
-                  </div>
+              <CardContent className="space-y-4">
+                {/* Your Personal Itinerary Forecast */}
+                <div className="bg-[#ccff00] rounded-2xl p-6 border border-black/5 flex flex-col gap-2 shadow-xl shadow-[#ccff00]/20 items-center text-center">
+                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-black/60">Your Personal Forecast</span>
+                  <span className="text-4xl sm:text-5xl font-black text-black italic serif-title">
+                    ₹{displayPerPerson.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  </span>
+                  <p className="text-[8px] sm:text-[9px] text-black/40 font-bold uppercase tracking-widest mt-2">Based on your private itinerary</p>
                 </div>
 
-                {/* User's Selected Scenario */}
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Your Planned Cost
-                    </span>
-                    <span className="text-[8px] text-muted-foreground uppercase font-medium">Selected Scenarios</span>
-                  </div>
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-1 items-center justify-center">
                   <div className="flex items-center gap-2">
-                    {((stayScenarioTotal + activityScenarioTotal) > combinedAdminPickPerPerson) ? (
-                      <TrendingUp className="h-4 w-4 text-slate-900 dark:text-white" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-slate-900 dark:text-white" />
-                    )}
-                    <span className="text-sm font-bold">
-                      ₹{(stayScenarioTotal + activityScenarioTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                    </span>
+                     <Info className="size-3 text-slate-400" />
+                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                       Independent Planning Mode
+                     </span>
                   </div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mt-1">
+                    Your budget is private and unique to you.
+                  </span>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">
-                    Your Total Est.
-                  </span>
-                  <span className="text-lg font-black text-black dark:text-white">
-                    ₹{(baseTotal + stayScenarioTotal + activityScenarioTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
               </CardContent>
             </Card>
 

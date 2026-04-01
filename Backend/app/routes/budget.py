@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import current_user, login_required
 from ..extensions import db
@@ -196,11 +196,14 @@ def list_promoted_trips():
     return jsonify({'trips': [t.to_dict(include_members=True) for t in trips]}), 200
 
 
-@bp.route('/plans/<trip_id>', methods=['GET', 'OPTIONS'])
+@bp.route('/plans/<trip_id>', methods=['GET'])
 @trip_member_required
 def get_budget_plans(trip_id, trip, membership):
-    """Get all saved budget plans for a trip."""
-    plans = BudgetPlan.query.filter_by(trip_id=trip_id).order_by(BudgetPlan.updated_at.desc()).all()
+    """Get saved budget plans for the current user for a specific trip."""
+    plans = BudgetPlan.query.filter_by(
+        trip_id=trip_id, 
+        user_id=current_user.id
+    ).order_by(BudgetPlan.updated_at.desc()).all()
     return jsonify({'plans': [p.to_dict() for p in plans]}), 200
 
 
@@ -214,77 +217,8 @@ def save_budget_plan(trip_id, trip, membership):
 
     plan_name = data.get('name', 'My Budget Plan')
     
-    # --- Integration: Ensure all selected options are saved as StayOptions for this trip ---
-    processed_selections = []
-    for sel in data.get('selections', []):
-        # 1. Identify if it already exists as a trip option
-        existing_id = sel.get('id')
-        is_temp = isinstance(existing_id, str) and existing_id.startswith('temp-')
-        
-        match = None
-        if not is_temp:
-            try:
-                # Might be a global option ID or an existing trip option ID
-                int_id = int(existing_id)
-                opt = StayOption.query.get(int_id)
-                if opt and opt.trip_id == trip_id:
-                    match = opt
-            except (ValueError, TypeError):
-                pass
-
-        if not match:
-            # 2. Try to find a match by title and date to avoid duplicates
-            title = sel.get('title')
-            check_in = sel.get('check_in_date')
-            check_in_date = None
-            if check_in:
-                try:
-                    check_in_date = datetime.strptime(check_in.split('T')[0], '%Y-%m-%d').date()
-                except ValueError:
-                    pass
-            
-            match = StayOption.query.filter_by(
-                trip_id=trip_id,
-                title=title,
-                check_in_date=check_in_date
-            ).first()
-
-        if not match:
-            # 3. Create a new StayOption for this trip if it doesn't exist
-            check_out_date = None
-            if sel.get('check_out_date'):
-                try:
-                    check_out_date = datetime.strptime(sel.get('check_out_date').split('T')[0], '%Y-%m-%d').date()
-                except ValueError:
-                    pass
-                    
-            match = StayOption(
-                trip_id=trip_id,
-                title=sel.get('title'),
-                link=sel.get('link'),
-                price=sel.get('price'),
-                notes=sel.get('notes'),
-                added_by=current_user.id,
-                check_in_date=check_in_date,
-                check_out_date=check_out_date,
-                category=sel.get('category', 'stay'),
-                is_per_person=sel.get('is_per_person', False),
-                is_per_night=sel.get('is_per_night', False),
-                image_url=sel.get('image_url'),
-                destination=sel.get('destination') or sel.get('city'),
-                duration_days=sel.get('duration_days')
-            )
-            db.session.add(match)
-            db.session.flush()
-            match.update_pricing()
-        
-        # Update the selection id to the real trip-specific option id
-        # This keeps the scenario pointing to real database entities
-        new_sel = sel.copy()
-        new_sel['id'] = match.id
-        new_sel['trip_id'] = trip_id
-        processed_selections.append(new_sel)
-
+    processed_selections = data.get('selections', [])
+    
     # Check if a plan with this name already exists for this user/trip
     plan = BudgetPlan.query.filter_by(trip_id=trip_id, user_id=current_user.id, name=plan_name).first()
     

@@ -467,9 +467,16 @@ export function ExpenseForm({
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="max-w-md w-[95%] p-0 overflow-hidden border-none shadow-2xl rounded-[2rem] bg-white dark:bg-slate-900">
-          <div className="max-h-[90vh] overflow-y-auto px-5 py-6 md:px-8 md:py-10 scrollbar-hide">
-            <DialogHeader className="flex flex-row items-center justify-between pb-6 md:pb-10">
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+          <div className="h-full overflow-y-auto px-6 py-10 md:px-10 md:py-12 scrollbar-hide">
+            <button 
+              onClick={handleClose}
+              className="absolute right-4 top-4 z-[110] size-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 shadow-sm hover:scale-110 active:scale-95 transition-all sm:hidden"
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+
+            <DialogHeader className="flex flex-row items-center justify-between pb-8 md:pb-10">
               <div className="flex items-center gap-3">
                 <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                   <span className="material-symbols-outlined material-symbols-filled">
@@ -480,7 +487,7 @@ export function ExpenseForm({
                   {isEditMode ? "edit expense" : "add expense"}
                 </DialogTitle>
               </div>
-              <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <button onClick={handleClose} className="hidden sm:block p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </DialogHeader>
