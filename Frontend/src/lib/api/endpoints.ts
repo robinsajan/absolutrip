@@ -222,18 +222,18 @@ export const expenses = {
     return res.data;
   },
 
-  getComments: async (expenseId: number) => {
-    const res = await api.get<{ comments: any[] }>(`/expenses/${expenseId}/comments`);
+  getComments: async (tripId: string, expenseId: number) => {
+    const res = await api.get<any[]>(`/trips/${tripId}/expenses/${expenseId}/comments`);
     return res.data;
   },
 
-  createComment: async (expenseId: number, content: string) => {
-    const res = await api.post<{ message: string; comment: any }>(`/expenses/${expenseId}/comments`, { content });
+  createComment: async (tripId: string, expenseId: number, content: string) => {
+    const res = await api.post<any>(`/trips/${tripId}/expenses/${expenseId}/comments`, { content });
     return res.data;
   },
 
-  getActivities: async (expenseId: number) => {
-    const res = await api.get<{ activities: any[] }>(`/expenses/${expenseId}/activities`);
+  getActivities: async (tripId: string, expenseId: number) => {
+    const res = await api.get<any[]>(`/trips/${tripId}/expenses/${expenseId}/activities`);
     return res.data;
   },
 };

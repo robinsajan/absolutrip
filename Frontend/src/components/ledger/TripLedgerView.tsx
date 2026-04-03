@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2, Wallet } from "lucide-react";
+import { Pencil, Trash2, Wallet, X } from "lucide-react";
 import { useAuth, useExpenses, useSettlement, useTripMembers, useRankedOptions, useBudget } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
 import { expenses as expensesApi } from "@/lib/api/endpoints";
@@ -13,6 +13,7 @@ import type { Expense, RankedOption } from "@/types";
 import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseDetails } from "./ExpenseDetails";
 import { ExpenseFeed } from "./ExpenseFeed";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type ExpenseScope = "all" | "mine";
@@ -489,11 +490,25 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                     <span className="material-symbols-outlined">expand_more</span>
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[80vh] bg-[#fbfbf8] dark:bg-slate-950 rounded-t-[3rem] p-8 overflow-y-auto border-none">
-                  <SheetHeader className="mb-8">
-                    <SheetTitle className="text-3xl font-black lowercase serif-title italic">expense insights</SheetTitle>
-                  </SheetHeader>
-                  <div className="space-y-8">
+                <SheetContent 
+                  side="bottom" 
+                  className="h-full w-full sm:max-w-none bg-[#fbfbf8] dark:bg-slate-950 p-0 overflow-y-auto border-none z-[100]"
+                  showCloseButton={false}
+                >
+                  <div className="p-8">
+                    <SheetHeader className="mb-8 relative pr-10">
+                      <SheetTitle className="text-3xl font-black lowercase serif-title italic">expense insights</SheetTitle>
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute -right-4 -top-2 h-8 w-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg z-50 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </SheetTrigger>
+                    </SheetHeader>
+                    <div className="space-y-8">
                     {/* Spending Progress */}
                     <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
                       <div className="flex justify-between items-center mb-6">
@@ -534,6 +549,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                         )}
                       </div>
                     </section>
+                  </div>
                   </div>
                 </SheetContent>
               </Sheet>

@@ -239,20 +239,6 @@ export function TripSettleView({ tripId }: { tripId: string }) {
             </Button>
           </div>
         </div>
-
-        {/* Footer Banner */}
-        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm mt-10">
-          <div className="flex items-center gap-6 text-center md:text-left">
-            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-sm transform -rotate-3 shrink-0">
-              <span className="material-symbols-outlined filled-icon text-3xl">account_balance_wallet</span>
-            </div>
-            <div>
-              <h4 className="font-black text-xl text-gray-900 dark:text-white tracking-tight lowercase">pay via upi / payment link</h4>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Coming soon — instant settlement integration</p>
-            </div>
-          </div>
-          <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-300 dark:border-slate-700 whitespace-nowrap">Available Soon</span>
-        </div>
       </main>
 
       <Dialog open={open} onOpenChange={setOpen}>
