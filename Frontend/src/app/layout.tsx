@@ -5,6 +5,15 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AbsoluTrip - Plan Trips Together",
   description: "Collaborative trip planning with expense splitting and voting",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AbsoluTrip",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -13,6 +22,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#0a192f",
 };
 
 export default function RootLayout({

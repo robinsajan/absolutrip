@@ -577,15 +577,6 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                         : "Enhance Your Trip"
                                                     }
                                                 </h2>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-7 md:size-10 rounded-full text-slate-300 hover:text-primary transition-colors"
-                                                    onClick={fetchTripData}
-                                                    title="Reload Catalog"
-                                                >
-                                                    <RefreshCcw className="size-3.5 md:size-4" />
-                                                </Button>
                                             </div>
                                             {currentDay <= totalDays && (
                                                 <p className="text-slate-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">{format(addDays(parseISO(trip.start_date!), currentDay - 1), 'MMMM do, yyyy')}</p>
