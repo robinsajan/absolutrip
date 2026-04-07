@@ -507,7 +507,7 @@ export default function ExplorePage() {
 
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
@@ -525,7 +525,7 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!viewingOption} onOpenChange={(open) => !open && setViewingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
@@ -692,7 +692,7 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
