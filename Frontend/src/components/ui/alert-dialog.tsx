@@ -70,17 +70,23 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 group/alert-dialog-content fixed top-[50%] left-[50%] z-[210] grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] shadow-lg duration-200 overflow-auto data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 group/alert-dialog-content fixed inset-0 z-[210] grid w-full h-[100dvh] gap-4 border shadow-lg duration-200 overflow-auto rounded-none",
+          "pt-[calc(60px+env(safe-area-inset-top,0px))] pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] px-6",
+          "sm:inset-auto sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] sm:w-full sm:max-w-[calc(100%-2rem)] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:border",
+          "data-[size=sm]:sm:max-w-xs data-[size=default]:sm:max-w-lg",
           className
         )}
         {...props}
       >
-        {props.children}
+        {/* Airbnb-style top bar (safe-area aware). Intentionally empty. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-40 border-b border-border/40 bg-transparent pt-[env(safe-area-inset-top,0px)]">
+          <div className="h-15" />
+        </div>
         {showCloseButton && (
           <AlertDialogPrimitive.Cancel
             className={cn(
               "ring-offset-background focus:ring-ring absolute right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-900/60 bg-white text-slate-900 shadow-lg opacity-95 transition-all hover:opacity-100 hover:scale-105 active:scale-95 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none dark:border-white/70 dark:bg-slate-950 dark:text-white",
-              "top-[calc(1rem+env(safe-area-inset-top,0px))]"
+              "top-[calc(env(safe-area-inset-top,0px)+0.75rem)]"
             )}
             aria-label="Close"
             title="Close"
@@ -89,6 +95,7 @@ function AlertDialogContent({
             <span className="sr-only">Close</span>
           </AlertDialogPrimitive.Cancel>
         )}
+        {props.children}
       </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   )

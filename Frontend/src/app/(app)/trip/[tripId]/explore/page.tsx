@@ -507,7 +507,7 @@ export default function ExplorePage() {
 
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
@@ -530,18 +530,8 @@ export default function ExplorePage() {
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
 
-              <div className="relative h-64 md:h-[450px]">
+              <div className="relative h-80 md:h-[510px]">
                 <ImageCarousel imageUrls={getOptionImages(viewingOption.option)} alt={viewingOption.option.title} />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    {viewingOption.option.category || "activity"}
-                  </div>
-                  {viewingOption.option.is_finalized && (
-                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                      Selected
-                    </div>
-                  )}
-                </div>
                 {/* Like Button in Modal */}
                 <button
                   onClick={() => {
@@ -564,6 +554,16 @@ export default function ExplorePage() {
               </div>
 
               <div className="px-8 py-6 space-y-4">
+                <div className="flex flex-wrap gap-2 mt-[-0.5rem] mb-1">
+                  <div className="bg-slate-100 dark:bg-slate-800 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+                    {viewingOption.option.category || "activity"}
+                  </div>
+                  {viewingOption.option.is_finalized && (
+                    <div className="bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-200 dark:border-green-500/20">
+                      Selected
+                    </div>
+                  )}
+                </div>
                 <div>
                   <div className="flex items-start gap-3">
                     <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic flex-1 min-w-0">
@@ -692,7 +692,7 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">

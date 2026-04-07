@@ -70,25 +70,30 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[210] grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] shadow-lg duration-200 outline-none overflow-auto sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed inset-0 z-[210] grid w-full h-[100dvh] gap-4 border border-border shadow-lg duration-200 outline-none overflow-auto rounded-none",
+          "pt-[calc(60px+env(safe-area-inset-top,0px))] pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] px-6",
+          "sm:inset-auto sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] sm:w-full sm:max-w-[calc(100%-2rem)] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl",
+          "sm:pt-[calc(60px+env(safe-area-inset-top,0px))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:max-w-lg",
           className
         )}
         {...props}
       >
-        {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             className={cn(
               "ring-offset-background focus:ring-ring absolute right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-900/60 bg-white text-slate-900 shadow-lg opacity-95 transition-all hover:opacity-100 hover:scale-105 active:scale-95 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none dark:border-white/70 dark:bg-slate-950 dark:text-white",
-              "top-[calc(1rem+env(safe-area-inset-top,0px))]",
+              "top-[calc(env(safe-area-inset-top,0px)+72px)]",
               "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5"
             )}
+            aria-label="Close"
+            title="Close"
           >
             <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
+        {children}
       </DialogPrimitive.Content>
     </DialogPortal>
   )

@@ -365,44 +365,160 @@ export default function CategoryExplorePage() {
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
-            <div className="relative h-full overflow-y-auto scrollbar-hide">
-              <div className="relative h-64 md:h-[450px]">
+            <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
+              <div className="relative h-80 md:h-[510px]">
                 <ImageCarousel imageUrls={getOptionImages(viewingOption.option)} alt={viewingOption.option.title} />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    {viewingOption.option.category || "activity"}
-                  </div>
-                </div>
+                {/* Like Button in Modal */}
+                <button
+                  onClick={() => {
+                    const userVote = viewingOption.voters.find(v => v.user_id === user?.id);
+                    const hasVoted = !!userVote && userVote.score > 0;
+                    handleVote(viewingOption.option.id, hasVoted ? 0 : 1);
+                  }}
+                  className={cn(
+                    "absolute bottom-4 right-4 flex items-center justify-center transition-all hover:scale-125 active:scale-90 z-20",
+                    viewingOption.voters.some(v => v.user_id === user?.id && v.score > 0) ? "text-red-500 drop-shadow-sm" : "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                  )}
+                >
+                  <span className={cn("material-symbols-outlined text-2xl md:text-3xl", viewingOption.voters.some(v => v.user_id === user?.id && v.score > 0) && "material-symbols-filled")}>favorite</span>
+                  {viewingOption.vote_count > 0 && (
+                    <span className="absolute -bottom-1 -right-1 bg-white text-black text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                      {viewingOption.vote_count}
+                    </span>
+                  )}
+                </button>
               </div>
               <div className="px-8 py-6 space-y-4">
+                <div className="flex flex-wrap gap-2 mt-[-0.5rem] mb-1">
+                  <div className="bg-slate-100 dark:bg-slate-800 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+                    {viewingOption.option.category || "activity"}
+                  </div>
+                  {viewingOption.option.is_finalized && (
+                    <div className="bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-200 dark:border-green-500/20">
+                      Selected
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic">{viewingOption.option.title}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
-                    {viewingOption.option.notes || "No description provided."}
+                  <div className="flex items-start gap-3">
+                    <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic flex-1 min-w-0">
+                      {viewingOption.option.title}
+                    </h3>
+                    {viewingOption.option.link && (
+                      <a
+                        href={viewingOption.option.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors shrink-0"
+                        aria-label="Visit website"
+                        title="Visit website"
+                      >
+                        <span className="material-symbols-outlined text-[14px] leading-none">arrow_outward</span>
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
+                    {viewingOption.option.notes || viewingOption.option.link_description || "No additional description provided."}
                   </p>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  {viewingOption.option.check_in_date && (
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Dates</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                          {format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Proposed by</p>
+                    <div className="flex items-center gap-2">
+                      <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-[10px]">
+                        {(members?.find(m => m.user_id === viewingOption.option.added_by)?.user_name || "U").charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">
+                        {members?.find(m => m.user_id === viewingOption.option.added_by)?.user_name || "Trip Member"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10">
-                   <div className="flex justify-between items-center">
-                     <div>
-                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 leading-none">Per Person</p>
-                       <p className="text-3xl font-black text-primary leading-none mt-1">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
-                     </div>
-                     {isOwner && (
-                       <button
-                         onClick={() => {
-                           viewingOption.option.is_finalized ? handleUnfinalize(viewingOption.option.id) : handleFinalize(viewingOption.option.id);
-                           setViewingOption(null);
-                         }}
-                         className={cn(
-                           "px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all",
-                           viewingOption.option.is_finalized ? "bg-green-500 text-white" : "bg-black text-white"
-                         )}
-                       >
-                         {viewingOption.option.is_finalized ? "Selected" : "Select Option"}
-                       </button>
-                     )}
-                   </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1 leading-none">Total Group Price</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">₹{Math.round(
+                        (viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))) *
+                        Math.max(1, members?.length || 0) *
+                        (viewingOption.option.check_in_date && viewingOption.option.check_out_date ? Math.max(1, differenceInDays(parseISO(viewingOption.option.check_out_date), parseISO(viewingOption.option.check_in_date))) : 1)
+                      ).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] uppercase font-black text-primary/70 tracking-widest mb-1 leading-none">Per Person</p>
+                      <p className="text-2xl font-black text-primary leading-none mt-1">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {isOwner && (
+                  <button
+                    onClick={() => {
+                      viewingOption.option.is_finalized ? handleUnfinalize(viewingOption.option.id) : handleFinalize(viewingOption.option.id);
+                      setViewingOption(null);
+                    }}
+                    className={cn(
+                      "w-full py-5 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl uppercase tracking-widest text-xs",
+                      viewingOption.option.is_finalized
+                        ? "bg-green-500 text-white shadow-green-500/20 hover:scale-[1.02] active:scale-95"
+                        : "bg-black dark:bg-white text-white dark:text-black shadow-black/20 hover:scale-[1.02] active:scale-95"
+                    )}
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {viewingOption.option.is_finalized ? "check_circle" : "sell"}
+                    </span>
+                    {viewingOption.option.is_finalized ? "Selected" : "Select this option"}
+                  </button>
+                )}
+
+                {/* Mobile Pagination Controls */}
+                <div className="md:hidden flex items-center justify-between pt-10 border-t border-gray-100 dark:border-gray-800">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      const idx = filteredOptions.findIndex(o => o.option.id === viewingOption.option.id);
+                      if (idx > 0) setViewingOption(filteredOptions[idx - 1]);
+                      document.querySelector('.modal-scroll-area')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={filteredOptions.findIndex(o => o.option.id === viewingOption.option.id) === 0}
+                    className="rounded-2xl h-14 px-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-sm">arrow_back</span>
+                    Prev
+                  </Button>
+                  
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Explore</span>
+                    <span className="text-xs font-black text-primary leading-none">
+                      {filteredOptions.findIndex(o => o.option.id === viewingOption.option.id) + 1} of {filteredOptions.length}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      const idx = filteredOptions.findIndex(o => o.option.id === viewingOption.option.id);
+                      if (idx < filteredOptions.length - 1) setViewingOption(filteredOptions[idx + 1]);
+                      document.querySelector('.modal-scroll-area')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={filteredOptions.findIndex(o => o.option.id === viewingOption.option.id) === filteredOptions.length - 1}
+                    className="rounded-2xl h-14 px-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    Next
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -411,7 +527,7 @@ export default function CategoryExplorePage() {
       </Dialog>
 
       <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-6">
               <DialogTitle className="text-3xl font-extrabold serif-title italic">edit option</DialogTitle>
