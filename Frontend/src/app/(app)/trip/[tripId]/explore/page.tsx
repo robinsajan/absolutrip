@@ -565,7 +565,23 @@ export default function ExplorePage() {
 
               <div className="px-8 py-6 space-y-4">
                 <div>
-                  <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic">{viewingOption.option.title}</h3>
+                  <div className="flex items-start gap-3">
+                    <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic flex-1 min-w-0">
+                      {viewingOption.option.title}
+                    </h3>
+                    {viewingOption.option.link && (
+                      <a
+                        href={viewingOption.option.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors shrink-0"
+                        aria-label="Visit website"
+                        title="Visit website"
+                      >
+                        <span className="material-symbols-outlined text-[14px] leading-none">arrow_outward</span>
+                      </a>
+                    )}
+                  </div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
                     {viewingOption.option.notes || viewingOption.option.link_description || "No additional description provided."}
                   </p>
@@ -580,20 +596,6 @@ export default function ExplorePage() {
                           {format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")}
                         </span>
                       </div>
-                    </div>
-                  )}
-                  {viewingOption.option.link && (
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 col-span-2">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Web Link</p>
-                      <a
-                        href={viewingOption.option.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline font-bold text-xs"
-                      >
-                        <span className="material-symbols-outlined text-xs">public</span>
-                        View Website
-                      </a>
                     </div>
                   )}
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">

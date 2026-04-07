@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { XIcon } from "lucide-react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
@@ -56,9 +57,11 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  showCloseButton?: boolean
 }) {
   return (
     <AlertDialogPortal>
@@ -67,11 +70,26 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 group/alert-dialog-content fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 group/alert-dialog-content fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-2rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 overflow-auto data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
           className
         )}
         {...props}
-      />
+      >
+        {props.children}
+        {showCloseButton && (
+          <AlertDialogPrimitive.Cancel
+            className={cn(
+              "ring-offset-background focus:ring-ring absolute right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-900/60 bg-white text-slate-900 shadow-lg opacity-95 transition-all hover:opacity-100 hover:scale-105 active:scale-95 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none dark:border-white/70 dark:bg-slate-950 dark:text-white",
+              "top-[calc(1rem+env(safe-area-inset-top,0px))]"
+            )}
+            aria-label="Close"
+            title="Close"
+          >
+            <XIcon className="size-5" />
+            <span className="sr-only">Close</span>
+          </AlertDialogPrimitive.Cancel>
+        )}
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   )
 }
