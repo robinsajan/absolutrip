@@ -214,7 +214,7 @@ export default function TripsPage() {
           <div>
             <h1 className="text-2xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic truncate max-w-full">Welcome back, {user?.name}!</h1>
             <p className="text-slate-500 font-bold tracking-widest text-[10px] md:text-s">
-              {isLoading ? "loading your adventures..." : `You have ${trips?.length || 0} trips coming up. Ready for your next adventure?`}
+              {isLoading ? "loading your adventures..." : `You have ${trips?.length || 0} trip${(trips?.length || 0) !== 1 ? 's' : ''} coming up. Ready for your next adventure?`}
             </p>
           </div>
           <div className="flex gap-2">

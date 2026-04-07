@@ -42,10 +42,17 @@ interface AddOptionFormProps {
   tripEndDate?: string;
   defaultDate?: string;
   initialData?: {
+    id?: number;
     title?: string;
     link?: string;
-    image_url?: string;
+    price?: number;
     notes?: string;
+    check_in_date?: string;
+    check_out_date?: string;
+    category?: OptionCategory;
+    is_per_person?: boolean;
+    is_per_night?: boolean;
+    image_url?: string;
   };
   onCancel?: () => void;
 }
@@ -60,16 +67,16 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState(initialData?.title || "");
   const [link, setLink] = useState(initialData?.link || "");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(initialData?.price?.toString() || "");
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [dateSelection, setDateSelection] = useState<DateRange | undefined>({
-    from: defaultDate ? parseISO(defaultDate) : undefined,
-    to: undefined,
+    from: initialData?.check_in_date ? parseISO(initialData.check_in_date) : (defaultDate ? parseISO(defaultDate) : undefined),
+    to: initialData?.check_out_date ? parseISO(initialData.check_out_date) : undefined,
   });
 
-  const [category, setCategory] = useState<OptionCategory | "other">("stay");
-  const [isPerPerson, setIsPerPerson] = useState(false);
-  const [isPerNight, setIsPerNight] = useState(false);
+  const [category, setCategory] = useState<OptionCategory | "other">(initialData?.category || "stay");
+  const [isPerPerson, setIsPerPerson] = useState(initialData?.is_per_person || false);
+  const [isPerNight, setIsPerNight] = useState(initialData?.is_per_night || false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.image_url ? [initialData.image_url] : []);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -183,26 +190,34 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   return (
     <div className="max-w-md mx-auto px-4">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Category Selection */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground">Category</Label>
-          <div className="flex gap-2 flex-wrap">
-            {CATEGORIES.map((cat) => (
-              <Button
-                key={cat.value}
-                type="button"
-                variant={category === cat.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategory(cat.value)}
-                disabled={isLoading}
-                className="flex items-center gap-2 rounded-lg px-4 py-2"
-              >
-                {cat.icon}
-                {cat.label}
-              </Button>
-            ))}
+        {/* Category Selection - Only show when creating */}
+        {!initialData?.id && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-foreground">Category</Label>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((cat) => (
+                <Button
+                  key={cat.value}
+                  type="button"
+                  variant={category === cat.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                  setCategory(cat.value);
+                  setDateSelection({
+                    from: initialData?.check_in_date ? parseISO(initialData.check_in_date) : (defaultDate ? parseISO(defaultDate) : undefined),
+                    to: initialData?.check_out_date ? parseISO(initialData.check_out_date) : undefined,
+                  });
+                }}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 rounded-lg px-4 py-2"
+                >
+                  {cat.icon}
+                  {cat.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Title */}
         <div className="space-y-2">
@@ -272,14 +287,11 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   <CalendarComponent
                     mode="range"
                     selected={dateSelection}
-                    onSelect={(range, selectedDay) => {
-                      if (dateSelection?.from && dateSelection?.to) {
-                        setDateSelection({ from: selectedDay, to: undefined });
-                      } else {
-                        setDateSelection(range);
-                        if (range?.to) {
-                          setIsCalendarOpen(false);
-                        }
+                    onSelect={(range) => {
+                      setDateSelection(range);
+                      // Only close if we have a complete range (two different dates)
+                      if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
+                        setIsCalendarOpen(false);
                       }
                     }}
                     disabled={isDateDisabled}
@@ -294,7 +306,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                     onSelect={(date) => {
                       setDateSelection({ from: date, to: undefined });
                       if (date) {
-                        setIsCalendarOpen(false);
+                        setTimeout(() => setIsCalendarOpen(false), 100);
                       }
                     }}
                     disabled={isDateDisabled}
@@ -426,13 +438,11 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             className="flex-1 rounded-lg bg-primary py-2 font-semibold text-primary-foreground hover:bg-primary/90"
             disabled={isLoading}
           >
-            {isLoading ? "Creating..." : "Create Option"}
+            {isLoading ? (initialData?.id ? "Updating..." : "Creating...") : (initialData?.id ? "Update Option" : "Create Option")}
           </Button>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Learn more about voting
-        </p>
+
       </form>
     </div>
   );

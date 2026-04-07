@@ -101,6 +101,7 @@ export default function ExplorePage() {
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [viewingOption, setViewingOption] = useState<RankedOption | null>(null);
+  const [editingOption, setEditingOption] = useState<RankedOption | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -126,6 +127,15 @@ export default function ExplorePage() {
     const result = await optionsApi.create(tripId, data);
     mutate();
     setShowAddOption(false);
+    return result;
+  };
+  
+  const handleUpdateOption = async (data: any) => {
+    if (!editingOption) return { option: { id: 0 } };
+    const result = await optionsApi.update(editingOption.option.id, data);
+    mutate();
+    setEditingOption(null);
+    toast.success("Option updated!");
     return result;
   };
 
@@ -257,9 +267,13 @@ export default function ExplorePage() {
 
     return (
       <div key={ro.option.id} className={cn(
-        "group bg-white dark:bg-gray-900 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1 shrink-0",
+        "group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1 shrink-0",
         "w-[280px] md:w-[240px] lg:w-[260px] xl:w-[280px] 2xl:w-[calc(14.28%-1.5rem)] min-w-[200px] max-w-[360px]",
-        hasVoted ? "border-primary shadow-xl shadow-primary/5" : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg"
+        isFinalized 
+          ? "border-green-500 ring-4 ring-green-500/10 shadow-lg shadow-green-500/5 scale-[1.02] bg-green-500/10 dark:bg-green-500/20" 
+          : hasVoted 
+            ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-gray-900" 
+            : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg bg-white dark:bg-gray-900"
       )}>
         <div className="relative h-32 md:h-48 overflow-hidden rounded-t-[1.5rem] md:rounded-t-[2rem]">
           <ImageCarousel imageUrls={imageUrls} alt={ro.option.title} />
@@ -268,8 +282,8 @@ export default function ExplorePage() {
               {ro.option.category || "activity"}
             </div>
             {isFinalized && (
-              <div className="bg-green-500 text-white px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[6px] md:text-[8px] font-black uppercase tracking-widest shadow-lg w-fit">
-                Selected
+              <div className="bg-green-500 text-white p-1 rounded-full shadow-lg w-fit animate-in zoom-in duration-300">
+                <span className="material-symbols-outlined text-xs md:text-sm material-symbols-filled">check_circle</span>
               </div>
             )}
           </div>
@@ -297,26 +311,27 @@ export default function ExplorePage() {
                   <span className="material-symbols-outlined text-sm md:text-lg">north_east</span>
                 </a>
               )}
-              {(isOwner || ro.option.added_by === user?.id) && (
-                <button onClick={() => handleDelete(ro.option.id)} className="text-red-400 hover:text-red-600 transition-colors ml-1">
-                  <span className="material-symbols-outlined text-sm md:text-lg">delete</span>
-                </button>
-              )}
+              <div className="flex items-center gap-1">
+                {ro.option.added_by === user?.id && (
+                  <button onClick={() => setEditingOption(ro)} className="text-slate-400 hover:text-primary transition-colors ml-1">
+                    <span className="material-symbols-outlined text-sm md:text-lg">edit</span>
+                  </button>
+                )}
+                {(isOwner || ro.option.added_by === user?.id) && (
+                  <button onClick={() => handleDelete(ro.option.id)} className="text-red-400 hover:text-red-600 transition-colors">
+                    <span className="material-symbols-outlined text-sm md:text-lg">delete</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           <div>
-            {isStay && ro.option.check_in_date && (
+            {ro.option.check_in_date && (
               <div className="flex items-center gap-1.5 mb-2 md:mb-3 p-2 md:p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg md:rounded-xl border border-slate-100 dark:border-slate-800/50">
                 <span className="material-symbols-outlined text-xs md:text-sm text-primary">calendar_today</span>
                 <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300">
-                  {isStay ? (
-                    <>
-                      {ro.option.check_in_date ? format(parseISO(ro.option.check_in_date), "MMM d") : "?"} — {ro.option.check_out_date ? format(parseISO(ro.option.check_out_date), "MMM d") : "?"}
-                    </>
-                  ) : (
-                    format(parseISO(ro.option.check_in_date), "MMM d, yy")
-                  )}
+                  {format(parseISO(ro.option.check_in_date), "MMM d")}
                 </span>
               </div>
             )}
@@ -471,9 +486,7 @@ export default function ExplorePage() {
         </div>
       </main>
 
-      <footer className="max-w-[2000px] mx-auto px-6 py-20 border-t text-center">
-        <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">© {new Date().getFullYear()} absolutrip</p>
-      </footer>
+
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
         <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
@@ -555,13 +568,7 @@ export default function ExplorePage() {
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Dates</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                          {viewingOption.option.category === 'stay' ? (
-                            <>
-                              {viewingOption.option.check_in_date ? format(parseISO(viewingOption.option.check_in_date), "MMM d") : "?"} — {viewingOption.option.check_out_date ? format(parseISO(viewingOption.option.check_out_date), "MMM d") : "?"}
-                            </>
-                          ) : (
-                            format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")
-                          )}
+                          {format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")}
                         </span>
                       </div>
                     </div>
@@ -671,6 +678,43 @@ export default function ExplorePage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+          <button 
+            onClick={() => setEditingOption(null)}
+            className="absolute right-4 top-4 z-[110] size-10 rounded-full bg-white flex items-center justify-center text-black shadow-xl hover:scale-110 active:scale-95 transition-all md:hidden"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+          <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
+            <DialogHeader className="pb-8">
+              <DialogTitle className="text-3xl font-extrabold serif-title italic">edit option</DialogTitle>
+            </DialogHeader>
+            {editingOption && (
+              <AddOptionForm
+                onSubmit={handleUpdateOption}
+                onImageUpload={handleImageUpload}
+                tripStartDate={activeTrip?.start_date}
+                tripEndDate={activeTrip?.end_date}
+                initialData={{
+                  id: editingOption.option.id,
+                  title: editingOption.option.title,
+                  link: editingOption.option.link,
+                  price: editingOption.option.price,
+                  notes: editingOption.option.notes,
+                  check_in_date: editingOption.option.check_in_date,
+                  check_out_date: editingOption.option.check_out_date,
+                  category: editingOption.option.category as any,
+                  is_per_person: editingOption.option.is_per_person,
+                  is_per_night: editingOption.option.is_per_night,
+                  image_url: getOptionImages(editingOption.option)[0]
+                }}
+                onCancel={() => { setEditingOption(null); }}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
