@@ -115,7 +115,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent 
                 side="bottom"
-                className="w-full top-[50px] h-[calc(100%-50px)] sm:max-w-none p-0 flex flex-col border-none shadow-none z-[100]"
+                className="w-full h-full sm:max-w-none p-0 pt-[50px] flex flex-col border-none shadow-none z-[100]"
                 showCloseButton={false}
             >
                 <SheetHeader className="p-6 pb-4 border-b relative">
