@@ -215,7 +215,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
             setEditingExpense(null);
             setShowAddExpense(true);
           }}
-          className="md:hidden fixed bottom-24 right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+          className="md:hidden fixed bottom-[140px] right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
           aria-label="Add expense"
         >
           <span className="material-symbols-outlined text-3xl">add</span>
@@ -240,7 +240,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                 </div>
               </div>
 
-              <div 
+              <div
                 className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01] cursor-pointer"
                 onClick={() => router.push(`/trip/${tripId}/settle`)}
               >
@@ -490,8 +490,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                     <span className="material-symbols-outlined">expand_more</span>
                   </button>
                 </SheetTrigger>
-                <SheetContent 
-                  side="bottom" 
+                <SheetContent
+                  side="bottom"
                   className="h-full w-full sm:max-w-none bg-[#fbfbf8] dark:bg-slate-950 p-0 overflow-y-auto border-none z-[100]"
                   showCloseButton={false}
                 >
@@ -509,47 +509,47 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                       </SheetTrigger>
                     </SheetHeader>
                     <div className="space-y-8">
-                    {/* Spending Progress */}
-                    <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
-                      <div className="flex justify-between items-center mb-6">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
-                        <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
-                          style={{ width: `${Math.min(100, spendingProgress)}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
-                    </section>
+                      {/* Spending Progress */}
+                      <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm h-fit">
+                        <div className="flex justify-between items-center mb-6">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Spending Progress</span>
+                          <span className="text-xs font-black text-primary uppercase">{Math.round(spendingProgress)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-6 rounded-full overflow-hidden p-1.5 shadow-inner">
+                          <div
+                            className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-lg"
+                            style={{ width: `${Math.min(100, spendingProgress)}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-4 text-center">Relative to finalized scenarios</p>
+                      </section>
 
-                    {/* Top Spenders Mini-List */}
-                    <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
-                      <div className="space-y-6">
-                        {spenderData.map((spender, i) => (
-                          <div key={spender.id} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
-                                  {getInitials(spender.name)}
+                      {/* Top Spenders Mini-List */}
+                      <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Top Spenders</h3>
+                        <div className="space-y-6">
+                          {spenderData.map((spender, i) => (
+                            <div key={spender.id} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300">
+                                    {getInitials(spender.name)}
+                                  </div>
+                                  <span className="text-xs font-bold">{spender.name}</span>
                                 </div>
-                                <span className="text-xs font-bold">{spender.name}</span>
+                                <span className="text-xs font-black">₹{Math.round(spender.amount).toLocaleString('en-IN')}</span>
                               </div>
-                              <span className="text-xs font-black">₹{Math.round(spender.amount).toLocaleString('en-IN')}</span>
+                              <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                                <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
+                              </div>
                             </div>
-                            <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
-                              <div className="bg-primary h-full rounded-full opacity-60" style={{ width: `${(spender.amount / (spenderData[0]?.amount || 1)) * 100}%` }}></div>
-                            </div>
-                          </div>
-                        ))}
-                        {spenderData.length === 0 && (
-                          <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
-                        )}
-                      </div>
-                    </section>
-                  </div>
+                          ))}
+                          {spenderData.length === 0 && (
+                            <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                          )}
+                        </div>
+                      </section>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>

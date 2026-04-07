@@ -356,7 +356,7 @@ export default function ExplorePage() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 min-h-screen">
-      <main className="max-w-[2000px] mx-auto px-6 pt-4 pb-12 md:py-12">
+      <main className="max-w-7xl mx-auto px-6 pt-4 pb-12 md:py-12">
         <div className="hidden md:flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">comparison hub</h1>
@@ -376,9 +376,10 @@ export default function ExplorePage() {
         {/* Mobile Fixed Add Button */}
         <button
           onClick={() => setShowAddOption(true)}
-          className="md:hidden fixed bottom-24 right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90"
+          className="md:hidden fixed bottom-[140px] right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+          aria-label="Add option"
         >
-          <span className="material-symbols-outlined text-2xl">add</span>
+          <span className="material-symbols-outlined text-3xl">add</span>
         </button>
 
         <div>

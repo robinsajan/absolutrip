@@ -102,7 +102,7 @@ export default function NewTripPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-card border-b px-4 py-3">
+      <header className="z-10 bg-card border-b px-4 py-3">
         <div className="max-w-md mx-auto flex items-center gap-4">
           {step !== "invite" && (
             <Button
