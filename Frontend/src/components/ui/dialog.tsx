@@ -83,7 +83,7 @@ function DialogContent({
             data-slot="dialog-close"
             className={cn(
               "ring-offset-background focus:ring-ring absolute right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-900/60 bg-white text-slate-900 shadow-lg opacity-95 transition-all hover:opacity-100 hover:scale-105 active:scale-95 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none dark:border-white/70 dark:bg-slate-950 dark:text-white",
-              "top-[calc(env(safe-area-inset-top,0px)+72px)]",
+              "top-[calc(env(safe-area-inset-top,0px)+42px)]",
               "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5"
             )}
             aria-label="Close"
