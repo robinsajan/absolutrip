@@ -467,14 +467,9 @@ export function ExpenseForm({
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed top-[50px] left-0 right-0 bottom-0 h-[calc(100%-50px)] z-[100] w-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
           <div className="h-full overflow-y-auto px-6 py-10 md:px-10 md:py-12 scrollbar-hide">
-            <button 
-              onClick={handleClose}
-              className="absolute right-4 top-4 z-[110] size-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 shadow-sm hover:scale-110 active:scale-95 transition-all sm:hidden"
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-            </button>
+
 
             <DialogHeader className="flex flex-row items-center justify-between pb-8 md:pb-10">
               <div className="flex items-center gap-3">
@@ -487,9 +482,7 @@ export function ExpenseForm({
                   {isEditMode ? "edit expense" : "add expense"}
                 </DialogTitle>
               </div>
-              <button onClick={handleClose} className="hidden sm:block p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <span className="material-symbols-outlined">close</span>
-              </button>
+
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
               {/* Amount & Currency Section */}

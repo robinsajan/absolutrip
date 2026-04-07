@@ -115,7 +115,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent 
                 side="bottom"
-                className="w-full h-full sm:max-w-none p-0 flex flex-col border-none shadow-none z-[100]"
+                className="w-full top-[50px] h-[calc(100%-50px)] sm:max-w-none p-0 flex flex-col border-none shadow-none z-[100]"
                 showCloseButton={false}
             >
                 <SheetHeader className="p-6 pb-4 border-b relative">
@@ -146,7 +146,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-6 top-6 h-8 w-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg z-50 p-0"
+                        className="absolute right-6 top-[50px] h-8 w-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg z-50 p-0"
                         onClick={onClose}
                     >
                         <X className="h-4 w-4" />

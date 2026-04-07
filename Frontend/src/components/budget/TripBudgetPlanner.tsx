@@ -91,7 +91,7 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travel
 
     return (
         <Sheet open={open} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full max-w-md p-0 overflow-hidden flex flex-col z-[200]">
+            <SheetContent side="right" className="w-full max-w-md p-0 top-[50px] h-[calc(100%-50px)] overflow-hidden flex flex-col z-[200]">
                 <SheetHeader className="sr-only">
                     <SheetTitle>{opt.title}</SheetTitle>
                     <SheetDescription>Details about {opt.title}</SheetDescription>

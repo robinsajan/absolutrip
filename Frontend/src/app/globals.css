@@ -132,6 +132,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    padding-top: 50px;
   }
 
   .hero-title {

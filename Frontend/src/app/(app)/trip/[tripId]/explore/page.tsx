@@ -490,13 +490,8 @@ export default function ExplorePage() {
 
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
-          <button 
-            onClick={() => setShowAddOption(false)}
-            className="absolute right-4 top-4 z-[110] size-10 rounded-full bg-white flex items-center justify-center text-black shadow-xl hover:scale-110 active:scale-95 transition-all md:hidden"
-          >
-            <span className="material-symbols-outlined text-xl">close</span>
-          </button>
+        <DialogContent className="fixed top-[50px] left-0 right-0 bottom-0 h-[calc(100%-50px)] z-[100] w-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
               <DialogTitle className="text-3xl font-extrabold serif-title italic">add new option</DialogTitle>
@@ -513,15 +508,11 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!viewingOption} onOpenChange={(open) => !open && setViewingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-xl sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed top-[50px] left-0 right-0 bottom-0 h-[calc(100%-50px)] z-[100] w-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-xl sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+          <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
-              <button 
-                onClick={() => setViewingOption(null)}
-                className="absolute right-4 top-4 z-[60] size-10 rounded-full bg-white flex items-center justify-center text-black shadow-xl hover:scale-110 active:scale-95 transition-all"
-              >
-                <span className="material-symbols-outlined text-xl">close</span>
-              </button>
+
               <div className="relative h-64 md:h-80">
                 <ImageCarousel imageUrls={getOptionImages(viewingOption.option)} alt={viewingOption.option.title} />
                 <div className="absolute top-4 left-4 flex gap-2">
@@ -682,13 +673,8 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
-          <button 
-            onClick={() => setEditingOption(null)}
-            className="absolute right-4 top-4 z-[110] size-10 rounded-full bg-white flex items-center justify-center text-black shadow-xl hover:scale-110 active:scale-95 transition-all md:hidden"
-          >
-            <span className="material-symbols-outlined text-xl">close</span>
-          </button>
+        <DialogContent className="fixed top-[50px] left-0 right-0 bottom-0 h-[calc(100%-50px)] z-[100] w-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
               <DialogTitle className="text-3xl font-extrabold serif-title italic">edit option</DialogTitle>
