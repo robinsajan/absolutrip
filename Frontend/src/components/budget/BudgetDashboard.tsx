@@ -117,22 +117,80 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
   const [selectedActivityOptionIds, setSelectedActivityOptionIds] = useState<number[]>([]);
 
   const [hasInitializedDefault, setHasInitializedDefault] = useState(false);
+  const [showInitializationPrompt, setShowInitializationPrompt] = useState(false);
+  const [pendingSelections, setPendingSelections] = useState<{stays: number[], activities: number[]} | null>(null);
+
+  // Persistence Key
+  const SCENARIO_KEY = `budget_scenario_${tripId}_${user?.id}`;
 
   useEffect(() => {
-    if (!hasInitializedDefault && !optionsLoading) {
+    if (!hasInitializedDefault && !optionsLoading && user) {
+      const saved = localStorage.getItem(SCENARIO_KEY);
       const finalizedStays = stayOptions
         .filter((ro) => ro.option.is_finalized)
         .map((ro) => ro.option.id);
-      setSelectedOptionIds(finalizedStays);
-
       const finalizedActivities = activityOptions
         .filter((ro) => ro.option.is_finalized)
         .map((ro) => ro.option.id);
-      setSelectedActivityOptionIds(finalizedActivities);
 
+      if (saved) {
+        try {
+          const { stays, activities } = JSON.parse(saved);
+          // Only prompt if the saved scenario differs from current finalized group plan
+          const isSame = JSON.stringify([...stays].sort()) === JSON.stringify([...finalizedStays].sort()) && 
+                         JSON.stringify([...activities].sort()) === JSON.stringify([...finalizedActivities].sort());
+          
+          if (!isSame) {
+            setPendingSelections({ stays, activities });
+            setShowInitializationPrompt(true);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse saved budget scenario", e);
+        }
+      }
+
+      // Default load: Group Plan
+      setSelectedOptionIds(finalizedStays);
+      setSelectedActivityOptionIds(finalizedActivities);
       setHasInitializedDefault(true);
     }
-  }, [optionsLoading, stayOptions, activityOptions, hasInitializedDefault]);
+  }, [optionsLoading, stayOptions, activityOptions, hasInitializedDefault, user, tripId, SCENARIO_KEY]);
+
+  // Handle Scenario Persistence
+  useEffect(() => {
+    if (hasInitializedDefault && user) {
+      localStorage.setItem(SCENARIO_KEY, JSON.stringify({
+        stays: selectedOptionIds,
+        activities: selectedActivityOptionIds
+      }));
+    }
+  }, [selectedOptionIds, selectedActivityOptionIds, hasInitializedDefault, user, SCENARIO_KEY]);
+
+  const handleStartFresh = () => {
+    const finalizedStays = stayOptions
+      .filter((ro) => ro.option.is_finalized)
+      .map((ro) => ro.option.id);
+    const finalizedActivities = activityOptions
+      .filter((ro) => ro.option.is_finalized)
+      .map((ro) => ro.option.id);
+    
+    setSelectedOptionIds(finalizedStays);
+    setSelectedActivityOptionIds(finalizedActivities);
+    setHasInitializedDefault(true);
+    setShowInitializationPrompt(false);
+    toast.success("Started fresh with the official Group Plan");
+  };
+
+  const handleContinue = () => {
+    if (pendingSelections) {
+      setSelectedOptionIds(pendingSelections.stays);
+      setSelectedActivityOptionIds(pendingSelections.activities);
+    }
+    setHasInitializedDefault(true);
+    setShowInitializationPrompt(false);
+    toast.success("Continued your private plan");
+  };
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSticky, setIsSticky] = useState(false);
@@ -371,6 +429,37 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] py-10 dark:bg-background-dark">
+      {/* Initialization Prompt Dialog */}
+      <Sheet open={showInitializationPrompt} onOpenChange={setShowInitializationPrompt}>
+        <SheetContent side="bottom" className="h-auto p-0 border-none rounded-t-[2.5rem] bg-white dark:bg-slate-900 shadow-2xl overflow-hidden [&>button]:hidden">
+          <div className="p-8 flex flex-col items-center text-center gap-6">
+            <div className="size-16 rounded-[2rem] bg-[#ccff00] text-black flex items-center justify-center shadow-xl shadow-[#ccff00]/20">
+              <PlusCircle className="size-8" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black italic serif-title text-black dark:text-white">Existing Plan Found</h3>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Would you like to continue with your previous private plan or start fresh with the Group Plan?</p>
+            </div>
+
+            <div className="flex flex-col w-full gap-3 mt-4">
+              <button 
+                onClick={handleContinue}
+                className="w-full bg-black dark:bg-white text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] transition-all"
+              >
+                Continue Where I Left
+              </button>
+              <button 
+                onClick={handleStartFresh}
+                className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              >
+                Start from Scratch (Group Plan)
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Sticky Mobile Summary */}
       <div className={cn(
         "fixed top-0 left-0 right-0 z-50 bg-[#ccff00] text-black px-6 py-4 shadow-2xl transition-all duration-300 transform md:hidden",

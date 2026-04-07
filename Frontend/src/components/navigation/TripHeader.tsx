@@ -41,14 +41,14 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
     : "Dates not set";
 
   return (
-    <div className="hidden md:block z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-6 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+    <div className="hidden md:block sticky top-0 z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-4 py-2 my-[5px]">
+      <div className="w-full flex items-center justify-between gap-4">
         <div className="flex flex-col min-w-0">
           <h2 className="text-lg font-black text-black dark:text-white truncate tracking-tight lowercase">
             {title || trip?.name || "Trip"}
           </h2>
           <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] flex items-center gap-1">
-            <span className="material-symbols-outlined text-[10px]">event</span>
+            <span className="material-symbols-outlined text-[9px]">event</span>
             {tripDates}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                     : "text-slate-500 hover:text-primary"
                 )}
               >
-                <span className={cn("material-symbols-outlined text-sm", isActive ? "material-symbols-filled" : "outline-icon")}>
+                <span className={cn("material-symbols-outlined text-[13px]", isActive ? "material-symbols-filled" : "outline-icon")}>
                   {tab.icon}
                 </span>
                 {tab.name}
@@ -91,7 +91,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                     : "text-slate-500 hover:text-primary"
                 )}
               >
-                <span className={cn("material-symbols-outlined text-sm", (pathname.includes("/members") || pathname.includes("/settings")) ? "material-symbols-filled" : "outline-icon")}>
+                <span className={cn("material-symbols-outlined text-[13px]", (pathname.includes("/members") || pathname.includes("/settings")) ? "material-symbols-filled" : "outline-icon")}>
                   settings
                 </span>
                 Settings
@@ -104,7 +104,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                   onClick={() => setIsSettingsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">route</span>
+                  <span className="material-symbols-outlined text-base">route</span>
                   Itinerary
                 </Link>
                 <Link
@@ -112,7 +112,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                   onClick={() => setIsSettingsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">group</span>
+                  <span className="material-symbols-outlined text-base">group</span>
                   Members
                 </Link>
                 <Link
@@ -120,7 +120,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                   onClick={() => setIsSettingsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">settings</span>
+                  <span className="material-symbols-outlined text-base">settings</span>
                   Settings
                 </Link>
               </div>
@@ -134,7 +134,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
               onClick={copyInviteCode}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tight text-slate-400 hover:text-primary transition-all"
             >
-              <span className="material-symbols-outlined text-xs">content_copy</span>
+              <span className="material-symbols-outlined text-[11px]">content_copy</span>
               {trip.invite_code}
             </button>
           )}

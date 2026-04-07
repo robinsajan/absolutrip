@@ -467,7 +467,7 @@ export function ExpenseForm({
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[50px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
           <div className="h-full overflow-y-auto px-6 py-10 md:px-10 md:py-12 scrollbar-hide">
 
 

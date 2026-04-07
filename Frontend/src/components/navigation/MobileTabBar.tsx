@@ -26,8 +26,8 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[95] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 md:hidden p-2 pb-[calc(env(safe-area-inset-bottom,0.75rem)+0.5rem)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-      <div className="flex items-center justify-around h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-[95] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 md:hidden p-1 pb-[calc(env(safe-area-inset-bottom,0.5rem)+0.25rem)] shadow-[0_-4px_20px_rgba(0,0,0,0.01)]">
+      <div className="flex items-center justify-around h-14">
         {tabs.map((tab) => {
           const isActive = pathname.includes(`/trip/${tripId}/${tab.href}`);
           const Icon = tab.icon;
@@ -44,12 +44,12 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
               )}
             >
               <div className={cn(
-                "p-2 rounded-2xl transition-all",
+                "p-1.5 rounded-xl transition-all",
                 isActive ? "bg-primary/10" : ""
               )}>
-                <Icon className={cn("h-6 w-6", isActive && "stroke-[2.5px]")} />
+                <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5px]")} />
               </div>
-              <span className="text-[9px] uppercase tracking-widest mt-1 font-semibold">{tab.name}</span>
+              <span className="text-[8px] mt-1 font-bold">{tab.name}</span>
             </Link>
           );
         })}
@@ -65,12 +65,12 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
               )}
             >
               <div className={cn(
-                "p-2 rounded-2xl transition-all",
+                "p-1.5 rounded-xl transition-all",
                 (pathname.includes("/members") || pathname.includes("/settings")) ? "bg-primary/10" : ""
               )}>
-                <Settings className={cn("h-6 w-6", (pathname.includes("/members") || pathname.includes("/settings")) && "stroke-[2.5px]")} />
+                <Settings className={cn("h-5 w-5", (pathname.includes("/members") || pathname.includes("/settings")) && "stroke-[2.5px]")} />
               </div>
-              <span className="text-[9px] uppercase tracking-widest mt-1 font-semibold">Settings</span>
+              <span className="text-[8px] mt-1 font-bold">Settings</span>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 mb-2" side="top" align="center">

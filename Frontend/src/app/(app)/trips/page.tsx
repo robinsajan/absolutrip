@@ -135,7 +135,7 @@ export default function TripsPage() {
       name: tripName.trim(),
       start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "",
       end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "",
-      google_maps_url: mapsUrl.trim(),
+      google_maps_url: mapsUrl,
     };
 
     if (!data.name || !data.start_date || !data.end_date) {

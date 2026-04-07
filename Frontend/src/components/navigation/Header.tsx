@@ -27,12 +27,12 @@ export function Header() {
     };
 
     return (
-        <header className="z-50 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 h-20 pt-5">
-            <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-                <div className="flex items-center gap-8">
+        <header className="fixed top-0 inset-x-0 z-50 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+10px+env(safe-area-inset-top,0px))]">
+            <div className="w-full h-full px-4 my-[5px] flex items-center justify-between">
+                <div className="flex items-center gap-6">
                     <Link href="/trips" className="flex items-center gap-2 group transition-all hover:scale-105 active:scale-95">
-                        <div className="bg-primary p-2.5 rounded-xl text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-                            <span className="material-symbols-outlined outline-icon text-xl">flight_takeoff</span>
+                        <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                            <span className="material-symbols-outlined outline-icon text-lg">flight_takeoff</span>
                         </div>
                         <span className="text-xl font-black tracking-tight text-black dark:text-white lowercase">absolutrip</span>
                     </Link>
@@ -42,12 +42,12 @@ export function Header() {
                 {/* Right Section: Actions */}
                 <div className="flex items-center gap-3 md:gap-5">
                     <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined outline-icon text-xl">notifications</span>
+                        <span className="material-symbols-outlined outline-icon text-lg">notifications</span>
                     </button>
 
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button className="w-10 h-10 rounded-full bg-accent-lime flex items-center justify-center font-black text-black border-2 border-white dark:border-slate-800 shadow-sm hover:scale-110 active:scale-95 transition-all">
+                            <button className="w-9 h-9 rounded-full bg-accent-lime flex items-center justify-center font-black text-black border-2 border-white dark:border-slate-800 shadow-sm hover:scale-110 active:scale-95 transition-all">
                                 {user?.name?.charAt(0).toUpperCase() || "A"}
                             </button>
                         </PopoverTrigger>
@@ -63,7 +63,7 @@ export function Header() {
                                     onClick={handleLogout}
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 text-sm font-bold text-red-600 transition-colors"
                                 >
-                                    <span className="material-symbols-outlined text-xl">logout</span>
+                                    <span className="material-symbols-outlined text-lg">logout</span>
                                     Logout
                                 </button>
                             </div>

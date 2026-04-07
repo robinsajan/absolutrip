@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import { Plus, Upload, X, Calendar, Home, Utensils, Car, Ticket } from "lucide-react";
 import { toast } from "sonner";
-import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, parseISO, isWithinInterval, startOfDay, endOfDay, differenceInCalendarDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,6 +90,13 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
     };
   }, [tripStartDate, tripEndDate]);
 
+  const shouldAutoSetStayDates = useMemo(() => {
+    if (!tripStartDate || !tripEndDate) return false;
+    // For very short trips (same-day or 1-night like today->tomorrow), don't ask for stay dates.
+    const days = differenceInCalendarDays(parseISO(tripEndDate), parseISO(tripStartDate));
+    return days <= 1;
+  }, [tripStartDate, tripEndDate]);
+
   const isDateInTripRange = (date: Date) => {
     if (!tripDateRange) return true;
     return isWithinInterval(date, { start: tripDateRange.start, end: tripDateRange.end });
@@ -153,13 +160,18 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
 
     setIsLoading(true);
     try {
+      const autoStayDates =
+        category === "stay" && shouldAutoSetStayDates && tripStartDate && tripEndDate
+          ? { check_in_date: tripStartDate, check_out_date: tripEndDate }
+          : null;
+
       const result = await onSubmit({
         title: title.trim(),
-        link: link.trim(),
+        link: link,
         price: Number(price),
         notes: notes.trim() || undefined,
-        check_in_date: dateSelection?.from ? format(dateSelection.from, "yyyy-MM-dd") : undefined,
-        check_out_date: dateSelection?.to ? format(dateSelection.to, "yyyy-MM-dd") : undefined,
+        check_in_date: autoStayDates?.check_in_date ?? (dateSelection?.from ? format(dateSelection.from, "yyyy-MM-dd") : undefined),
+        check_out_date: autoStayDates?.check_out_date ?? (dateSelection?.to ? format(dateSelection.to, "yyyy-MM-dd") : undefined),
         category: category === "other" ? undefined : category,
         is_per_person: isPerPerson,
         is_per_night: isPerNight,
@@ -252,7 +264,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
         </div>
 
         {/* Dates component upgraded to DateRange - For stays and activities */}
-        {(category === "stay" || category === "activity") && (
+        {(category === "stay" || category === "activity") && !(category === "stay" && shouldAutoSetStayDates) && (
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-foreground">
               {category === "stay" ? "Check-in / Check-out" : "Activity Date"}
@@ -316,6 +328,15 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                 )}
               </PopoverContent>
             </Popover>
+          </div>
+        )}
+
+        {category === "stay" && shouldAutoSetStayDates && tripStartDate && tripEndDate && (
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold text-foreground">Dates</Label>
+            <div className="text-xs text-muted-foreground">
+              Auto-set to trip dates ({tripStartDate} → {tripEndDate})
+            </div>
           </div>
         )}
 

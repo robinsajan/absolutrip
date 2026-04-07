@@ -180,12 +180,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
     <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen pb-24 font-sans">
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div className="flex flex-row items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-3xl md:text-6xl font-black text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">expense log</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100 truncate">
-              {activeTrip?.name || "Trip"} • {expenses.length} transactions
-            </p>
-          </div>
+
 
           {/* Header Actions */}
           <div className="flex gap-3 md:gap-4 items-center animate-in fade-in slide-in-from-right-4 duration-700 shrink-0">

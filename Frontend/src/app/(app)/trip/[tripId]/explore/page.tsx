@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
@@ -235,14 +236,20 @@ export default function ExplorePage() {
   }, [rankedOptions, selectedDate]);
 
   const activities = useMemo(() => {
-    return (rankedOptions || [])
-      .filter(ro => ro.option.category !== 'stay')
-      .sort((a, b) => {
-        const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
-        const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
-        return dateA - dateB;
+    let list = (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
+    if (selectedDate) {
+      list = list.filter(ro => {
+        if (!ro.option.check_in_date) return false;
+        const start = parseISO(ro.option.check_in_date);
+        return isSameDay(selectedDate, start);
       });
-  }, [rankedOptions]);
+    }
+    return list.sort((a, b) => {
+      const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
+      const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [rankedOptions, selectedDate]);
 
   const allFilteredOptions = useMemo(() => [...stays, ...activities], [stays, activities]);
 
@@ -268,9 +275,9 @@ export default function ExplorePage() {
     return (
       <div key={ro.option.id} className={cn(
         "group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1 shrink-0",
-        "w-[280px] md:w-[240px] lg:w-[260px] xl:w-[280px] 2xl:w-[calc(14.28%-1.5rem)] min-w-[200px] max-w-[360px]",
+        "w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)]",
         isFinalized 
-          ? "border-green-500 ring-4 ring-green-500/10 shadow-lg shadow-green-500/5 scale-[1.02] bg-green-500/10 dark:bg-green-500/20" 
+          ? "border-green-500 ring-8 ring-green-500/10 shadow-2xl scale-[1.02] bg-white dark:bg-gray-900 z-10" 
           : hasVoted 
             ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-gray-900" 
             : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg bg-white dark:bg-gray-900"
@@ -302,7 +309,7 @@ export default function ExplorePage() {
             )}
           </button>
         </div>
-        <div className="p-3 md:p-4 flex flex-col h-full">
+        <div className="p-2.5 md:p-4 flex flex-col h-full">
           <div className="flex justify-between items-start mb-1 gap-2">
             <h3 className="text-sm md:text-lg font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">{ro.option.title}</h3>
             <div className="flex items-center gap-1 shrink-0">
@@ -332,6 +339,7 @@ export default function ExplorePage() {
                 <span className="material-symbols-outlined text-xs md:text-sm text-primary">calendar_today</span>
                 <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300">
                   {format(parseISO(ro.option.check_in_date), "MMM d")}
+                  {ro.option.check_out_date && ` — ${format(parseISO(ro.option.check_out_date), "MMM d")}`}
                 </span>
               </div>
             )}
@@ -342,10 +350,9 @@ export default function ExplorePage() {
               </div>
               <button
                 onClick={() => setViewingOption(ro)}
-                className="text-gray-400 hover:text-black dark:hover:text-white transition-all text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1 group/link"
+                className="size-8 rounded-full border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-black dark:hover:text-white transition-colors"
               >
-                details
-                <span className="material-symbols-outlined text-xs group-hover/link:translate-x-0.5 transition-transform">arrow_forward</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
               </button>
             </div>
           </div>
@@ -355,15 +362,68 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 min-h-screen">
-      <main className="max-w-7xl mx-auto px-6 pt-4 pb-12 md:py-12">
-        <div className="hidden md:flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-black dark:text-white tracking-tighter lowercase serif-title italic animate-in fade-in slide-in-from-left-4 duration-700">comparison hub</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-2 font-bold uppercase tracking-widest text-[10px] animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
-              {activeTrip?.name || "Trip"} • {members?.length || 0} members
-            </p>
+    <div className="bg-background font-sans text-gray-900 dark:text-gray-100">
+      <main className="w-full px-3 pt-4 pb-12 md:px-6 md:py-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 px-2">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Popover open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
+                <PopoverTrigger asChild>
+                  <button className={cn(
+                    "size-10 md:size-12 rounded-full flex items-center justify-center transition-all shadow-xl",
+                    selectedDate ? "bg-black text-[#ccff00] dark:bg-white dark:text-black scale-105" : "bg-white dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800"
+                  )}>
+                    <span className="material-symbols-outlined text-xl md:text-2xl">calendar_today</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden bg-white dark:bg-slate-900 z-[200]" align="start">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <Button
+                      variant="ghost" 
+                      onClick={() => {
+                        setSelectedDate(null);
+                        setIsPopoverOpen(false);
+                      }}
+                      className="w-full text-[10px] font-black uppercase tracking-[0.2em] h-12 rounded-xl text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+                    >
+                      Show All Days
+                    </Button>
+                  </div>
+                  <div className="p-2">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate || undefined}
+                      onSelect={(d) => {
+                        setSelectedDate(d || null);
+                        setIsPopoverOpen(false);
+                      }}
+                      disabled={(date) => {
+                        if (!activeTrip?.start_date || !activeTrip?.end_date) return false;
+                        const start = parseISO(activeTrip.start_date);
+                        const end = activeTrip.end_date ? parseISO(activeTrip.end_date) : start;
+                        start.setHours(0, 0, 0, 0);
+                        end.setHours(0, 0, 0, 0);
+                        const checkDate = new Date(date);
+                        checkDate.setHours(0, 0, 0, 0);
+                        return checkDate < start || checkDate > end;
+                      }}
+                      fromDate={activeTrip?.start_date ? parseISO(activeTrip.start_date) : undefined}
+                      toDate={activeTrip?.end_date ? parseISO(activeTrip.end_date) : undefined}
+                      initialFocus
+                      className="font-sans"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div className="flex flex-col">
+                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Filtering</span>
+                <span className="text-sm md:text-lg font-extrabold text-black dark:text-white serif-title italic leading-none">
+                  {selectedDate ? format(selectedDate, "MMM d, yyyy") : "all days"}
+                </span>
+              </div>
+            </div>
           </div>
+
           <button
             onClick={() => setShowAddOption(true)}
             className="hidden md:flex bg-black dark:bg-white dark:text-black text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest items-center gap-2 hover:opacity-90 transition-all shadow-xl shadow-black/5"
@@ -373,7 +433,7 @@ export default function ExplorePage() {
           </button>
         </div>
 
-        {/* Mobile Fixed Add Button */}
+        {/* Mobile Fixed Add Button (Keep for accessibility) */}
         <button
           onClick={() => setShowAddOption(true)}
           className="md:hidden fixed bottom-[140px] right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
@@ -382,115 +442,72 @@ export default function ExplorePage() {
           <span className="material-symbols-outlined text-3xl">add</span>
         </button>
 
-        <div>
-          <div className="w-full">
-            {tripDates.length > 0 && (
-              <>
-                {/* Mobile Calendar Filter */}
-                <div className="flex md:hidden items-center justify-between mb-8 px-2">
+        {isLoading ? (
+          <FullPageLoader />
+        ) : rankedOptions?.length === 0 ? (
+          <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800">
+            <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>
+            <p className="text-gray-500">Help your group decide! Add stays or activities.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {stays.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2 pl-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Filtering</span>
-                    <span className="text-xl font-extrabold text-black dark:text-white serif-title italic">
-                      {selectedDate ? format(selectedDate, "MMM d, yyyy") : "all days"}
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Accommodation</span>
+                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Stays ({stays.length})</h2>
                   </div>
-                  <Popover open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
-                    <PopoverTrigger asChild>
-                      <button className={cn(
-                        "size-12 rounded-full flex items-center justify-center transition-all shadow-xl",
-                        selectedDate ? "bg-black text-[#ccff00] dark:bg-white dark:text-black scale-105" : "bg-white dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800"
-                      )}>
-                        <span className="material-symbols-outlined text-2xl">calendar_today</span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden bg-white dark:bg-slate-900 z-[200]" align="end">
-                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                        <Button
-                          variant="ghost" 
-                          onClick={() => {
-                            setSelectedDate(null);
-                            setIsPopoverOpen(false);
-                          }}
-                          className="w-full text-[10px] font-black uppercase tracking-[0.2em] h-12 rounded-xl text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
-                        >
-                          Show All Days
-                        </Button>
-                      </div>
-                      <div className="p-2">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate || undefined}
-                          onSelect={(d) => {
-                            setSelectedDate(d || null);
-                            setIsPopoverOpen(false);
-                          }}
-                          disabled={(date) => {
-                            if (!activeTrip?.start_date || !activeTrip?.end_date) return false;
-                            const start = parseISO(activeTrip.start_date);
-                            const end = parseISO(activeTrip.end_date);
-                            // Set hours to 0 to compare dates only
-                            start.setHours(0, 0, 0, 0);
-                            end.setHours(0, 0, 0, 0);
-                            const checkDate = new Date(date);
-                            checkDate.setHours(0, 0, 0, 0);
-                            return checkDate < start || checkDate > end;
-                          }}
-                          fromDate={activeTrip?.start_date ? parseISO(activeTrip.start_date) : undefined}
-                          toDate={activeTrip?.end_date ? parseISO(activeTrip.end_date) : undefined}
-                          initialFocus
-                          className="font-sans"
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  {(stays.length > 7 || (stays.length > 2)) && (
+                    <Link
+                      href={`/trip/${tripId}/explore/stays`}
+                      className={cn("group flex items-center gap-1.5 transition-all", stays.length <= 7 && "md:hidden")}
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">View all stays</span>
+                      <span className="material-symbols-outlined text-sm text-black dark:text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </Link>
+                  )}
                 </div>
-
-                {/* Desktop Date Bar */}
-                <div className="hidden md:flex items-center gap-3 mb-10 overflow-x-auto pb-4 scrollbar-hide">
-                  <button onClick={() => setSelectedDate(null)} className={cn("whitespace-nowrap px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all", !selectedDate ? "bg-black text-[#ccff00] dark:bg-white dark:text-black shadow-xl scale-105" : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400")}>All Dates</button>
-                  {tripDates.map((date, idx) => {
-                    const isSelected = selectedDate && isSameDay(date, selectedDate);
-                    return <button key={idx} onClick={() => setSelectedDate(date)} className={cn("whitespace-nowrap px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all", isSelected ? "bg-black text-[#ccff00] dark:bg-white dark:text-black shadow-xl scale-105" : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400")}>{format(date, "MMM d")}</button>;
-                  })}
+                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                  {stays.slice(0, 7).map(renderOptionCard)}
                 </div>
-              </>
-            )}
-
-            {isLoading ? (
-              <FullPageLoader />
-            ) : rankedOptions?.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800">
-                <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>
-                <p className="text-gray-500">Help your group decide! Add stays or activities.</p>
               </div>
-            ) : (
-              <div className="space-y-12">
-                {stays.length > 0 && (
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest pl-2">Stays</h2>
-                    <div className="flex overflow-x-auto md:flex md:flex-wrap md:justify-center gap-4 md:gap-6 pb-4 scrollbar-hide snap-x">
-                      {stays.map(renderOptionCard)}
-                    </div>
+            )}
+            {activities.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-8 pl-2">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Itinerary</span>
+                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Activities ({activities.length})</h2>
                   </div>
-                )}
-                {activities.length > 0 && (
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest pl-2">Activities</h2>
-                    <div className="flex overflow-x-auto md:flex md:flex-wrap md:justify-center gap-4 md:gap-6 pb-4 scrollbar-hide snap-x">
-                      {activities.map(renderOptionCard)}
-                    </div>
-                  </div>
-                )}
+                  {(activities.length > 7 || (activities.length > 2)) && (
+                    <Link
+                      href={`/trip/${tripId}/explore/activities`}
+                      className={cn("group flex items-center gap-1.5 transition-all", activities.length <= 7 && "md:hidden")}
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">View all activities</span>
+                      <span className="material-symbols-outlined text-sm text-black dark:text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </Link>
+                  )}
+                </div>
+                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                  {activities.slice(0, 7).map(renderOptionCard)}
+                </div>
+              </div>
+            )}
+            {stays.length === 0 && activities.length === 0 && (
+              <div className="py-20 text-center bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800">
+                <p className="text-slate-400 font-bold italic lowercase tracking-widest">no options matched for this day</p>
               </div>
             )}
           </div>
-        </div>
+        )}
       </main>
 
 
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[50px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
@@ -508,12 +525,12 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!viewingOption} onOpenChange={(open) => !open && setViewingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[50px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-xl sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
 
-              <div className="relative h-64 md:h-80">
+              <div className="relative h-64 md:h-[450px]">
                 <ImageCarousel imageUrls={getOptionImages(viewingOption.option)} alt={viewingOption.option.title} />
                 <div className="absolute top-4 left-4 flex gap-2">
                   <div className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
@@ -546,7 +563,7 @@ export default function ExplorePage() {
                 </button>
               </div>
 
-              <div className="px-8 py-8 space-y-6">
+              <div className="px-8 py-6 space-y-4">
                 <div>
                   <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2 serif-title italic">{viewingOption.option.title}</h3>
                   <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
@@ -593,19 +610,19 @@ export default function ExplorePage() {
                 </div>
 
 
-                <div className="p-5 bg-primary/5 rounded-[1.5rem] border border-primary/10">
-                  <div className="flex justify-between items-end mb-4">
+                <div className="p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10">
+                  <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1">Total Group Price</p>
-                      <p className="text-xl font-black text-slate-900 dark:text-white">₹{Math.round(
+                      <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1 leading-none">Total Group Price</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">₹{Math.round(
                         (viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))) *
                         Math.max(1, members?.length || 0) *
                         (viewingOption.option.check_in_date && viewingOption.option.check_out_date ? Math.max(1, differenceInDays(parseISO(viewingOption.option.check_out_date), parseISO(viewingOption.option.check_in_date))) : 1)
                       ).toLocaleString('en-IN')}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] uppercase font-black text-primary/70 tracking-widest mb-1">Per Person</p>
-                      <p className="text-2xl font-black text-primary">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
+                      <p className="text-[9px] uppercase font-black text-primary/70 tracking-widest mb-1 leading-none">Per Person</p>
+                      <p className="text-2xl font-black text-primary leading-none mt-1">₹{Math.round(viewingOption.option.price_per_day_pp ?? (viewingOption.option.price / Math.max(1, members?.length || 0))).toLocaleString('en-IN')}</p>
                     </div>
                   </div>
                 </div>
@@ -673,7 +690,7 @@ export default function ExplorePage() {
         </DialogContent>
       </Dialog>
       <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
-        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[50px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-lg sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
+        <DialogContent className="fixed inset-0 z-[100] translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">

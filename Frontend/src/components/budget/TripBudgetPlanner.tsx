@@ -91,7 +91,7 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travel
 
     return (
         <Sheet open={open} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full max-w-md p-0 pt-[50px] overflow-hidden flex flex-col z-[200]">
+            <SheetContent side="right" className="w-full max-w-md p-0 overflow-hidden flex flex-col z-[200]">
                 <SheetHeader className="sr-only">
                     <SheetTitle>{opt.title}</SheetTitle>
                     <SheetDescription>Details about {opt.title}</SheetDescription>
@@ -362,6 +362,8 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     const [reservedOptions, setReservedOptions] = useState<any[]>([]);
     const [infoOpt, setInfoOpt] = useState<any | null>(null);
     const [allOptions, setAllOptions] = useState<any[]>([]);
+    const [showInitializationPrompt, setShowInitializationPrompt] = useState(false);
+    const [pendingSelections, setPendingSelections] = useState<any[]>([]);
 
     const { members } = useTripMembers(tripId);
     useEffect(() => { fetchTripData(); }, [tripId]);
@@ -381,14 +383,11 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
             // Strictly load only the current user's plan
             const userPlans = plansRes.data.plans || [];
             if (userPlans.length > 0 && userPlans[0].selections?.length > 0) {
-                setSelections(userPlans[0].selections);
-                const ls = [...userPlans[0].selections]
-                    .filter((s: any) => s.category === 'stay')
-                    .sort((a: any, b: any) => b.end_day - a.end_day)[0];
-                setCurrentDay(ls ? ls.end_day + 1 : 1);
-                setHasPlan(true);
+                setPendingSelections(userPlans[0].selections);
+                setShowInitializationPrompt(true);
+                // We don't setHasPlan(true) yet so it doesn't render the full UI behind the prompt if we want a clean gate
+                // Actually, let's keep hasPlan=null (loading) until decision
             } else {
-                // No plan exists for this user yet
                 setHasPlan(false);
             }
 
@@ -405,6 +404,26 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleContinue = () => {
+        setSelections(pendingSelections);
+        const ls = [...pendingSelections]
+            .filter((s: any) => s.category === 'stay')
+            .sort((a: any, b: any) => b.end_day - a.end_day)[0];
+        setCurrentDay(ls ? ls.end_day + 1 : 1);
+        setHasPlan(true);
+        setShowInitializationPrompt(false);
+        toast.success("Continued your saved plan");
+    };
+
+    const handleStartFresh = () => {
+        setSelections([]);
+        setCurrentDay(1);
+        setActiveStayEndDay(null);
+        setHasPlan(true);
+        setShowInitializationPrompt(false);
+        toast.success("Started fresh");
     };
 
     const fetchAiPlans = async () => {
@@ -487,6 +506,8 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     if (loading && !trip) return <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-primary size-10" /></div>;
     if (!trip) return null;
 
+
+
     // ── Gate: No plan yet for this user — show Create Budget screen ──────────
     if (hasPlan === false) {
         return (
@@ -553,13 +574,44 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-8">
                     <div className="bg-white dark:bg-slate-900 rounded-[32px] md:rounded-[48px] border border-primary/10 p-5 md:p-10 shadow-sm relative overflow-hidden space-y-6 md:space-y-10">
-                        {planningMode === 'ai' && (
-                            <div className="flex justify-between items-center relative z-10">
-                                <Button variant="ghost" className="rounded-full gap-2 text-slate-400 font-bold" onClick={() => setPlanningMode('manual')}><ArrowRight className="size-4 rotate-180" /> Back to Manual</Button>
+                        {showInitializationPrompt ? (
+                            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-8 animate-in fade-in duration-500 py-6">
+                                <div className="size-20 rounded-[32px] bg-[#ccff00] flex items-center justify-center shadow-xl shadow-[#ccff00]/20">
+                                    <Save className="size-10 text-black" />
+                                </div>
+                                <div className="text-center space-y-2">
+                                    <h2 className="text-3xl font-black italic text-slate-900 dark:text-white tracking-tight">
+                                        Existing Plan Found
+                                    </h2>
+                                    <p className="text-slate-500 font-bold text-sm">
+                                        You already have a private budget plan. Would you like to continue it or start fresh?
+                                    </p>
+                                </div>
+                                <div className="flex flex-col md:flex-row w-full max-w-md gap-4 mt-4">
+                                    <Button
+                                        className="rounded-[24px] flex-1 py-6 font-black uppercase text-[10px] tracking-widest bg-black text-white hover:bg-black/90 transition-all shadow-xl h-auto"
+                                        onClick={handleContinue}
+                                    >
+                                        Continue
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="rounded-[24px] flex-1 py-6 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50 transition-all h-auto"
+                                        onClick={handleStartFresh}
+                                    >
+                                        Start Fresh
+                                    </Button>
+                                </div>
                             </div>
-                        )}
+                        ) : (
+                            <>
+                                {planningMode === 'ai' && (
+                                    <div className="flex justify-between items-center relative z-10">
+                                        <Button variant="ghost" className="rounded-full gap-2 text-slate-400 font-bold" onClick={() => setPlanningMode('manual')}><ArrowRight className="size-4 rotate-180" /> Back to Manual</Button>
+                                    </div>
+                                )}
 
-                        {planningMode === 'manual' ? (
+                                {planningMode === 'manual' ? (
                             <div className="space-y-6 md:space-y-10 animate-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-4 md:space-y-6">
                                     <div className="flex items-center justify-between">
@@ -711,6 +763,8 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                 )}
                             </div>
                         )}
+                        </>
+                    )}
                     </div>
                 </div>
 
