@@ -31,7 +31,7 @@ export function useBackCloseController<T extends BackCloseControllerArgs>(props:
   }, [id]);
 
   const onOpenChange = useCallback(
-    (next) => {
+    (next: boolean) => {
       // When opening, push a history entry immediately so Back closes it.
       if (next) pushModalState();
 
