@@ -82,6 +82,8 @@ interface ExpenseFormProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  urlKey?: string;
+  urlValue?: string;
 }
 
 const categories: { value: ExpenseCategory; label: string; icon: React.ReactNode }[] = [
@@ -109,6 +111,8 @@ export function ExpenseForm({
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
   showTrigger = true,
+  urlKey,
+  urlValue,
 }: ExpenseFormProps) {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -459,7 +463,7 @@ export function ExpenseForm({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(val) => val ? setIsOpen(true) : handleClose()}>
+      <Dialog open={isOpen} onOpenChange={(val) => val ? setIsOpen(true) : handleClose()} urlKey={urlKey} urlValue={urlValue}>
         {showTrigger && !isEditMode && (
           <DialogTrigger asChild>
             <Button

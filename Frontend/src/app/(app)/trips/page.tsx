@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTrips, useAuth } from "@/lib/hooks";
@@ -120,9 +120,15 @@ export default function TripsPage() {
   const [showOverlapDialog, setShowOverlapDialog] = useState(false);
   const [pendingTripData, setPendingTripData] = useState<any>(null);
 
+  const searchParams = useSearchParams();
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    const modal = searchParams.get("modal");
+    if (modal === "new-trip") setCreateDialogOpen(true);
+    if (modal === "join-trip") setJoinDialogOpen(true);
+    if (modal === "date-conflict") setShowOverlapDialog(true);
+  }, [searchParams]);
 
   const handleLogout = async () => {
     await logout();
@@ -218,7 +224,12 @@ export default function TripsPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <Dialog 
+              open={createDialogOpen} 
+              onOpenChange={setCreateDialogOpen}
+              urlKey="modal"
+              urlValue="new-trip"
+            >
               <DialogTrigger asChild>
                 <button className="md:hidden bg-primary text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-lg shadow-primary/20">
                   <span className="material-symbols-outlined text-base">add</span>
@@ -267,7 +278,12 @@ export default function TripsPage() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+            <Dialog 
+              open={joinDialogOpen} 
+              onOpenChange={setJoinDialogOpen}
+              urlKey="modal"
+              urlValue="join-trip"
+            >
               <DialogTrigger asChild>
                 <button className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 md:px-8 md:py-4 rounded-full font-bold text-xs md:text-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm">
                   <span className="material-symbols-outlined text-base md:text-xl outline-icon">group_add</span>
@@ -395,7 +411,12 @@ export default function TripsPage() {
         )}
 
         {/* Overlap Warning Dialog */}
-        <Dialog open={showOverlapDialog} onOpenChange={setShowOverlapDialog}>
+        <Dialog 
+          open={showOverlapDialog} 
+          onOpenChange={setShowOverlapDialog}
+          urlKey="modal"
+          urlValue="date-conflict"
+        >
           <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] max-w-sm">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black text-amber-500 flex items-center gap-2">

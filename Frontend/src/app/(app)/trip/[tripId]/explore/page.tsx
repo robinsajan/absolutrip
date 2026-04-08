@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
 import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks";
@@ -99,11 +99,35 @@ export default function ExplorePage() {
   const { members } = useTripMembers(tripId);
   const { showAddOption, setShowAddOption } = useAppStore();
 
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [viewingOption, setViewingOption] = useState<RankedOption | null>(null);
   const [editingOption, setEditingOption] = useState<RankedOption | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  // Sync state with URL on mount or when rankedOptions changes
+  useEffect(() => {
+    if (!rankedOptions || rankedOptions.length === 0) return;
+
+    const modal = searchParams.get("modal");
+    if (modal === "add-option") {
+      setShowAddOption(true);
+    }
+
+    const viewingId = searchParams.get("viewing");
+    if (viewingId) {
+      const option = rankedOptions.find(ro => ro.option.id.toString() === viewingId);
+      if (option) setViewingOption(option);
+    }
+
+    const editingId = searchParams.get("editing");
+    if (editingId) {
+      const option = rankedOptions.find(ro => ro.option.id.toString() === editingId);
+      if (option) setEditingOption(option);
+    }
+  }, [rankedOptions, searchParams, setShowAddOption]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -533,7 +557,7 @@ export default function ExplorePage() {
 
 
 
-      <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
+      <Dialog open={showAddOption} onOpenChange={setShowAddOption} urlKey="modal" urlValue="add-option">
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
@@ -551,7 +575,12 @@ export default function ExplorePage() {
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!viewingOption} onOpenChange={(open) => !open && setViewingOption(null)}>
+      <Dialog 
+        open={!!viewingOption} 
+        onOpenChange={(open) => !open && setViewingOption(null)}
+        urlKey="viewing"
+        urlValue={viewingOption?.option.id.toString()}
+      >
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
@@ -719,7 +748,12 @@ export default function ExplorePage() {
           )}
         </DialogContent>
       </Dialog>
-      <Dialog open={!!editingOption} onOpenChange={(open) => !open && setEditingOption(null)}>
+      <Dialog 
+        open={!!editingOption} 
+        onOpenChange={(open) => !open && setEditingOption(null)}
+        urlKey="editing"
+        urlValue={editingOption?.option.id.toString()}
+      >
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">

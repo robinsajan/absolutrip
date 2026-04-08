@@ -46,9 +46,11 @@ interface ExpenseDetailsProps {
     currentUserId?: number;
     onClose: () => void;
     onDelete?: (expenseId: number) => void;
+    urlKey?: string;
+    urlValue?: string;
 }
 
-export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDelete }: ExpenseDetailsProps) {
+export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDelete, urlKey, urlValue }: ExpenseDetailsProps) {
     const [comments, setComments] = useState<ExpenseComment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -112,7 +114,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
     };
 
     return (
-        <Sheet open={isOpen} onOpenChange={onClose}>
+        <Sheet open={isOpen} onOpenChange={onClose} urlKey={urlKey} urlValue={urlValue}>
             <SheetContent 
                 side="bottom"
                 className="w-full h-full sm:max-w-none p-0 flex flex-col border-none shadow-none z-[100]"

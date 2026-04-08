@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useAuth, useExpenses, useSettlement, useTripMembers } from "@/lib/hooks";
@@ -45,11 +46,20 @@ export function TripSettleView({ tripId }: { tripId: string }) {
   const { balances, settlements, isLoading, mutate: mutateSettle } = useSettlement(tripId);
   const { mutate: mutateExpenses } = useExpenses(tripId); // Corrected from mutateExpenseTripId(tripId)
 
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [fromUserId, setFromUserId] = useState<number | null>(null);
   const [toUserId, setToUserId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Sync state with URL
+  useEffect(() => {
+    const modal = searchParams.get("modal");
+    if (modal === "record-settlement") {
+      setOpen(true);
+    }
+  }, [searchParams]);
 
   const myId = user?.id;
 
@@ -241,7 +251,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
         </div>
       </main>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={setOpen} urlKey="modal" urlValue="record-settlement">
         <DialogContent className="max-w-md bg-white dark:bg-gray-900 rounded-[3rem] p-10 border-none shadow-2xl">
           <DialogHeader className="pb-8">
             <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic animate-in fade-in slide-in-from-top-4 duration-500">record settlement</DialogTitle>

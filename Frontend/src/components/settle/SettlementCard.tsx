@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
 import { ArrowRight, Check, Copy, Info, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,9 +36,19 @@ export function SettlementCard({
   tripId,
   onSettled,
 }: SettlementCardProps) {
+  const searchParams = useSearchParams();
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isSettling, setIsSettling] = useState(false);
+
+  // Sync state with URL
+  useEffect(() => {
+    const settleWithId = searchParams.get("settleWithId");
+    const otherId = type === "pay" ? settlement.to_user_id : settlement.from_user_id;
+    if (settleWithId === otherId.toString()) {
+      setShowDetails(true);
+    }
+  }, [searchParams, settlement, type]);
 
   const otherPerson = type === "pay" ? settlement.to_user_name : settlement.from_user_name;
 
@@ -122,7 +133,12 @@ export function SettlementCard({
         </div>
       </div>
 
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+      <Dialog 
+        open={showDetails} 
+        onOpenChange={setShowDetails}
+        urlKey="settleWithId"
+        urlValue={(type === "pay" ? settlement.to_user_id : settlement.from_user_id).toString()}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

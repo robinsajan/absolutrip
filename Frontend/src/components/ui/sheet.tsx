@@ -7,8 +7,15 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 import { useBackCloseController } from "@/lib/hooks"
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  const { open, onOpenChange } = useBackCloseController(props)
+function Sheet({
+  urlKey,
+  urlValue,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Root> & {
+  urlKey?: string;
+  urlValue?: string;
+}) {
+  const { open, onOpenChange } = useBackCloseController({ ...props, urlKey, urlValue })
   return (
     <SheetPrimitive.Root
       data-slot="sheet"

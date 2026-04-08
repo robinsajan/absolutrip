@@ -9,9 +9,14 @@ import { Button } from "@/components/ui/button"
 import { useBackCloseController } from "@/lib/hooks"
 
 function Dialog({
+  urlKey,
+  urlValue,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  const { open, onOpenChange } = useBackCloseController(props)
+}: React.ComponentProps<typeof DialogPrimitive.Root> & {
+  urlKey?: string;
+  urlValue?: string;
+}) {
+  const { open, onOpenChange } = useBackCloseController({ ...props, urlKey, urlValue })
   return (
     <DialogPrimitive.Root
       data-slot="dialog"

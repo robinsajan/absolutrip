@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2, Wallet, X } from "lucide-react";
 import { useAuth, useExpenses, useSettlement, useTripMembers, useRankedOptions, useBudget } from "@/lib/hooks";
@@ -86,6 +86,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const youAreOwed = Math.max(currentUserBalance?.balance ?? 0, 0);
   const youOwe = Math.max(-(currentUserBalance?.balance ?? 0), 0);
 
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<ExpenseScope>("mine");
   const [showAll, setShowAll] = useState(false);
@@ -94,6 +95,34 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddExpense, setShowAddExpense] = useState(false);
+
+  // Sync state with URL
+  useEffect(() => {
+    if (!expenses || expenses.length === 0) return;
+
+    const addExpense = searchParams.get("addExpense");
+    if (addExpense === "true") {
+      setShowAddExpense(true);
+    }
+
+    const viewingId = searchParams.get("expenseId");
+    if (viewingId) {
+      const expense = expenses.find(e => e.id.toString() === viewingId);
+      if (expense) {
+        setSelectedExpense(expense);
+        setIsDetailsOpen(true);
+      }
+    }
+
+    const editingId = searchParams.get("editExpenseId");
+    if (editingId) {
+      const expense = expenses.find(e => e.id.toString() === editingId);
+      if (expense) {
+        setEditingExpense(expense);
+        setShowAddExpense(true);
+      }
+    }
+  }, [expenses, searchParams]);
 
   const sortedExpenses = useMemo(() => {
     const copy = [...expenses];
@@ -610,6 +639,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
             setIsDetailsOpen(false);
             setSelectedExpense(null);
           }}
+          urlKey="expenseId"
+          urlValue={selectedExpense?.id.toString()}
         />
 
         <ExpenseForm
@@ -635,6 +666,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
             }
           }}
           showTrigger={false}
+          urlKey={editingExpense ? "editExpenseId" : "addExpense"}
+          urlValue={editingExpense ? editingExpense.id.toString() : "true"}
         />
       </main>
 

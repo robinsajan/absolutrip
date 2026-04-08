@@ -29,6 +29,7 @@ import axios from "@/lib/api/client";
 import { trips as tripsApi, options as optionsApi } from "@/lib/api/endpoints";
 import type { Trip } from "@/types";
 import { useTripMembers, useAuth } from "@/lib/hooks";
+import { useSearchParams, usePathname } from "next/navigation";
 
 // ── Utility ──────────────────────────────────────────────────────────────────
 const getOptionImageUrl = (opt: any) => {
@@ -72,7 +73,7 @@ const getUnitPrice = (opt: any, travelers: number) => {
 
 // ── Sub-components for Stability ───────────────────────────────────────────
 
-function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travelers }: any) {
+function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travelers, urlKey, urlValue }: any) {
     if (!opt) return null;
 
     // Calculate effective duration from dates for stays
@@ -90,7 +91,7 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travel
     const groupGrandTotal = perPersonTotal * travelers;
 
     return (
-        <Sheet open={open} onOpenChange={onClose}>
+        <Sheet open={open} onOpenChange={onClose} urlKey={urlKey} urlValue={urlValue}>
             <SheetContent side="right" className="w-full max-w-md p-0 overflow-hidden flex flex-col z-[200]">
                 <SheetHeader className="sr-only">
                     <SheetTitle>{opt.title}</SheetTitle>
@@ -375,8 +376,19 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     const [showInitializationPrompt, setShowInitializationPrompt] = useState(false);
     const [pendingSelections, setPendingSelections] = useState<any[]>([]);
 
+    const searchParams = useSearchParams();
     const { members } = useTripMembers(tripId);
     useEffect(() => { fetchTripData(); }, [tripId]);
+
+    // Sync state with URL
+    useEffect(() => {
+        if (!reservedOptions || reservedOptions.length === 0) return;
+        const optionId = searchParams.get("optionId");
+        if (optionId) {
+            const opt = reservedOptions.find(o => o.id.toString() === optionId);
+            if (opt) setInfoOpt(opt);
+        }
+    }, [reservedOptions, searchParams]);
 
     const fetchTripData = async () => {
         setLoading(true);
@@ -790,7 +802,16 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                     />
                 </div>
             </div>
-            <OptionInfoSheet opt={infoOpt} open={!!infoOpt} onClose={() => setInfoOpt(null)} onSelect={addSelection} tripDestination={trip.destination} travelers={travelersCount} />
+            <OptionInfoSheet 
+                opt={infoOpt} 
+                open={!!infoOpt} 
+                onClose={() => setInfoOpt(null)} 
+                onSelect={addSelection} 
+                tripDestination={trip!.destination} 
+                travelers={travelersCount} 
+                urlKey="optionId"
+                urlValue={infoOpt?.id?.toString()}
+            />
         </div>
     );
 }
