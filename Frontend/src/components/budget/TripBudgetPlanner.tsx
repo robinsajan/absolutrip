@@ -311,7 +311,9 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                                     <div className="flex items-center justify-between gap-1.5">
                                         <div className="flex flex-col">
                                             <h4 className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{item.title}</h4>
-                                            <span className="text-[7px] font-black text-slate-400 uppercase">Day {item.planned_day}</span>
+                                            <span className="text-[7px] font-black text-slate-400 uppercase">
+                                                {startDate ? format(addDays(parseISO(startDate), item.planned_day - 1), 'MMM d') : `Day ${item.planned_day}`}
+                                            </span>
                                         </div>
                                         <span className="text-[9px] font-black text-primary">₹{((item.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
                                     </div>

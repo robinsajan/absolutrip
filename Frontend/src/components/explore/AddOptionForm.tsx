@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { OptionCategory } from "@/types";
@@ -60,7 +61,7 @@ interface AddOptionFormProps {
 const CATEGORIES: { value: OptionCategory | "other"; label: string; icon: React.ReactNode }[] = [
   { value: "stay", label: "Stay", icon: <Home className="h-4 w-4" /> },
   { value: "activity", label: "Activity", icon: <Ticket className="h-4 w-4" /> },
-  { value: "other", label: "Other", icon: <Plus className="h-4 w-4" /> },
+  // { value: "other", label: "Other", icon: <Plus className="h-4 w-4" /> },
 ];
 
 export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndDate, defaultDate, initialData, onCancel }: AddOptionFormProps) {
@@ -103,8 +104,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   };
 
   const isDateDisabled = (date: Date) => {
-    const today = startOfDay(new Date());
-    return !isDateInTripRange(date) || date < today;
+    return !isDateInTripRange(date);
   };
 
   const resetForm = () => {
@@ -160,18 +160,13 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
 
     setIsLoading(true);
     try {
-      const autoStayDates =
-        category === "stay" && shouldAutoSetStayDates && tripStartDate && tripEndDate
-          ? { check_in_date: tripStartDate, check_out_date: tripEndDate }
-          : null;
-
       const result = await onSubmit({
         title: title.trim(),
         link: link,
         price: Number(price),
         notes: notes.trim() || undefined,
-        check_in_date: autoStayDates?.check_in_date ?? (dateSelection?.from ? format(dateSelection.from, "yyyy-MM-dd") : undefined),
-        check_out_date: autoStayDates?.check_out_date ?? (dateSelection?.to ? format(dateSelection.to, "yyyy-MM-dd") : undefined),
+        check_in_date: dateSelection?.from ? format(dateSelection.from, "yyyy-MM-dd") : undefined,
+        check_out_date: dateSelection?.to ? format(dateSelection.to, "yyyy-MM-dd") : undefined,
         category: category === "other" ? undefined : category,
         is_per_person: isPerPerson,
         is_per_night: isPerNight,
@@ -214,12 +209,12 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   variant={category === cat.value ? "default" : "outline"}
                   size="sm"
                   onClick={() => {
-                  setCategory(cat.value);
-                  setDateSelection({
-                    from: initialData?.check_in_date ? parseISO(initialData.check_in_date) : (defaultDate ? parseISO(defaultDate) : undefined),
-                    to: initialData?.check_out_date ? parseISO(initialData.check_out_date) : undefined,
-                  });
-                }}
+                    setCategory(cat.value);
+                    setDateSelection({
+                      from: initialData?.check_in_date ? parseISO(initialData.check_in_date) : (defaultDate ? parseISO(defaultDate) : undefined),
+                      to: initialData?.check_out_date ? parseISO(initialData.check_out_date) : undefined,
+                    });
+                  }}
                   disabled={isLoading}
                   className="flex items-center gap-2 rounded-lg px-4 py-2"
                 >
@@ -264,18 +259,45 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
         </div>
 
         {/* Dates component upgraded to DateRange - For stays and activities */}
-        {(category === "stay" || category === "activity") && !(category === "stay" && shouldAutoSetStayDates) && (
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-foreground">
-              {category === "stay" ? "Check-in / Check-out" : "Activity Date"}
-            </Label>
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-foreground">
+            {category === "stay" ? "Check-in / Check-out" : (category === "activity" ? "Activity Date" : "Date (Optional)")}
+          </Label>
+
+          {/* Mobile View: Inline Calendar (Ensures it 'shows up' and is selectable) */}
+          <div className="md:hidden space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 p-2 flex justify-center shadow-inner">
+              {category === "stay" ? (
+                <CalendarComponent
+                  mode="range"
+                  selected={dateSelection}
+                  onSelect={setDateSelection}
+                  disabled={isDateDisabled}
+                  defaultMonth={dateSelection?.from || (tripDateRange?.start instanceof Date && !isNaN(tripDateRange.start.getTime()) ? tripDateRange.start : new Date())}
+                  className="rounded-xl border-none"
+                />
+              ) : (
+                <CalendarComponent
+                  mode="single"
+                  selected={dateSelection?.from}
+                  onSelect={(date) => setDateSelection({ from: date, to: undefined })}
+                  disabled={isDateDisabled}
+                  defaultMonth={dateSelection?.from || (tripDateRange?.start instanceof Date && !isNaN(tripDateRange.start.getTime()) ? tripDateRange.start : new Date())}
+                  className="rounded-xl border-none"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Desktop View: Popover Calendar */}
+          <div className="hidden md:block">
+            <Popover modal={false}>
               <PopoverTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
                   className={cn(
-                    "w-full justify-start rounded-lg border-border bg-background px-4 py-2 text-left font-normal",
+                    "w-full justify-start rounded-lg border-border bg-background px-4 py-6 text-left font-normal",
                     !dateSelection?.from && "text-muted-foreground"
                   )}
                   disabled={isLoading}
@@ -299,15 +321,9 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   <CalendarComponent
                     mode="range"
                     selected={dateSelection}
-                    onSelect={(range) => {
-                      setDateSelection(range);
-                      // Only close if we have a complete range (two different dates)
-                      if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
-                        setIsCalendarOpen(false);
-                      }
-                    }}
+                    onSelect={setDateSelection}
                     disabled={isDateDisabled}
-                    defaultMonth={dateSelection?.from || tripDateRange?.start}
+                    defaultMonth={dateSelection?.from || (tripDateRange?.start instanceof Date && !isNaN(tripDateRange.start.getTime()) ? tripDateRange.start : new Date())}
                     initialFocus
                     numberOfMonths={1}
                   />
@@ -315,30 +331,29 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
                   <CalendarComponent
                     mode="single"
                     selected={dateSelection?.from}
-                    onSelect={(date) => {
-                      setDateSelection({ from: date, to: undefined });
-                      if (date) {
-                        setTimeout(() => setIsCalendarOpen(false), 100);
-                      }
-                    }}
+                    onSelect={(date) => setDateSelection({ from: date, to: undefined })}
                     disabled={isDateDisabled}
-                    defaultMonth={dateSelection?.from || tripDateRange?.start}
+                    defaultMonth={dateSelection?.from || (tripDateRange?.start instanceof Date && !isNaN(tripDateRange.start.getTime()) ? tripDateRange.start : new Date())}
                     initialFocus
                   />
                 )}
               </PopoverContent>
             </Popover>
           </div>
-        )}
 
-        {category === "stay" && shouldAutoSetStayDates && tripStartDate && tripEndDate && (
-          <div className="space-y-1">
-            <Label className="text-sm font-semibold text-foreground">Dates</Label>
-            <div className="text-xs text-muted-foreground">
-              Auto-set to trip dates ({tripStartDate} → {tripEndDate})
+          {dateSelection?.from && (
+            <div className="bg-primary/5 rounded-xl border border-primary/10 p-3 flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-primary" />
+              <p className="text-xs font-bold text-primary">
+                {format(dateSelection.from, "MMM d, yyyy")}
+                {category === "stay" && dateSelection.to && ` — ${format(dateSelection.to, "MMM d, yyyy")}`}
+              </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+
+
 
         {/* Images Selection */}
         <div className="space-y-2">
@@ -430,13 +445,14 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
           <Label htmlFor="notes" className="text-sm font-semibold text-foreground">
             Notes (Optional)
           </Label>
-          <Input
+          <Textarea
             id="notes"
-            placeholder="Add any notes..."
+            placeholder="Add any details, booking info, or reminders..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={isLoading}
-            className="rounded-lg border-border bg-background px-4 py-2"
+            className="rounded-xl border-border bg-background px-4 py-3 resize-none min-h-[100px]"
+            rows={3}
           />
         </div>
 
