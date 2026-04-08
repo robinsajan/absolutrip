@@ -436,7 +436,8 @@ export default function ExplorePage() {
         {/* Mobile Fixed Add Button (Keep for accessibility) */}
         <button
           onClick={() => setShowAddOption(true)}
-          className="md:hidden fixed bottom-[140px] right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+          className="md:hidden fixed right-4 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
           aria-label="Add option"
         >
           <span className="material-symbols-outlined text-3xl">add</span>
@@ -470,6 +471,19 @@ export default function ExplorePage() {
                 </div>
                 <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
                   {stays.slice(0, 7).map(renderOptionCard)}
+                  {stays.length > 7 && (
+                    <Link
+                      href={`/trip/${tripId}/explore/stays`}
+                      className="group shrink-0 flex flex-col items-center justify-center w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)] min-h-[12rem]"
+                    >
+                      <div className="size-20 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all shadow-md active:scale-95 group-hover:scale-110">
+                        <span className="material-symbols-outlined text-3xl">arrow_forward</span>
+                      </div>
+                      <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors text-center leading-tight">
+                        view all<br/>stays
+                      </span>
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -492,6 +506,19 @@ export default function ExplorePage() {
                 </div>
                 <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
                   {activities.slice(0, 7).map(renderOptionCard)}
+                  {activities.length > 7 && (
+                    <Link
+                      href={`/trip/${tripId}/explore/activities`}
+                      className="group shrink-0 flex flex-col items-center justify-center w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)] min-h-[12rem]"
+                    >
+                      <div className="size-20 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all shadow-md active:scale-95 group-hover:scale-110">
+                        <span className="material-symbols-outlined text-3xl">arrow_forward</span>
+                      </div>
+                      <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors text-center leading-tight">
+                        view all<br/>activities
+                      </span>
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -593,7 +620,8 @@ export default function ExplorePage() {
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Dates</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                          {format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")}
+                          {format(parseISO(viewingOption.option.check_in_date), "MMM d")}
+                          {viewingOption.option.check_out_date ? ` - ${format(parseISO(viewingOption.option.check_out_date), "MMM d")}` : ""}
                         </span>
                       </div>
                     </div>

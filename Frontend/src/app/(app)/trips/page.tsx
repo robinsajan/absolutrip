@@ -225,8 +225,8 @@ export default function TripsPage() {
                   new trip
                 </button>
               </DialogTrigger>
-              <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] p-0 overflow-hidden max-w-sm">
-                <div className="bg-primary p-6 text-white text-center">
+              <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[3rem] sm:shadow-2xl flex flex-col">
+                <div className="bg-primary p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] text-white text-center shrink-0">
                   <h2 className="text-2xl font-black italic serif-title">Plan a new trip</h2>
                 </div>
                 <div className="p-6 space-y-4">
@@ -274,10 +274,10 @@ export default function TripsPage() {
                   join trip
                 </button>
               </DialogTrigger>
-              <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] p-0 overflow-hidden max-w-sm">
-                <DialogHeader className="bg-primary p-6 text-white text-center">
-                  <DialogTitle className="text-2xl font-black italic serif-title">Join a Trip</DialogTitle>
-                </DialogHeader>
+              <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[3rem] sm:shadow-2xl flex flex-col">
+                <div className="bg-primary p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] text-white text-center shrink-0">
+                  <h2 className="text-2xl font-black italic serif-title">Join a Trip</h2>
+                </div>
                 <div className="p-6 space-y-6">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Invite Code</Label>

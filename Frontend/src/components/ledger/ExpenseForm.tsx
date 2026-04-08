@@ -462,13 +462,17 @@ export function ExpenseForm({
       <Dialog open={isOpen} onOpenChange={(val) => val ? setIsOpen(true) : handleClose()}>
         {showTrigger && !isEditMode && (
           <DialogTrigger asChild>
-            <Button size="lg" className="fixed bottom-24 right-4 h-16 w-16 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-white lg:bottom-12 lg:right-12 z-40 transition-all hover:scale-110 active:scale-95 group">
-              <span className="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90">add</span>
+            <Button
+              size="lg"
+              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+              className="md:hidden fixed right-4 w-14 h-14 rounded-full shadow-2xl bg-black dark:bg-white dark:text-black text-white hover:opacity-90 z-40 transition-all active:scale-95 flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-3xl">add</span>
             </Button>
           </DialogTrigger>
         )}
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
-          <div className="h-full overflow-y-auto px-6 py-10 md:px-10 md:py-12 scrollbar-hide">
+          <div className="h-full overflow-y-auto px-6 py-10 pt-[calc(2.5rem+env(safe-area-inset-top,0px))] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] md:px-10 md:py-12 scrollbar-hide">
 
 
             <DialogHeader className="flex flex-row items-center justify-between pb-8 md:pb-10">

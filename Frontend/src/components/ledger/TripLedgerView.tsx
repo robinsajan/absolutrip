@@ -177,7 +177,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   }, [expenses]);
 
   return (
-    <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen pb-24 font-sans">
+    <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen font-sans">
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div className="flex flex-row items-center justify-between gap-4">
 
@@ -204,17 +204,9 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
           </div>
         </div>
 
-        {/* Mobile FAB */}
-        <button
-          onClick={() => {
-            setEditingExpense(null);
-            setShowAddExpense(true);
-          }}
-          className="md:hidden fixed bottom-[140px] right-6 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
-          aria-label="Add expense"
-        >
-          <span className="material-symbols-outlined text-3xl">add</span>
-        </button>
+
+
+
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Main Expense Area */}
@@ -608,6 +600,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
           </div>
         </div>
 
+
+
         {/* Details */}
         <ExpenseDetails
           expense={selectedExpense}
@@ -643,6 +637,19 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
           showTrigger={false}
         />
       </main>
+
+      {/* Mobile FAB — outside main so space-y-12 cannot affect fixed positioning */}
+      <button
+        onClick={() => {
+          setEditingExpense(null);
+          setShowAddExpense(true);
+        }}
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+        className="md:hidden fixed right-4 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+        aria-label="Add expense"
+      >
+        <span className="material-symbols-outlined text-3xl">add</span>
+      </button>
     </div>
   );
 }

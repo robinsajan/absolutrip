@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Calculator, Receipt, Wallet, Settings, Users } from "lucide-react";
+import { Compass, Calculator, Receipt, Wallet, Settings, Users, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -59,18 +59,18 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
             <button
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-95",
-                pathname.includes("/members") || pathname.includes("/settings")
+                pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary")
                   ? "text-primary font-black scale-105"
                   : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               )}
             >
               <div className={cn(
                 "p-1.5 rounded-xl transition-all",
-                (pathname.includes("/members") || pathname.includes("/settings")) ? "bg-primary/10" : ""
+                (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary")) ? "bg-primary/10" : ""
               )}>
-                <Settings className={cn("h-5 w-5", (pathname.includes("/members") || pathname.includes("/settings")) && "stroke-[2.5px]")} />
+                <Layers className={cn("h-5 w-5", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary")) && "stroke-[2.5px]")} />
               </div>
-              <span className="text-[8px] mt-1 font-bold">Settings</span>
+              <span className="text-[8px] mt-1 font-bold">More</span>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 mb-2" side="top" align="center">

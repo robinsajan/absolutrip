@@ -428,7 +428,8 @@ export default function CategoryExplorePage() {
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 select-none">Dates</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                          {format(parseISO(viewingOption.option.check_in_date), "MMM d, yyyy")}
+                          {format(parseISO(viewingOption.option.check_in_date), "MMM d")}
+                          {viewingOption.option.check_out_date ? ` - ${format(parseISO(viewingOption.option.check_out_date), "MMM d")}` : ""}
                         </span>
                       </div>
                     </div>

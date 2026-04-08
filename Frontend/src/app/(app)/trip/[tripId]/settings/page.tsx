@@ -254,25 +254,25 @@ export default function SettingsPage() {
                   Delete Trip
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
-                <div className="p-10">
+              <AlertDialogContent className="w-[95vw] md:w-full max-w-lg rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-white dark:bg-slate-900 overflow-y-auto max-h-[90dvh]">
+                <div className="p-6 md:p-10 pt-[calc(2rem+env(safe-area-inset-top,0px))] pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-3xl font-black tracking-tight">Wait! Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle className="text-2xl md:text-3xl font-black tracking-tight">Wait! Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-6 pt-4">
-                        <p className="text-slate-500 font-medium">
+                        <p className="text-slate-500 font-medium text-sm md:text-base">
                           Deleting <strong>&quot;{activeTrip?.name}&quot;</strong> will permanently remove all data for everyone. This cannot be undone.
                         </p>
 
-                        <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                        <div className="bg-slate-50 dark:bg-slate-800 p-5 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800">
                           <ul className="space-y-3">
                             {[
                               "All stay options and community votes",
                               "Entire expense ledger and balances",
                               "All member and invitation data"
                             ].map((item, i) => (
-                              <li key={i} className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                                <span className="material-symbols-outlined text-red-500 text-sm">cancel</span>
+                              <li key={i} className="flex items-start md:items-center gap-3 text-[11px] md:text-xs font-bold text-slate-400">
+                                <span className="material-symbols-outlined text-red-500 text-sm mt-0.5 md:mt-0 shadow-sm rounded-full">cancel</span>
                                 {item}
                               </li>
                             ))}
@@ -280,15 +280,17 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="pt-4 space-y-3">
-                          <Label htmlFor="confirm-name" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
-                            Type <span className="text-black dark:text-white">{activeTrip?.name}</span> below to confirm
+                          <Label htmlFor="confirm-name" className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] font-black tracking-[0.1em] text-slate-400">
+                            <span className="uppercase">Type</span>
+                            <span className="text-black dark:text-white px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] normal-case bg-stripes bg-stripes-slate-200 dark:bg-stripes-slate-800 select-all font-mono tracking-normal">{activeTrip?.name}</span>
+                            <span className="uppercase">below to confirm</span>
                           </Label>
                           <Input
                             id="confirm-name"
                             value={confirmName}
                             onChange={(e) => setConfirmName(e.target.value)}
                             placeholder="Type trip name here"
-                            className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-red-600 focus:ring-4 focus:ring-red-600/5 transition-all font-bold"
+                            className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-red-600 focus:ring-4 focus:ring-red-600/5 transition-all font-bold text-sm md:text-base"
                           />
                         </div>
                       </div>
