@@ -254,7 +254,7 @@ export default function SettingsPage() {
                   Delete Trip
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="w-[95vw] md:w-full max-w-lg rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-white dark:bg-slate-900 overflow-y-auto max-h-[90dvh]">
+              <AlertDialogContent className="sm:max-w-lg md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-white dark:bg-slate-900 overflow-y-auto">
                 <div className="p-6 md:p-10 pt-[calc(2rem+env(safe-area-inset-top,0px))] pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-2xl md:text-3xl font-black tracking-tight">Wait! Are you sure?</AlertDialogTitle>

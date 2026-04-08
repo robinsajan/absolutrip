@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
-import { Plus, Upload, X, Calendar, Home, Utensils, Car, Ticket } from "lucide-react";
+import { useState, useRef, useMemo, useEffect } from "react";
+import { Plus, Upload, X, Calendar, Home, Utensils, Car, Ticket, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay, differenceInCalendarDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { options as optionsApi } from "@/lib/api/endpoints";
 import {
   Sheet,
   SheetContent,
@@ -81,6 +82,7 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.image_url ? [initialData.image_url] : []);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tripDateRange = useMemo(() => {
@@ -97,6 +99,37 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
     const days = differenceInCalendarDays(parseISO(tripEndDate), parseISO(tripStartDate));
     return days <= 1;
   }, [tripStartDate, tripEndDate]);
+
+  // Link Metadata Extraction
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      if (link && (link.includes("airbnb.com") || link.includes("booking.com") || link.includes("expedia.com")) && link.startsWith("http") && !title) {
+        setIsExtracting(true);
+        try {
+          const metadata = await optionsApi.extract(link);
+          if (metadata.link_title && !title) {
+            setTitle(metadata.link_title);
+          }
+          if (metadata.image_url && imagePreviews.length === 0) {
+            setImagePreviews([metadata.image_url]);
+          }
+          if (metadata.link_description && !notes) {
+            setNotes(metadata.link_description);
+          }
+        } catch (err) {
+          console.error("Failed to extract metadata:", err);
+        } finally {
+          setIsExtracting(false);
+        }
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchMetadata();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [link]);
 
   const isDateInTripRange = (date: Date) => {
     if (!tripDateRange) return true;
@@ -255,6 +288,12 @@ export function AddOptionForm({ onSubmit, onImageUpload, tripStartDate, tripEndD
             disabled={isLoading}
             className="rounded-lg border-border bg-background px-4 py-2"
           />
+          {isExtracting && (
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary animate-pulse py-1">
+              <span className="material-symbols-outlined text-xs animate-spin">refresh</span>
+              Reading link details...
+            </div>
+          )}
 
         </div>
 

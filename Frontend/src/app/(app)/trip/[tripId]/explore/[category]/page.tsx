@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
 import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks";
+import { useAppStore } from "@/lib/store";
 import { options as optionsApi, votes as votesApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
 import { getOptionImages } from "@/lib/image";
@@ -95,6 +96,7 @@ export default function CategoryExplorePage() {
   const { trip: activeTrip } = useTrip(tripId);
   const { rankedOptions, isLoading, mutate } = useRankedOptions(tripId);
   const { members } = useTripMembers(tripId);
+  const { showAddOption, setShowAddOption } = useAppStore();
 
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -129,6 +131,19 @@ export default function CategoryExplorePage() {
       mutate();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to select option");
+    }
+  };
+
+  const handleAddOption = async (data: any) => {
+    try {
+      const result = await optionsApi.create(tripId, data);
+      mutate();
+      setShowAddOption(false);
+      toast.success("Option added!");
+      return result;
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to add option");
+      return { option: { id: 0 } };
     }
   };
 
@@ -240,6 +255,30 @@ export default function CategoryExplorePage() {
         <div className="flex flex-col gap-1 px-1">
           <div className="flex justify-between items-start">
             <h3 className="text-base font-bold text-gray-900 dark:text-white line-clamp-1">{ro.option.title}</h3>
+            <div className="flex items-center gap-1 shrink-0">
+              {ro.option.added_by === user?.id && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingOption(ro);
+                  }} 
+                  className="text-slate-400 hover:text-primary transition-colors ml-1"
+                >
+                  <span className="material-symbols-outlined text-sm md:text-lg">edit</span>
+                </button>
+              )}
+              {(isOwner || ro.option.added_by === user?.id) && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(ro.option.id);
+                  }} 
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm md:text-lg">delete</span>
+                </button>
+              )}
+            </div>
           </div>
           
           <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
@@ -359,7 +398,35 @@ export default function CategoryExplorePage() {
             </div>
           )}
         </div>
+
+        {/* Mobile Fixed Add Button */}
+        <button
+          onClick={() => setShowAddOption(true)}
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+          className="md:hidden fixed right-4 z-40 bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+          aria-label="Add option"
+        >
+          <span className="material-symbols-outlined text-3xl">add</span>
+        </button>
       </main>
+
+      <Dialog open={showAddOption} onOpenChange={setShowAddOption}>
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+          <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
+            <DialogHeader className="pb-8">
+              <DialogTitle className="text-3xl font-extrabold serif-title italic">add new {category === 'stays' ? 'stay' : 'activity'}</DialogTitle>
+            </DialogHeader>
+            <AddOptionForm
+              onSubmit={handleAddOption}
+              onImageUpload={handleImageUpload}
+              tripStartDate={activeTrip?.start_date}
+              tripEndDate={activeTrip?.end_date}
+              initialData={{ category: category === 'stays' ? 'stay' : 'activity' }}
+              onCancel={() => { setShowAddOption(false); }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!viewingOption} onOpenChange={(open) => !open && setViewingOption(null)}>
         <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">

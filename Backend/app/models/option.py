@@ -8,15 +8,15 @@ class StayOption(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     trip_id = db.Column(db.String(36), db.ForeignKey('trips.id'), nullable=True) # Optional for global catalog
     title = db.Column(db.String(200), nullable=False)
-    link = db.Column(db.String(500), nullable=True)
+    link = db.Column(db.String(3000), nullable=True)
     price = db.Column(db.Numeric(10, 2), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     added_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    image_path = db.Column(db.String(500), nullable=True)
-    image_url = db.Column(db.String(500), nullable=True)
-    link_title = db.Column(db.String(300), nullable=True)
+    image_path = db.Column(db.String(3000), nullable=True)
+    image_url = db.Column(db.String(3000), nullable=True)
+    link_title = db.Column(db.String(500), nullable=True)
     link_description = db.Column(db.Text, nullable=True)
     
     check_in_date = db.Column(db.Date, nullable=True)

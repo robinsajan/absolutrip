@@ -15,7 +15,7 @@ class Expense(db.Model):
     description = db.Column(db.String(300), nullable=False)
     category = db.Column(db.String(50), nullable=True)
     split_type = db.Column(db.String(20), default='equally')  # equally, shares, exact, percentage
-    receipt_url = db.Column(db.String(500), nullable=True)
+    receipt_url = db.Column(db.String(1500), nullable=True)
     expense_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -111,7 +111,7 @@ class ExpenseActivity(db.Model):
     expense_id = db.Column(db.Integer, db.ForeignKey('expenses.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     activity_type = db.Column(db.String(50), nullable=False)  # created, updated, deleted, comment_added
-    details = db.Column(db.String(500), nullable=True)
+    details = db.Column(db.String(1500), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     expense = db.relationship('Expense', back_populates='activities')

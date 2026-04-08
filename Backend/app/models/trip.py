@@ -19,7 +19,7 @@ class Trip(db.Model):
     invite_code = db.Column(db.String(32), unique=True, nullable=False, index=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    google_maps_url = db.Column(db.String(500), nullable=True)
+    google_maps_url = db.Column(db.String(1500), nullable=True)
     default_currency = db.Column(db.String(3), default='INR')
 
     creator = db.relationship('User', back_populates='created_trips')
