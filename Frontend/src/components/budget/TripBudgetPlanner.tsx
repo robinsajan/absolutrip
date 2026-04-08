@@ -260,6 +260,9 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                     <div className="space-y-3 md:space-y-4">
                         {stays.map((stay: any) => {
                             const getStayDates = () => {
+                                if (stay.check_in_date && stay.check_out_date) {
+                                    return `${format(parseISO(stay.check_in_date), 'MMM d')} - ${format(parseISO(stay.check_out_date), 'MMM d')}`;
+                                }
                                 if (!startDate) return null;
                                 const start = addDays(parseISO(startDate), stay.planned_day - 1);
                                 const end = addDays(parseISO(startDate), (stay.end_day || stay.planned_day) - 1);
@@ -312,7 +315,12 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                                         <div className="flex flex-col">
                                             <h4 className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{item.title}</h4>
                                             <span className="text-[7px] font-black text-slate-400 uppercase">
-                                                {startDate ? format(addDays(parseISO(startDate), item.planned_day - 1), 'MMM d') : `Day ${item.planned_day}`}
+                                                {item.check_in_date 
+                                                    ? format(parseISO(item.check_in_date), 'MMM d')
+                                                    : startDate 
+                                                        ? format(addDays(parseISO(startDate), item.planned_day - 1), 'MMM d')
+                                                        : `Day ${item.planned_day}`
+                                                }
                                             </span>
                                         </div>
                                         <span className="text-[9px] font-black text-primary">₹{((item.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
