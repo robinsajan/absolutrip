@@ -36,34 +36,44 @@ export function useBackCloseController<T extends BackCloseControllerArgs>(props:
   const [uncontrolledOpen, setUncontrolledOpen] = useState<boolean>(props.defaultOpen ?? false);
   const open = isControlled ? props.open : uncontrolledOpen;
 
-  // Sync state with URL (URL -> State)
+  const lastSearchParamsRef = useRef(searchParams.toString());
+  const lastOpenRef = useRef(open);
+
+  // Sync State -> URL and URL -> State
   useEffect(() => {
-    if (urlKey) {
-      const currentVal = searchParams.get(urlKey);
-      
-      if (currentVal === null && open) {
-        // URL key removed (e.g., via Back button) -> Close modal
-        if (!isControlled) setUncontrolledOpen(false);
-        props.onOpenChange?.(false);
-      } else if (currentVal === urlValue && !open) {
-        // URL key matches our value and we are closed -> Open modal
+    if (!urlKey) return;
+
+    const currentParamsStr = searchParams.toString();
+    const paramsChanged = currentParamsStr !== lastSearchParamsRef.current;
+    const openChanged = open !== lastOpenRef.current;
+    const currentVal = searchParams.get(urlKey);
+    const shouldBeOpen = currentVal === urlValue;
+
+    if (paramsChanged && !openChanged) {
+      // URL changed externally (e.g., Back button)
+      if (shouldBeOpen && !open) {
         if (!isControlled) setUncontrolledOpen(true);
         props.onOpenChange?.(true);
+      } else if (!shouldBeOpen && open) {
+        if (!isControlled) setUncontrolledOpen(false);
+        props.onOpenChange?.(false);
       }
-    }
-  }, [searchParams, urlKey, urlValue, isControlled, open]);
-
-  // Handle value changes while open (State -> URL)
-  useEffect(() => {
-    if (open && urlKey && urlValue && pushedRef.current) {
-      const currentVal = searchParams.get(urlKey);
-      if (currentVal !== null && currentVal !== urlValue) {
-        const params = new URLSearchParams(searchParams.toString());
+    } else if (openChanged) {
+      // State changed (prop or internal) -> Update URL if needed
+      if (open && !shouldBeOpen) {
+        const params = new URLSearchParams(currentParamsStr);
         params.set(urlKey, urlValue);
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      } else if (!open && shouldBeOpen) {
+        const params = new URLSearchParams(currentParamsStr);
+        params.delete(urlKey);
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
       }
     }
-  }, [open, urlKey, urlValue, searchParams, router, pathname]);
+
+    lastSearchParamsRef.current = currentParamsStr;
+    lastOpenRef.current = open;
+  }, [searchParams, open, urlKey, urlValue, isControlled, router, pathname, props]);
 
 
   const pushedRef = useRef(false);

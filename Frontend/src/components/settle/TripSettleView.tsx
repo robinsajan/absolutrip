@@ -44,7 +44,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
   const { user } = useAuth();
   const { members } = useTripMembers(tripId);
   const { balances, settlements, isLoading, mutate: mutateSettle } = useSettlement(tripId);
-  const { mutate: mutateExpenses } = useExpenses(tripId); // Corrected from mutateExpenseTripId(tripId)
+  const { expenses, mutate: mutateExpenses } = useExpenses(tripId);
 
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
@@ -78,6 +78,10 @@ export function TripSettleView({ tripId }: { tripId: string }) {
         !owesMe.some((s) => s.from_user_id === b.user_id)
     ), [balances, myId, owedByMe, owesMe]);
 
+  const settlementHistory = useMemo(() => {
+    return (expenses || []).filter((e) => e.category === "settlement");
+  }, [expenses]);
+
   const handleRecordSettlement = async (s?: any) => {
     const amt = s ? s.amount : Number(amount);
     const from = s ? s.from_user_id : fromUserId;
@@ -106,6 +110,13 @@ export function TripSettleView({ tripId }: { tripId: string }) {
     }
   };
 
+  const getFontSize = (amt: number) => {
+    const len = Math.round(amt).toString().length;
+    if (len > 6) return "text-xl md:text-2xl";
+    if (len > 4) return "text-2xl md:text-3xl";
+    return "text-3xl md:text-4xl";
+  };
+
   if (isLoading) {
     return (
       <div className="p-20 text-center animate-pulse">
@@ -121,14 +132,14 @@ export function TripSettleView({ tripId }: { tripId: string }) {
         {/* Simple Summary Header */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center truncate">Owed by you</p>
-            <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center truncate">You need to pay</p>
+            <h2 className={cn("font-black text-center tracking-tight text-slate-900 dark:text-white transition-all duration-300", getFontSize(totalOwedByMe))}>
               ₹{Math.round(totalOwedByMe).toLocaleString('en-IN')}
             </h2>
           </div>
           <div className="bg-slate-100/50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-700">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center truncate">Owed to you</p>
-            <h2 className="text-3xl font-black text-center tracking-tight text-slate-900 dark:text-white">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center truncate">You get back</p>
+            <h2 className={cn("font-black text-center tracking-tight text-slate-900 dark:text-white transition-all duration-300", getFontSize(totalOwedToMe))}>
               ₹{Math.round(totalOwedToMe).toLocaleString('en-IN')}
             </h2>
           </div>
@@ -138,7 +149,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
           {/* Section: Owed by Me */}
           {owedByMe.length > 0 && (
             <section>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2">Owed by you</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2">You need to pay</h3>
               <div className="space-y-4">
                 {owedByMe.map((s, idx) => (
                   <div
@@ -171,7 +182,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
           {owesMe.length > 0 && (
             <section>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2">
-                {owesMe.length} {owesMe.length === 1 ? "person owes" : "people owe"} you
+                {owesMe.length} {owesMe.length === 1 ? "person will" : "people will"} pay you
               </h3>
               <div className="space-y-4">
                 {owesMe.map((s, idx) => (
@@ -226,6 +237,39 @@ export function TripSettleView({ tripId }: { tripId: string }) {
               ))}
             </div>
           </section>
+
+          {/* Section: Settlement History */}
+          {settlementHistory.length > 0 && (
+            <section>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 px-2">Settlement History</h3>
+              <div className="space-y-4">
+                {settlementHistory.map((s, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-50 dark:border-slate-800/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-extrabold text-sm border-2 border-white dark:border-slate-800 shadow-inner">
+                        {getInitials(s.payer_name)}
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-sm tracking-tight">{s.payer_name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-[9px]">
+                          Paid {s.splits && s.splits.length > 0 && s.splits[0].user_id !== s.paid_by ? s.splits[0].user_name : "Someone"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">₹{Math.round(s.amount).toLocaleString('en-IN')}</span>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        {format(new Date(s.expense_date || s.created_at), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Bottom Actions Fixed Bar - Raised above mobile nav bar */}
@@ -252,7 +296,9 @@ export function TripSettleView({ tripId }: { tripId: string }) {
       </main>
 
       <Dialog open={open} onOpenChange={setOpen} urlKey="modal" urlValue="record-settlement">
-        <DialogContent className="max-w-md bg-white dark:bg-gray-900 rounded-[3rem] p-10 border-none shadow-2xl">
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 rounded-[3rem] p-0 border-none shadow-2xl z-[300] overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-accent-lime/30 via-accent-lime to-accent-lime/30 opacity-50 z-50" />
+          <div className="p-10 pt-[calc(3rem+env(safe-area-inset-top,0px))] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
           <DialogHeader className="pb-8">
             <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic animate-in fade-in slide-in-from-top-4 duration-500">record settlement</DialogTitle>
           </DialogHeader>
@@ -287,6 +333,7 @@ export function TripSettleView({ tripId }: { tripId: string }) {
             >
               {submitting ? "Processing..." : "Confirm & Settle"}
             </Button>
+          </div>
           </div>
         </DialogContent>
       </Dialog>

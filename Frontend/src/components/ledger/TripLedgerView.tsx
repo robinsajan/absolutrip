@@ -89,6 +89,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<ExpenseScope>("mine");
+  const [onlyPaidByMe, setOnlyPaidByMe] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -125,7 +126,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   }, [expenses, searchParams]);
 
   const sortedExpenses = useMemo(() => {
-    const copy = [...expenses];
+    const copy = expenses.filter(e => e.category !== "settlement");
     copy.sort((a, b) => {
       const ad = toDate(a.expense_date)?.getTime() ?? new Date(a.created_at).getTime();
       const bd = toDate(b.expense_date)?.getTime() ?? new Date(b.created_at).getTime();
@@ -137,7 +138,14 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const filteredExpenses = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sortedExpenses.filter((e) => {
-      if (scope === "mine" && currentUserId && e.paid_by !== currentUserId) return false;
+      if (scope === "mine" && currentUserId) {
+        const isPayer = e.paid_by === currentUserId;
+        const isOwer = e.splits?.some(s => s.user_id === currentUserId);
+        if (!isPayer && !isOwer) return false;
+        
+        // Sub-filter: Paid by me
+        if (onlyPaidByMe && !isPayer) return false;
+      }
       if (!q) return true;
       return (
         e.description.toLowerCase().includes(q) ||
@@ -145,7 +153,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
         e.category.toLowerCase().includes(q)
       );
     });
-  }, [sortedExpenses, query, scope, currentUserId]);
+  }, [sortedExpenses, query, scope, currentUserId, onlyPaidByMe]);
 
   const visibleExpenses = useMemo(() => {
     if (showAll) return filteredExpenses;
@@ -177,7 +185,11 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
 
   const isBusy = expensesLoading || settleLoading || membersLoading || budgetLoading || rankedLoading;
 
-  const actualExpenses = budget?.total_expenses ?? 0;
+  const actualExpenses = useMemo(() => {
+    return expenses
+      .filter(e => e.category !== "settlement")
+      .reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
 
   // Simplified spending progress for ledger (actual vs scenario-like)
   // For ledger, we'll show progress relative to the sum of actuals + finalized options
@@ -190,20 +202,59 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const totalProjected = actualExpenses + finalizedOptionsTotal;
   const spendingProgress = totalProjected > 0 ? (actualExpenses / totalProjected) * 100 : 0;
 
-  // Calculate top spenders from actual expenses
+  // Calculate top spenders from actual expenses (excluding settlements)
   const spenderData = useMemo(() => {
     const totals: Record<number, { name: string, amount: number }> = {};
-    expenses.forEach(e => {
-      if (!totals[e.paid_by]) {
-        totals[e.paid_by] = { name: e.payer_name, amount: 0 };
-      }
-      totals[e.paid_by].amount += e.amount;
-    });
+    expenses
+      .filter(e => e.category !== "settlement")
+      .forEach(e => {
+        if (!totals[e.paid_by]) {
+          totals[e.paid_by] = { name: e.payer_name, amount: 0 };
+        }
+        totals[e.paid_by].amount += e.amount;
+      });
     return Object.entries(totals)
       .map(([id, data]) => ({ id: Number(id), ...data }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 3);
   }, [expenses]);
+
+  // Calculate Category-wise Expenses
+  const categoryData = useMemo(() => {
+    const totals: Record<string, number> = {};
+    expenses
+      .filter((e) => e.category !== "settlement")
+      .forEach((e) => {
+        totals[e.category] = (totals[e.category] || 0) + e.amount;
+      });
+    return Object.entries(totals)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [expenses]);
+
+  // Calculate Day-wise Expenses
+  const dayWiseData = useMemo(() => {
+    const totals: Record<string, { dateStr: string; timestamp: number; amount: number }> = {};
+    expenses
+      .filter((e) => e.category !== "settlement")
+      .forEach((e) => {
+        const d = toDate(e.expense_date) ?? new Date(e.created_at);
+        const dateStr = format(d, "MMM dd");
+        if (!totals[dateStr]) {
+          totals[dateStr] = { dateStr, timestamp: d.getTime(), amount: 0 };
+        }
+        totals[dateStr].amount += e.amount;
+      });
+    return Object.values(totals)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [expenses]);
+
+  const getFontSize = (amt: number) => {
+    const len = Math.round(amt).toString().length;
+    if (len > 6) return "text-2xl md:text-3xl";
+    if (len > 4) return "text-3xl md:text-4xl";
+    return "text-4xl md:text-5xl";
+  };
 
   return (
     <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen font-sans">
@@ -216,19 +267,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
            <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] animate-pulse delay-150">calculating split balances</p>
         </div>
       ) : (
-        <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
-        <div className="flex flex-row items-center justify-between gap-4">
-
-
-          {/* Header Actions */}
-          <div className="flex gap-3 md:gap-4 items-center animate-in fade-in slide-in-from-right-4 duration-700 shrink-0">
-            <button
-              onClick={() => router.push(`/trip/${tripId}/settle`)}
-              className="flex bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 px-4 md:px-6 py-2.5 md:py-4 rounded-full font-black text-[8px] md:text-[10px] uppercase tracking-widest items-center gap-1.5 md:gap-2 hover:bg-emerald-100 transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-500/10"
-            >
-              <Wallet className="size-3.5 md:size-4" />
-              Settle Up
-            </button>
+        <main className="max-w-7xl mx-auto px-6 py-4 space-y-6">
+          <div className="flex justify-end mb-2">
             <button
               onClick={() => {
                 setEditingExpense(null);
@@ -240,48 +280,42 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
               add expense
             </button>
           </div>
-        </div>
 
-
-
-
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Main Expense Area */}
-          <div className="lg:col-span-8 space-y-12">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01]">
-                <div>
-                  <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 lowercase">you are owed</p>
-                  <h2 className="text-xl sm:text-2xl md:text-5xl font-black text-emerald-600 tracking-tighter">{money(youAreOwed)}</h2>
-                  <p className="hidden sm:flex text-emerald-600/60 text-[8px] font-black uppercase tracking-widest mt-2 items-center gap-1">
-                    <span className="material-symbols-outlined text-xs material-symbols-filled">trending_up</span>
-                    Positive Balance
-                  </p>
-                </div>
-                <div className="w-8 h-8 md:w-16 md:h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl md:rounded-2xl flex items-center justify-center text-emerald-600 transform rotate-3 transition-transform group-hover:rotate-6 shrink-0">
-                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">call_made</span>
+          {/* Unified Balance Bar - Now at the Top */}
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="flex items-center gap-8 md:gap-16 w-full sm:w-auto justify-between sm:justify-start">
+              <div className="flex flex-col">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you get back</p>
+                <div className="flex items-baseline gap-1.5">
+                  <h2 className={cn("font-black text-emerald-600 tracking-tight transition-all duration-300", getFontSize(youAreOwed))}>
+                    {money(youAreOwed)}
+                  </h2>
+                  <span className="material-symbols-outlined text-emerald-600/50 text-sm material-symbols-filled">trending_up</span>
                 </div>
               </div>
 
-              <div
-                className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group transition-all hover:shadow-xl hover:scale-[1.01] cursor-pointer"
-                onClick={() => router.push(`/trip/${tripId}/settle`)}
-              >
-                <div>
-                  <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 lowercase">you owe</p>
-                  <h2 className="text-xl sm:text-2xl md:text-5xl font-black text-rose-500 tracking-tighter">{money(youOwe)}</h2>
-                  <p className="hidden sm:flex text-rose-500/60 text-[8px] font-black uppercase tracking-widest mt-2 items-center gap-1">
-                    <span className="material-symbols-outlined text-xs material-symbols-filled">account_balance_wallet</span>
-                    settle all debts
-                  </p>
-                </div>
-                <div className="w-8 h-8 md:w-16 md:h-16 bg-rose-50 dark:bg-rose-900/20 rounded-xl md:rounded-2xl flex items-center justify-center text-rose-500 transform -rotate-3 transition-transform group-hover:-rotate-6 shrink-0">
-                  <span className="material-symbols-outlined text-lg md:text-3xl filled-icon">payments</span>
+              <div className="flex flex-col relative pl-8 md:pl-16 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-px before:h-12 before:bg-slate-100 dark:before:bg-slate-800">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lowercase">you need to pay</p>
+                <div className="flex items-baseline gap-1.5">
+                  <h2 className={cn("font-black text-rose-500 tracking-tight transition-all duration-300", getFontSize(youOwe))}>
+                    {money(youOwe)}
+                  </h2>
+                  <span className="material-symbols-outlined text-rose-500/50 text-sm material-symbols-filled">payments</span>
                 </div>
               </div>
             </div>
+
+            <Button 
+              className="w-full sm:w-auto h-16 px-12 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-black/10"
+              onClick={() => router.push(`/trip/${tripId}/settle`)}
+            >
+              Settle Up
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Main Expense Area */}
+            <div className="lg:col-span-8 space-y-12">
 
             {/* Expense Table Container */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
@@ -314,6 +348,32 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                     My Expenses
                   </button>
                 </div>
+
+                {scope === "mine" ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 dark:bg-primary/10 rounded-full border border-primary/10 animate-in fade-in zoom-in-95 duration-300 md:ml-0">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <div className="relative">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only" 
+                          checked={onlyPaidByMe}
+                          onChange={(e) => setOnlyPaidByMe(e.target.checked)}
+                        />
+                        <div className={cn(
+                          "w-7 h-4 rounded-full transition-colors duration-200",
+                          onlyPaidByMe ? "bg-primary" : "bg-slate-200 dark:bg-slate-700"
+                        )}></div>
+                        <div className={cn(
+                          "absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200 shadow-sm",
+                          onlyPaidByMe ? "translate-x-3" : "translate-x-0"
+                        )}></div>
+                      </div>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-primary/70 group-hover:text-primary transition-colors">Paid by me</span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="hidden md:block w-[100px]" /> // Spacer to keep main toggle centered
+                )}
               </div>
 
               <div className="hidden md:block overflow-x-auto">
@@ -324,14 +384,14 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                       <th className="px-6 py-4 font-semibold">Payer</th>
                       <th className="px-6 py-4 font-semibold">Total Amount</th>
                       <th className="px-6 py-4 font-semibold">Your Share</th>
-                      <th className="px-6 py-4 font-semibold text-right">Status</th>
+                      <th className="px-6 py-4 font-semibold text-right"></th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-primary/5">
                     {visibleExpenses.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                        <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
                           No expenses found
                         </td>
                       </tr>
@@ -351,18 +411,10 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                             : -share
                           : 0;
 
-                        const netLabel =
-                          net > 0 ? "You" : net < 0 ? `To ${expense.payer_name}` : "No change";
+                        const netLabel = net > 0 ? "you get back" : net < 0 ? "you pay" : "";
+
 
                         const isSettlement = expense.category === "settlement";
-
-                        const status = isSettlement
-                          ? { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" }
-                          : net < 0
-                            ? { label: "Unpaid", cls: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" }
-                            : net > 0
-                              ? { label: "Partial", cls: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" }
-                              : { label: "Settled", cls: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" };
 
                         const showActions = currentUserId && expense.paid_by === currentUserId && !isSettlement;
 
@@ -383,9 +435,14 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                                   <span className="text-sm font-bold leading-none">{day}</span>
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-bold text-sm group-hover:text-primary transition-colors truncate">
-                                    {expense.description}
-                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-bold text-sm group-hover:text-primary transition-colors truncate">
+                                      {expense.description}
+                                    </p>
+                                    {expense.receipt_url && (
+                                      <span className="material-symbols-outlined text-[14px] text-primary/60" title="Receipt attached">receipt_long</span>
+                                    )}
+                                  </div>
                                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                                     {activeTrip?.name ? `${activeTrip.name} • ` : ""}
                                     {titleCase(expense.category)}
@@ -419,20 +476,19 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                             </td>
 
                             <td className="px-6 py-4">
-                              <div className="flex flex-col">
-                                <span className={cn("text-sm font-bold", net < 0 ? "text-rose-500" : net > 0 ? "text-emerald-600" : "text-slate-400")}>
-                                  {net < 0 ? "-" : net > 0 ? "+" : ""}
-                                  {money(Math.abs(net))}
-                                </span>
-                                <span className="text-[10px] text-slate-400 uppercase font-medium truncate">{netLabel}</span>
-                              </div>
+                              {scope === "mine" && (
+                                <div className="flex flex-col">
+                                  <span className={cn("text-sm font-bold", net < 0 ? "text-rose-500" : net > 0 ? "text-emerald-600" : "text-slate-400")}>
+                                    {net < 0 ? "-" : net > 0 ? "+" : ""}
+                                    {money(Math.abs(net))}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-tight">{netLabel}</span>
+                                </div>
+                              )}
                             </td>
 
                             <td className="px-6 py-4">
                               <div className="flex items-center justify-end gap-2">
-                                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold", status.cls)}>
-                                  {status.label}
-                                </span>
 
                                 {showActions && (
                                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
@@ -481,6 +537,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                     setShowAddExpense(true);
                   }}
                   memberCount={members.length}
+                  scope={scope}
                 />
               </div>
 
@@ -516,10 +573,11 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                 </SheetTrigger>
                 <SheetContent
                   side="bottom"
-                  className="h-full w-full sm:max-w-none bg-[#fbfbf8] dark:bg-slate-950 p-0 overflow-y-auto border-none z-[100]"
+                  className="h-full w-full sm:max-w-none bg-[#fbfbf8] dark:bg-slate-950 p-0 overflow-y-auto border-none z-[300]"
                   showCloseButton={false}
                 >
-                  <div className="p-8">
+                  <div className="p-8 pt-[calc(3rem+env(safe-area-inset-top,0px))] pb-[calc(4rem+env(safe-area-inset-bottom,0px))] relative">
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50 opacity-50" />
                     <SheetHeader className="mb-8 relative pr-10">
                       <SheetTitle className="text-3xl font-black lowercase serif-title italic">expense insights</SheetTitle>
                       <SheetTrigger asChild>
@@ -573,6 +631,48 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                           )}
                         </div>
                       </section>
+
+                      {/* Category Breakdown */}
+                      <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Category Breakdown</h3>
+                        <div className="space-y-6">
+                          {categoryData.map((cat, i) => (
+                            <div key={cat.category} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold capitalize">{cat.category}</span>
+                                <span className="text-xs font-black">₹{Math.round(cat.amount).toLocaleString('en-IN')}</span>
+                              </div>
+                              <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                                <div className="bg-emerald-500 h-full rounded-full opacity-60" style={{ width: `${(cat.amount / (categoryData[0]?.amount || 1)) * 100}%` }}></div>
+                              </div>
+                            </div>
+                          ))}
+                          {categoryData.length === 0 && (
+                            <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                          )}
+                        </div>
+                      </section>
+
+                      {/* Daily Spending */}
+                      <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Daily Spending</h3>
+                        <div className="space-y-6">
+                          {dayWiseData.map((day, i) => (
+                            <div key={day.dateStr} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold">{day.dateStr}</span>
+                                <span className="text-xs font-black">₹{Math.round(day.amount).toLocaleString('en-IN')}</span>
+                              </div>
+                              <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                                <div className="bg-amber-500 h-full rounded-full opacity-60" style={{ width: `${(day.amount / (Math.max(...dayWiseData.map(d => d.amount)) || 1)) * 100}%` }}></div>
+                              </div>
+                            </div>
+                          ))}
+                          {dayWiseData.length === 0 && (
+                            <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                          )}
+                        </div>
+                      </section>
                     </div>
                   </div>
                 </SheetContent>
@@ -622,6 +722,48 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
                 </div>
               </section>
 
+              {/* Category Breakdown */}
+              <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Category Breakdown</h3>
+                <div className="space-y-6">
+                  {categoryData.map((cat, i) => (
+                    <div key={cat.category} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold capitalize">{cat.category}</span>
+                        <span className="text-xs font-black">₹{Math.round(cat.amount).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                        <div className="bg-emerald-500 h-full rounded-full opacity-60" style={{ width: `${(cat.amount / (categoryData[0]?.amount || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                  {categoryData.length === 0 && (
+                    <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                  )}
+                </div>
+              </section>
+
+              {/* Daily Spending */}
+              <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Daily Spending</h3>
+                <div className="space-y-6">
+                  {dayWiseData.map((day, i) => (
+                    <div key={day.dateStr} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">{day.dateStr}</span>
+                        <span className="text-xs font-black">₹{Math.round(day.amount).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="w-full bg-slate-50 dark:bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                        <div className="bg-amber-500 h-full rounded-full opacity-60" style={{ width: `${(day.amount / (Math.max(...dayWiseData.map(d => d.amount)) || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                  {dayWiseData.length === 0 && (
+                    <p className="text-[10px] text-slate-400 uppercase font-black text-center py-4">No data yet</p>
+                  )}
+                </div>
+              </section>
+
               {/* Budget Breakdown Summary */}
               <div className="bg-emerald-500 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 text-white">
                 <div className="flex items-center gap-2 mb-4">
@@ -643,6 +785,8 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
         <ExpenseDetails
           expense={selectedExpense}
           isOpen={isDetailsOpen}
+          currentUserId={currentUserId}
+          onDelete={handleDeleteExpense}
           onClose={() => {
             setIsDetailsOpen(false);
             setSelectedExpense(null);
@@ -656,8 +800,12 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
           members={members}
           currentUserId={currentUserId}
           onSubmit={async (data) => {
-            await handleAddExpense(data);
             setShowAddExpense(false);
+            try {
+              await handleAddExpense(data);
+            } catch (error) {
+              setShowAddExpense(true); // Re-open if failed
+            }
           }}
           onUpdate={handleUpdateExpense}
           editExpense={editingExpense}

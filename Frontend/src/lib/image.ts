@@ -12,15 +12,16 @@ export function getAuthenticatedImageUrl(urlOrPath: string, optionId?: number): 
 
   if (urlOrPath.startsWith('http')) {
     finalUrl = urlOrPath;
-  } else if (urlOrPath.startsWith('/') || urlOrPath.includes('/')) {
+  } else {
     // Relative URL or Supabase path
     let path = urlOrPath;
     
-    // If it looks like a Supabase path but lacks the proxy prefix, and we have an optionId
-    if (optionId && !path.startsWith('/options/') && !path.startsWith('options/') && !path.startsWith('/api/')) {
+    // If it looks like a Supabase path for options but lacks the proxy prefix
+    if (optionId && !path.startsWith('/options/') && !path.startsWith('options/') && !path.startsWith('/api/') && !path.startsWith('/expenses/')) {
         path = `/options/${optionId}/images/${path}`;
     }
 
+    // Clean up prefixes to avoid double API segments
     if (path.startsWith('/api/')) {
       path = path.substring(5);
     } else if (path.startsWith('api/')) {
@@ -30,9 +31,6 @@ export function getAuthenticatedImageUrl(urlOrPath: string, optionId?: number): 
     }
     
     finalUrl = `${baseUrl}/${path}`;
-  } else {
-    // Local upload fallback (filename only)
-    finalUrl = `${baseUrl}/uploads/options/${urlOrPath}`;
   }
 
   if (finalUrl && token) {
@@ -41,6 +39,13 @@ export function getAuthenticatedImageUrl(urlOrPath: string, optionId?: number): 
   }
 
   return finalUrl;
+}
+
+/**
+ * Standardizes receipt URLs for display
+ */
+export function getReceiptUrl(urlOrPath: string): string {
+    return getAuthenticatedImageUrl(urlOrPath);
 }
 
 /**

@@ -14,9 +14,10 @@ interface ExpenseFeedProps {
   onDelete?: (expenseId: number) => void;
   onEdit?: (expense: Expense) => void;
   memberCount?: number;
+  scope?: "all" | "mine";
 }
 
-export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberCount }: ExpenseFeedProps) {
+export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberCount, scope }: ExpenseFeedProps) {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -76,11 +77,37 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
                   </p>
                 </div>
 
-                {expense.description && (
-                  <p className="text-[11px] text-slate-400 font-medium truncate italic mt-0.5">
-                    for <span className="not-italic text-slate-600 dark:text-slate-400">{expense.description}</span>
-                  </p>
-                )}
+                <div className="flex items-center justify-between gap-4 mt-1">
+                  {expense.description && (
+                    <p className="text-[11px] text-slate-400 font-medium truncate italic shrink min-w-0">
+                      for <span className="not-italic text-slate-600 dark:text-slate-400">{expense.description}</span>
+                    </p>
+                  )}
+
+                  {/* Individual Debt/Credit Context - Only in "Mine" scope */}
+                  {scope === "mine" && (() => {
+                    const mySplit = expense.splits?.find(s => s.user_id === currentUserId);
+                    const iPaid = expense.paid_by === currentUserId;
+                    const othersOweMe = iPaid ? (expense.splits?.filter(s => s.user_id !== currentUserId).reduce((sum, s) => sum + s.amount, 0) || 0) : 0;
+                    const iOwePortion = !iPaid && mySplit ? mySplit.amount : 0;
+
+                    if (iOwePortion > 0) {
+                      return (
+                        <p className="text-[9px] font-black text-rose-500 uppercase tracking-tight whitespace-nowrap shrink-0">
+                          you pay ₹{Math.round(iOwePortion).toLocaleString('en-IN')}
+                        </p>
+                      );
+                    }
+                    if (othersOweMe > 0) {
+                      return (
+                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tight whitespace-nowrap shrink-0">
+                          you get back ₹{Math.round(othersOweMe).toLocaleString('en-IN')}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
               </div>
 
               {/* Chevron */}

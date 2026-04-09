@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Check, X, CalendarIcon, Utensils, Car, Home, Sparkles, MoreHorizontal, Users, Percent, Calculator, Hash, Receipt, Globe, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, eachDayOfInterval, startOfDay, endOfDay, isWithinInterval, differenceInDays } from "date-fns";
@@ -94,10 +94,6 @@ const categories: { value: ExpenseCategory; label: string; icon: React.ReactNode
   { value: "other", label: "Other", icon: <MoreHorizontal className="h-4 w-4" /> },
 ];
 
-const currencies = [
-  { code: 'INR', symbol: '₹' },
-];
-
 export function ExpenseForm({
   tripId,
   members,
@@ -115,13 +111,13 @@ export function ExpenseForm({
   urlValue,
 }: ExpenseFormProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = externalOpen !== undefined;
+  const isOpen = isControlled ? externalOpen : internalOpen;
 
-  // Use external control if provided, otherwise fallback to internal state
-  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
-  const setIsOpen = (val: boolean) => {
+  const setIsOpen = useCallback((val: boolean) => {
     if (externalOnOpenChange) externalOnOpenChange(val);
-    setInternalOpen(val);
-  };
+    if (!isControlled) setInternalOpen(val);
+  }, [externalOnOpenChange, isControlled]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [amount, setAmount] = useState("");
@@ -129,7 +125,6 @@ export function ExpenseForm({
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [paidBy, setPaidBy] = useState<number | undefined>(currentUserId);
   const [expenseDate, setExpenseDate] = useState<Date | undefined>(undefined);
-  const [selectedStayOptionId, setSelectedStayOptionId] = useState<number | null>(null);
 
   // Advanced Split State
   const [splitType, setSplitType] = useState<'equally' | 'shares' | 'percentage' | 'exact'>('equally');
@@ -143,50 +138,6 @@ export function ExpenseForm({
   const [receiptUrl, setReceiptUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // Options (used to simplify stay expenses)
-  const { options } = useOptions(tripId ?? null);
-  const stayOptions = useMemo(
-    () => options.filter((o) => (o.category || "stay") === "stay" && typeof o.price === "number"),
-    [options]
-  );
-
-  const calcStayTotal = useMemo(() => {
-    return (opt: any) => {
-      const memberCount = Math.max(members.length, 1);
-
-      if (opt.price_per_day_pp !== undefined && opt.price_per_day_pp !== null) {
-        let nights = 1;
-        if (opt.check_in_date && opt.check_out_date) {
-          nights = Math.max(differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)), 1);
-        }
-        return Number((opt.price_per_day_pp * memberCount * nights).toFixed(2));
-      }
-
-      const price = (Number(opt.price || 0) / memberCount);
-      let total = price;
-
-      if (opt.is_per_night && opt.check_in_date && opt.check_out_date) {
-        try {
-          const nights = Math.max(differenceInDays(parseISO(opt.check_out_date), parseISO(opt.check_in_date)), 1);
-          total *= nights;
-        } catch {
-          // fallback to 1 night
-        }
-      }
-
-      return Number(total.toFixed(2));
-    };
-  }, [members.length]);
-
-  useEffect(() => {
-    setExchangeRate("1.0");
-    setBaseAmount(amount);
-  }, [currency, exchangeRate, baseAmount]);
-
-  useEffect(() => {
-    setBaseAmount(amount);
-  }, [amount, currency]);
-
   const isEditMode = !!editExpense;
 
   const tripDateRange = useMemo(() => {
@@ -196,11 +147,6 @@ export function ExpenseForm({
       end: endOfDay(parseISO(tripEndDate)),
     };
   }, [tripStartDate, tripEndDate]);
-
-  const tripDates = useMemo(() => {
-    if (!tripDateRange) return [];
-    return eachDayOfInterval({ start: tripDateRange.start, end: tripDateRange.end });
-  }, [tripDateRange]);
 
   const isDateDisabled = (date: Date) => {
     if (!tripDateRange) return false;
@@ -244,38 +190,6 @@ export function ExpenseForm({
     }
   }, [editExpense, members]);
 
-  // Stay category: choose stay option -> auto-fill amount + split equally across all members
-  useEffect(() => {
-    if (category !== "stay") {
-      setSelectedStayOptionId(null);
-      return;
-    }
-
-    // enforce auto split for stay
-    setSplitType("equally");
-    setSelectedSplitUsers(members.map((m) => m.user_id));
-    setSplitData({});
-    setCurrency("INR");
-    setExchangeRate("1.0");
-
-    if (!selectedStayOptionId) return;
-    const opt = stayOptions.find((o: any) => o.id === selectedStayOptionId);
-    if (!opt) return;
-
-    const total = calcStayTotal(opt);
-    setAmount(total.toFixed(2));
-    setBaseAmount(total.toFixed(2));
-    setDescription(opt.title || "Stay");
-
-    if (opt.check_in_date) {
-      try {
-        setExpenseDate(parseISO(opt.check_in_date));
-      } catch {
-        // ignore
-      }
-    }
-  }, [category, selectedStayOptionId, stayOptions, members, calcStayTotal]);
-
   const resetForm = () => {
     setAmount("");
     setDescription("");
@@ -287,16 +201,15 @@ export function ExpenseForm({
     setExpenseDate(new Date());
     setCurrency('INR');
     setReceiptUrl("");
-    setSelectedStayOptionId(null);
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     if (onCancelEdit) {
       onCancelEdit();
     }
     resetForm();
-  };
+  }, [setIsOpen, onCancelEdit]);
 
   const validateSplits = () => {
     const numAmount = parseFloat(amount);
@@ -318,7 +231,7 @@ export function ExpenseForm({
     }
 
     if (splitType === 'shares') {
-      const totalShares = selectedSplitUsers.reduce((sum, id) => sum + (splitData[id]?.share_count || 1), 0);
+      const totalShares = selectedSplitUsers.reduce((sum, id) => sum + (splitData[id]?.share_count ?? 0), 0);
       if (totalShares <= 0) {
         toast.error("Total shares must be greater than zero");
         return false;
@@ -360,11 +273,6 @@ export function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isEditMode && category === "stay" && !selectedStayOptionId) {
-      toast.error("Please choose a stay option");
-      return;
-    }
-
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
       toast.error("Please enter a valid amount");
@@ -394,7 +302,7 @@ export function ExpenseForm({
 
       const payloadSplitData: SplitDataItem[] = selectedSplitUsers.map(userId => ({
         user_id: userId,
-        share_count: splitType === 'shares' ? (splitData[userId]?.share_count || 1) : undefined,
+        share_count: splitType === 'shares' ? (splitData[userId]?.share_count ?? 0) : undefined,
         percentage: splitType === 'percentage' ? (splitData[userId]?.percentage || 0) : undefined,
         amount: splitType === 'exact' ? (splitData[userId]?.amount || 0) : undefined,
       }));
@@ -449,7 +357,6 @@ export function ExpenseForm({
   };
 
   const toggleSplitMember = (userId: number) => {
-    if (category === "stay") return; // stay splits are always auto-calculated across all members
     setSelectedSplitUsers(prev =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -469,128 +376,65 @@ export function ExpenseForm({
             <Button
               size="lg"
               style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
-              className="md:hidden fixed right-4 w-14 h-14 rounded-full shadow-2xl bg-black dark:bg-white dark:text-black text-white hover:opacity-90 z-40 transition-all active:scale-95 flex items-center justify-center"
+              className="md:hidden fixed right-4 w-14 h-14 rounded-full shadow-2xl bg-black dark:bg-white dark:text-black text-white hover:opacity-90 z-40 transition-all active:scale-95 flex items-center justify-center font-black"
             >
               <span className="material-symbols-outlined text-3xl">add</span>
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[2.5rem] sm:shadow-2xl">
-          <div className="h-full overflow-y-auto px-6 py-10 pt-[calc(2.5rem+env(safe-area-inset-top,0px))] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] md:px-10 md:py-12 scrollbar-hide">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[90%] sm:max-w-md sm:h-auto sm:max-h-[90vh] sm:rounded-[2.5rem] sm:shadow-2xl z-[300]">
+          <div className="max-h-[inherit] overflow-y-auto px-6 py-10 pt-[calc(3rem+env(safe-area-inset-top,0px))] pb-[calc(3rem+env(safe-area-inset-bottom,0px))] md:px-10 md:py-12 relative">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50 opacity-50" />
 
-
-            <DialogHeader className="flex flex-row items-center justify-between pb-8 md:pb-10">
+            <DialogHeader className="flex flex-row items-center justify-between pb-6 md:pb-8">
               <div className="flex items-center gap-3">
-                <div className="size-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined material-symbols-filled">
+                <div className="size-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined material-symbols-filled text-lg">
                     {isEditMode ? "edit" : "add_circle"}
                   </span>
                 </div>
-                <DialogTitle className="text-xl md:text-3xl font-extrabold tracking-tight serif-title italic">
+                <DialogTitle className="text-lg md:text-xl font-extrabold tracking-tight serif-title italic text-slate-800 dark:text-slate-100">
                   {isEditMode ? "edit expense" : "add expense"}
                 </DialogTitle>
               </div>
-
             </DialogHeader>
+
             <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
               {/* Amount & Currency Section */}
-              <div className="space-y-4 rounded-[1.5rem] md:rounded-[2.5rem] bg-gray-50 dark:bg-black/20 p-5 md:p-8 border border-gray-100 dark:border-white/5 shadow-inner">
+              <div className="space-y-3 rounded-2xl md:rounded-3xl bg-gray-50 dark:bg-black/20 p-4 md:p-6 border border-gray-100 dark:border-white/5 shadow-inner">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 block px-1">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1 block px-1">
                       total amount in INR
                     </Label>
                     <div className="flex items-center">
-                      <span className="text-2xl md:text-5xl font-black text-gray-300 mr-2 md:mr-3 tracking-tighter">₹</span>
+                      <span className="text-xl md:text-3xl font-black text-gray-300 mr-2 tracking-tighter">₹</span>
                       <Input
                         type="number"
                         placeholder="0.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="text-2xl md:text-5xl font-black h-10 md:h-16 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
+                        className="text-xl md:text-3xl font-black h-8 md:h-12 p-0 border-none bg-transparent focus-visible:ring-0 text-gray-900 dark:text-white tracking-tighter"
                         disabled={isLoading}
                       />
                     </div>
-                    {/* FX row removed – INR only */}
                   </div>
-
-                  {/* Currency is fixed to INR – no selector needed */}
                 </div>
               </div>
 
               {/* Description & Category */}
-              <div className="grid grid-cols-1 gap-6">
-                {category === "stay" ? (
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Stay Details</Label>
-                    {(selectedStayOptionId || isEditMode) ? (
-                      (() => {
-                        const opt = selectedStayOptionId
-                          ? stayOptions.find((o: any) => o.id === selectedStayOptionId)
-                          : null;
-                        return (
-                          <div className="rounded-[2rem] border border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 p-6 shadow-sm">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-lg font-black text-gray-900 dark:text-white truncate tracking-tight uppercase">
-                                  {opt?.title || description || "Selected stay"}
-                                </p>
-                                <div className="flex flex-col gap-1 mt-3">
-                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-xs">event_available</span>
-                                    Date Set from stay {opt?.check_in_date ? `(${opt.check_in_date})` : ""}
-                                  </p>
-                                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-xs">auto_awesome</span>
-                                    Auto-calculated • Equal Split
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()
-                    ) : (
-                      <>
-                        <Select
-                          value={selectedStayOptionId?.toString() ?? ""}
-                          onValueChange={(v) => setSelectedStayOptionId(parseInt(v))}
-                          disabled={!tripId || isLoading}
-                        >
-                          <SelectTrigger className="rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-16 px-6 font-bold shadow-sm">
-                            <SelectValue placeholder={tripId ? "Choose a stay..." : "Unavailable"} />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl border-none shadow-2xl">
-                            {stayOptions.length === 0 ? (
-                              <SelectItem value="0" disabled>No stays found</SelectItem>
-                            ) : (
-                              stayOptions.map((o: any) => (
-                                <SelectItem key={o.id} value={o.id.toString()} className="rounded-xl font-bold py-3">
-                                  {o.title} • ₹{Number(o.price).toLocaleString('en-IN')}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-1">
-                          Auto-fills date, total, and distribution
-                        </p>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">What was this for?</Label>
-                    <Input
-                      id="description"
-                      placeholder="e.g. Dinner by the beach"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      disabled={isLoading}
-                      className="rounded-xl md:rounded-[2rem] border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-12 md:h-16 px-4 md:px-6 text-sm md:text-lg font-bold shadow-sm placeholder:text-gray-300"
-                    />
-                  </div>
-                )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">What was this for?</Label>
+                  <Input
+                    id="description"
+                    placeholder={category === "stay" ? "e.g. Hotel stay" : "e.g. Dinner by the beach"}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    disabled={isLoading}
+                    className="rounded-xl md:rounded-2xl border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 h-11 md:h-12 px-4 text-xs md:text-sm font-bold shadow-sm placeholder:text-gray-300"
+                  />
+                </div>
 
                 <div className="space-y-3 md:space-y-4">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Category</Label>
@@ -608,7 +452,7 @@ export function ExpenseForm({
                         )}
                         disabled={isLoading}
                       >
-                        <span className="material-symbols-outlined text-[14px] md:text-[18px] mr-1.5 md:mr-2">
+                         <span className="material-symbols-outlined text-[14px] md:text-[18px] mr-1.5 md:mr-2">
                           {cat.value === "stay" ? "home" : cat.value === "activity" ? "stars" : cat.value === "food" ? "restaurant" : cat.value === "transport" ? "directions_car" : "more_horiz"}
                         </span>
                         {cat.label}
@@ -627,119 +471,92 @@ export function ExpenseForm({
                   </Label>
                 </div>
 
-                {category === "stay" ? (
-                  <div className="mt-2 space-y-3 bg-gray-50 dark:bg-black/20 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 dark:border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <span className="material-symbols-outlined text-xs text-primary">numbers</span>
-                        Automatic Equal Split
-                      </span>
-                      <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/10 rounded-full">
-                        {selectedSplitUsers.length} members
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {members.map((member) => (
-                        <div
-                          key={member.user_id}
-                          className="flex items-center justify-between text-[11px] bg-white dark:bg-slate-800/80 rounded-2xl px-4 py-3 border border-gray-50 dark:border-white/5 shadow-sm"
-                        >
-                          <span className="truncate font-extrabold uppercase tracking-tight">{member.user_name}</span>
-                          <span className="font-black text-primary ml-2">
-                            ₹{((parseFloat(amount) || 0) / Math.max(members.length, 1)).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <Tabs value={splitType} onValueChange={(v) => setSplitType(v as any)} className="w-full">
-                    <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-gray-100 dark:bg-gray-800 h-10 md:h-14 mb-4 md:mb-6">
-                      <TabsTrigger value="equally" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                        Equal
-                      </TabsTrigger>
-                      <TabsTrigger value="shares" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                        Shares
-                      </TabsTrigger>
-                      <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                        %
-                      </TabsTrigger>
-                      <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                        ₹
-                      </TabsTrigger>
-                    </TabsList>
+                <Tabs value={splitType} onValueChange={(v) => setSplitType(v as any)} className="w-full">
+                  <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1 bg-gray-100 dark:bg-gray-800 h-10 md:h-14 mb-4 md:mb-6">
+                    <TabsTrigger value="equally" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                      Equal
+                    </TabsTrigger>
+                    <TabsTrigger value="shares" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                      Shares
+                    </TabsTrigger>
+                    <TabsTrigger value="percentage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                      %
+                    </TabsTrigger>
+                    <TabsTrigger value="exact" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                      ₹
+                    </TabsTrigger>
+                  </TabsList>
 
-                    <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 dark:border-white/5">
-                      {members.map((member) => (
-                        <div key={member.user_id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-white/5 last:border-0 group">
-                          <div className="flex items-center gap-4">
-                            <Checkbox
-                              id={`split-${member.user_id}`}
-                              checked={selectedSplitUsers.includes(member.user_id)}
-                              onCheckedChange={() => toggleSplitMember(member.user_id)}
-                              className="w-6 h-6 rounded-lg"
-                            />
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 md:h-10 w-8 md:w-10 ring-2 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover:scale-110">
-                                <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{getInitials(member.user_name)}</AvatarFallback>
-                              </Avatar>
-                              <Label htmlFor={`split-${member.user_id}`} className="text-xs font-black uppercase tracking-widest cursor-pointer text-gray-700 dark:text-gray-300">
-                                {member.user_name}
-                              </Label>
-                            </div>
+                  <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 dark:border-white/5">
+                    {members.map((member) => (
+                      <div key={member.user_id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-white/5 last:border-0 group">
+                        <div className="flex items-center gap-4">
+                          <Checkbox
+                            id={`split-${member.user_id}`}
+                            checked={selectedSplitUsers.includes(member.user_id)}
+                            onCheckedChange={() => toggleSplitMember(member.user_id)}
+                            className="w-6 h-6 rounded-lg"
+                          />
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 md:h-10 w-8 md:w-10 ring-2 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover:scale-110">
+                              <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{getInitials(member.user_name)}</AvatarFallback>
+                            </Avatar>
+                            <Label htmlFor={`split-${member.user_id}`} className="text-xs font-black uppercase tracking-widest cursor-pointer text-gray-700 dark:text-gray-300 font-bold">
+                              {member.user_name}
+                            </Label>
                           </div>
-
-                          {selectedSplitUsers.includes(member.user_id) && splitType !== 'equally' && (
-                            <div className="flex items-center gap-2 w-28 animate-in slide-in-from-right-4 duration-300">
-                              {splitType === 'shares' && (
-                                <div className="relative w-full">
-                                  <Input
-                                    type="number"
-                                    placeholder="1"
-                                    value={splitData[member.user_id]?.share_count || 1}
-                                    onChange={(e) => handleSplitDataChange(member.user_id, 'share_count', e.target.value)}
-                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400 uppercase">shr</span>
-                                </div>
-                              )}
-                              {splitType === 'percentage' && (
-                                <div className="relative w-full">
-                                  <Input
-                                    type="number"
-                                    placeholder="0"
-                                    value={splitData[member.user_id]?.percentage || 0}
-                                    onChange={(e) => handleSplitDataChange(member.user_id, 'percentage', e.target.value)}
-                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
-                                </div>
-                              )}
-                              {splitType === 'exact' && (
-                                <div className="relative w-full">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
-                                  <Input
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={splitData[member.user_id]?.amount || 0}
-                                    onChange={(e) => handleSplitDataChange(member.user_id, 'amount', e.target.value)}
-                                    className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pl-7 pr-3"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {selectedSplitUsers.includes(member.user_id) && splitType === 'equally' && (
-                            <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-full uppercase tracking-tighter animate-in fade-in duration-300">
-                              ₹{((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
-                            </span>
-                          )}
                         </div>
-                      ))}
-                    </div>
-                  </Tabs>
-                )}
+
+                        {selectedSplitUsers.includes(member.user_id) && splitType !== 'equally' && (
+                          <div className="flex items-center gap-2 w-28 animate-in slide-in-from-right-4 duration-300">
+                            {splitType === 'shares' && (
+                              <div className="relative w-full">
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={splitData[member.user_id]?.share_count ?? 0}
+                                  onChange={(e) => handleSplitDataChange(member.user_id, 'share_count', e.target.value)}
+                                  className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400 uppercase">shr</span>
+                              </div>
+                            )}
+                            {splitType === 'percentage' && (
+                              <div className="relative w-full">
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={splitData[member.user_id]?.percentage || 0}
+                                  onChange={(e) => handleSplitDataChange(member.user_id, 'percentage', e.target.value)}
+                                  className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pr-10"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
+                              </div>
+                            )}
+                            {splitType === 'exact' && (
+                              <div className="relative w-full">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={splitData[member.user_id]?.amount || 0}
+                                  onChange={(e) => handleSplitDataChange(member.user_id, 'amount', e.target.value)}
+                                  className="h-8 md:h-10 text-right text-xs rounded-xl font-black bg-white dark:bg-gray-800 border-none shadow-sm pl-7 pr-3"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {selectedSplitUsers.includes(member.user_id) && splitType === 'equally' && (
+                          <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-full uppercase tracking-tighter animate-in fade-in duration-300">
+                            ₹{((parseFloat(amount) || 0) / selectedSplitUsers.length).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Tabs>
               </div>
 
               {/* Extras: Date, Receipt, Payer */}
@@ -747,47 +564,37 @@ export function ExpenseForm({
                 <div className="grid grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Expense Date</Label>
-                    {category === "stay" ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full h-12 md:h-14 rounded-2xl justify-start text-[9px] md:text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-gray-50/50 cursor-default opacity-80"
-                        disabled
-                      >
-                        <span className="material-symbols-outlined mr-3 text-primary text-[20px]">calendar_month</span>
-                        {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Auto-set"}
-                      </Button>
-                    ) : (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-12 md:h-14 rounded-2xl justify-start text-[9px] md:text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm">
-                            <span className="material-symbols-outlined mr-2 md:mr-3 text-primary text-[16px] md:text-[20px]">calendar_month</span>
-                            {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Today"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={expenseDate}
-                            onSelect={setExpenseDate}
-                            disabled={isDateDisabled}
-                            initialFocus
-                            className="rounded-2xl"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    )}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-12 md:h-14 rounded-2xl justify-start text-[9px] md:text-[10px] font-black uppercase tracking-widest border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm px-6">
+                          <span className="material-symbols-outlined mr-2 md:mr-3 text-primary text-[16px] md:text-[20px]">calendar_month</span>
+                          {expenseDate ? format(expenseDate, "MMM d, yyyy") : "Today"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={expenseDate}
+                          onSelect={setExpenseDate}
+                          disabled={isDateDisabled}
+                          initialFocus
+                          className="rounded-2xl"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Paid By</Label>
                     <Select value={paidBy?.toString()} onValueChange={(v) => setPaidBy(parseInt(v))}>
-                      <SelectTrigger className="w-full h-12 md:h-14 rounded-2xl border-none bg-white dark:bg-black/20 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest px-4 md:px-6">
+                      <SelectTrigger className="w-full !h-12 md:!h-14 rounded-2xl border border-gray-100 dark:border-white/5 bg-white dark:bg-black/20 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest px-6 focus:ring-0">
                         <SelectValue placeholder="Who paid?" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-none shadow-2xl">
+                      <SelectContent className="rounded-2xl border border-gray-100 dark:border-white/5 shadow-2xl z-[400] bg-white dark:bg-slate-900">
                         {members.map(m => (
-                          <SelectItem key={m.user_id} value={m.user_id.toString()} className="rounded-xl font-bold py-3 uppercase tracking-tighter text-[10px]">{m.user_name}</SelectItem>
+                          <SelectItem key={m.user_id} value={m.user_id.toString()} className="rounded-xl font-bold py-3 uppercase tracking-tighter text-[10px] cursor-pointer">
+                            {m.user_name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

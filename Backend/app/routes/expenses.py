@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN, InvalidOperation
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, current_app, send_from_directory, redirect
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from flasgger import swag_from
@@ -10,6 +10,7 @@ from ..extensions import db
 from ..models import Expense, ExpenseSplit, TripMember, ExpenseComment, ExpenseActivity
 from ..utils.decorators import trip_member_required
 from ..services.settlement import SettlementService
+from ..services.supabase_storage import SupabaseStorage
 
 bp = Blueprint('expenses', __name__, url_prefix='/api')
 
@@ -246,6 +247,7 @@ def record_expense(trip_id, trip, membership):
 })
 def list_expenses(trip_id, trip, membership):
     expenses = Expense.query.filter_by(trip_id=trip_id).order_by(
+        Expense.expense_date.desc().nullslast(),
         Expense.created_at.desc()
     ).all()
 
@@ -756,15 +758,40 @@ def upload_receipt():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp, pdf'}), 400
 
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(get_receipt_upload_folder(), filename)
-    file.save(filepath)
+    # Try Supabase upload first
+    result = SupabaseStorage.upload_file(file, folder="receipts")
+    
+    if not result:
+        # Fallback to local storage
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(get_receipt_upload_folder(), filename)
+        file.save(filepath)
+        final_url = f"/api/uploads/receipts/{filename}"
+    else:
+        # Use cloud storage path
+        storage_filename = result["filename"] # e.g. "receipts/uuid.jpg"
+        final_url = f"/api/expenses/receipts/{storage_filename}"
 
-    # Return the relative URL to the file
     return jsonify({
-        'url': f'/api/uploads/receipts/{filename}'
+        'url': final_url
     }), 200
+
+
+@bp.route('/expenses/receipts/<path:filename>', methods=['GET'])
+def serve_receipt_supabase(filename):
+    # Secure bridge to private Supabase files
+    signed_url = SupabaseStorage.get_signed_url(filename, expires_in=120)
+    
+    if not signed_url:
+        # Check if it exists locally as fallback
+        local_filename = filename.split('/')[-1]
+        try:
+            return send_from_directory(get_receipt_upload_folder(), local_filename)
+        except:
+            return jsonify({'error': 'Could not access this receipt'}), 404
+    
+    return redirect(signed_url)
 
 
 @bp.route('/uploads/receipts/<filename>', methods=['GET'])
