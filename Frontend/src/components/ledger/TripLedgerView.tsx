@@ -51,9 +51,9 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
   const { activeTrip } = useAppStore();
   const { expenses, isLoading: expensesLoading, mutate: mutateExpenses } = useExpenses(tripId);
   const { balances, isLoading: settleLoading, mutate: mutateSettle } = useSettlement(tripId);
-  const { members } = useTripMembers(tripId);
-  const { budget } = useBudget(tripId);
-  const { rankedOptions } = useRankedOptions(tripId);
+  const { members, isLoading: membersLoading } = useTripMembers(tripId);
+  const { budget, isLoading: budgetLoading } = useBudget(tripId);
+  const { rankedOptions, isLoading: rankedLoading } = useRankedOptions(tripId);
 
   const calculateOptionPrice = useCallback((ro: RankedOption) => {
     const { option } = ro;
@@ -175,7 +175,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
     }
   };
 
-  const isBusy = expensesLoading || settleLoading;
+  const isBusy = expensesLoading || settleLoading || membersLoading || budgetLoading || rankedLoading;
 
   const actualExpenses = budget?.total_expenses ?? 0;
 
@@ -207,7 +207,16 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
 
   return (
     <div className="bg-[#fbfbf8] dark:bg-background-dark min-h-screen font-sans">
-      <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+      {isBusy ? (
+        <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 animate-in fade-in duration-700">
+           <div className="bg-slate-900 text-white px-10 py-5 rounded-[2.5rem] font-black text-xs md:text-sm uppercase tracking-widest shadow-2xl animate-pulse relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              checking with banks how much you owe…
+           </div>
+           <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] animate-pulse delay-150">calculating split balances</p>
+        </div>
+      ) : (
+        <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div className="flex flex-row items-center justify-between gap-4">
 
 
@@ -279,7 +288,6 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
               <div className="p-6 md:p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex flex-col text-center md:text-left">
                   <h3 className="font-black text-lg md:text-xl text-black dark:text-white tracking-tight lowercase">transaction log</h3>
-                  {isBusy && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Syncing…</span>}
                 </div>
 
                 <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 w-full md:w-auto overflow-x-auto">
@@ -670,6 +678,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
           urlValue={editingExpense ? editingExpense.id.toString() : "true"}
         />
       </main>
+      )}
 
       {/* Mobile FAB — outside main so space-y-12 cannot affect fixed positioning */}
       <button

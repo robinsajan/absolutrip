@@ -61,7 +61,7 @@ function ItineraryGroup({ group }: { group: any }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Finalized Homebase</p>
-                  {isExpanded && <span className="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-full">Active</span>}
+                  {isExpanded && <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full whitespace-nowrap shrink-0">Active</span>}
                 </div>
                 <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 truncate mt-1">
                   {group.stay.title}

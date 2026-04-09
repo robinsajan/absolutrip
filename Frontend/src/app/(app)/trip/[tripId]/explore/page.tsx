@@ -106,6 +106,53 @@ export default function ExplorePage() {
   const [editingOption, setEditingOption] = useState<RankedOption | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+  const stays = useMemo(() => {
+    let list = (rankedOptions || []).filter(ro => ro.option.category === 'stay');
+    if (selectedDate) {
+      list = list.filter(ro => {
+        if (!ro.option.check_in_date || !ro.option.check_out_date) return false;
+        const start = parseISO(ro.option.check_in_date);
+        const end = parseISO(ro.option.check_out_date);
+        return selectedDate >= start && selectedDate < end;
+      });
+    }
+    return list.sort((a, b) => {
+      const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
+      const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [rankedOptions, selectedDate]);
+
+  const activities = useMemo(() => {
+    let list = (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
+    if (selectedDate) {
+      list = list.filter(ro => {
+        if (!ro.option.check_in_date) return false;
+        const start = parseISO(ro.option.check_in_date);
+        return isSameDay(selectedDate, start);
+      });
+    }
+    return list.sort((a, b) => {
+      const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
+      const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [rankedOptions, selectedDate]);
+
+  const allFilteredOptions = useMemo(() => [...stays, ...activities], [stays, activities]);
+
+  const tripDates = useMemo(() => {
+    if (!activeTrip?.start_date || !activeTrip?.end_date) return [];
+    try {
+      return eachDayOfInterval({
+        start: parseISO(activeTrip.start_date),
+        end: parseISO(activeTrip.end_date)
+      });
+    } catch {
+      return [];
+    }
+  }, [activeTrip]);
+
   // Sync state with URL on mount or when rankedOptions changes
   useEffect(() => {
     if (!rankedOptions || rankedOptions.length === 0) return;
@@ -132,6 +179,24 @@ export default function ExplorePage() {
     setMounted(true);
   }, []);
 
+  // Keyboard navigation for viewing modal
+  useEffect(() => {
+    if (!viewingOption || !allFilteredOptions.length) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        const idx = allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id);
+        if (idx > 0) setViewingOption(allFilteredOptions[idx - 1]);
+      } else if (e.key === "ArrowRight") {
+        const idx = allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id);
+        if (idx < allFilteredOptions.length - 1) setViewingOption(allFilteredOptions[idx + 1]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [viewingOption, allFilteredOptions]);
+
   const isOwner = useMemo(() => {
     if (!user || !members) return false;
     const membership = members.find((m: TripMember) => m.user_id === user.id);
@@ -147,6 +212,7 @@ export default function ExplorePage() {
       toast.error(error.response?.data?.error || "Failed to vote");
     }
   };
+
 
   const handleAddOption = async (data: any) => {
     const result = await optionsApi.create(tripId, data);
@@ -230,52 +296,6 @@ export default function ExplorePage() {
   };
 
 
-  const tripDates = useMemo(() => {
-    if (!activeTrip?.start_date || !activeTrip?.end_date) return [];
-    try {
-      return eachDayOfInterval({
-        start: parseISO(activeTrip.start_date),
-        end: parseISO(activeTrip.end_date)
-      });
-    } catch {
-      return [];
-    }
-  }, [activeTrip]);
-
-  const stays = useMemo(() => {
-    let list = (rankedOptions || []).filter(ro => ro.option.category === 'stay');
-    if (selectedDate) {
-      list = list.filter(ro => {
-        if (!ro.option.check_in_date || !ro.option.check_out_date) return false;
-        const start = parseISO(ro.option.check_in_date);
-        const end = parseISO(ro.option.check_out_date);
-        return selectedDate >= start && selectedDate < end;
-      });
-    }
-    return list.sort((a, b) => {
-      const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
-      const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
-      return dateA - dateB;
-    });
-  }, [rankedOptions, selectedDate]);
-
-  const activities = useMemo(() => {
-    let list = (rankedOptions || []).filter(ro => ro.option.category !== 'stay');
-    if (selectedDate) {
-      list = list.filter(ro => {
-        if (!ro.option.check_in_date) return false;
-        const start = parseISO(ro.option.check_in_date);
-        return isSameDay(selectedDate, start);
-      });
-    }
-    return list.sort((a, b) => {
-      const dateA = a.option.check_in_date ? parseISO(a.option.check_in_date).getTime() : 0;
-      const dateB = b.option.check_in_date ? parseISO(b.option.check_in_date).getTime() : 0;
-      return dateA - dateB;
-    });
-  }, [rankedOptions, selectedDate]);
-
-  const allFilteredOptions = useMemo(() => [...stays, ...activities], [stays, activities]);
 
   if (!mounted) return null;
 
@@ -301,20 +321,20 @@ export default function ExplorePage() {
         "group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1 shrink-0",
         "w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)]",
         isFinalized 
-          ? "border-green-500 ring-8 ring-green-500/10 shadow-2xl scale-[1.02] bg-white dark:bg-gray-900 z-10" 
+          ? "border-green-500 shadow-2xl scale-[1.02] bg-white dark:bg-gray-900 z-10" 
           : hasVoted 
             ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-gray-900" 
             : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg bg-white dark:bg-gray-900"
       )}>
         <div className="relative h-32 md:h-48 overflow-hidden rounded-t-[1.5rem] md:rounded-t-[2rem]">
           <ImageCarousel imageUrls={imageUrls} alt={ro.option.title} />
-          <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-col md:flex-row gap-1.5 z-20">
-            <div className="bg-black/60 backdrop-blur-md text-white px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[6px] md:text-[8px] font-black uppercase tracking-widest w-fit">
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-col md:flex-row gap-2 z-20">
+            <div className="bg-black/60 backdrop-blur-md text-white h-5 md:h-7 px-2.5 md:px-4 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] flex items-center justify-center border border-white/10 shadow-lg whitespace-nowrap shrink-0">
               {ro.option.category || "activity"}
             </div>
             {isFinalized && (
-              <div className="bg-green-500 text-white p-1 rounded-full shadow-lg w-fit animate-in zoom-in duration-300">
-                <span className="material-symbols-outlined text-xs md:text-sm material-symbols-filled">check_circle</span>
+              <div className="bg-green-500 text-white size-5 md:size-7 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300">
+                <span className="material-symbols-outlined text-[10px] md:text-[14px] font-black material-symbols-filled">check</span>
               </div>
             )}
           </div>
@@ -483,10 +503,10 @@ export default function ExplorePage() {
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Accommodation</span>
                     <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Stays ({stays.length})</h2>
                   </div>
-                  {(stays.length > 7 || (stays.length > 2)) && (
+                  {(stays.length > 6 || (stays.length > 2)) && (
                     <Link
                       href={`/trip/${tripId}/explore/stays`}
-                      className={cn("group flex items-center gap-1.5 transition-all", stays.length <= 7 && "md:hidden")}
+                      className={cn("group flex items-center gap-1.5 transition-all", stays.length <= 6 && "md:hidden")}
                     >
                       <span className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">View all stays</span>
                       <span className="material-symbols-outlined text-sm text-black dark:text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -494,8 +514,8 @@ export default function ExplorePage() {
                   )}
                 </div>
                 <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
-                  {stays.slice(0, 7).map(renderOptionCard)}
-                  {stays.length > 7 && (
+                  {stays.slice(0, 6).map(renderOptionCard)}
+                  {stays.length > 6 && (
                     <Link
                       href={`/trip/${tripId}/explore/stays`}
                       className="group shrink-0 flex flex-col items-center justify-center w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)] min-h-[12rem]"
@@ -518,10 +538,10 @@ export default function ExplorePage() {
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Itinerary</span>
                     <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Activities ({activities.length})</h2>
                   </div>
-                  {(activities.length > 7 || (activities.length > 2)) && (
+                  {(activities.length > 6 || (activities.length > 2)) && (
                     <Link
                       href={`/trip/${tripId}/explore/activities`}
-                      className={cn("group flex items-center gap-1.5 transition-all", activities.length <= 7 && "md:hidden")}
+                      className={cn("group flex items-center gap-1.5 transition-all", activities.length <= 6 && "md:hidden")}
                     >
                       <span className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">View all activities</span>
                       <span className="material-symbols-outlined text-sm text-black dark:text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -529,8 +549,8 @@ export default function ExplorePage() {
                   )}
                 </div>
                 <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
-                  {activities.slice(0, 7).map(renderOptionCard)}
-                  {activities.length > 7 && (
+                  {activities.slice(0, 6).map(renderOptionCard)}
+                  {activities.length > 6 && (
                     <Link
                       href={`/trip/${tripId}/explore/activities`}
                       className="group shrink-0 flex flex-col items-center justify-center w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)] min-h-[12rem]"
@@ -611,7 +631,7 @@ export default function ExplorePage() {
 
               <div className="px-8 py-6 space-y-4">
                 <div className="flex flex-wrap gap-2 mt-[-0.5rem] mb-1">
-                  <div className="bg-slate-100 dark:bg-slate-800 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+                  <div className="bg-slate-100 dark:bg-slate-800 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0">
                     {viewingOption.option.category || "activity"}
                   </div>
                   {viewingOption.option.is_finalized && (
@@ -706,8 +726,8 @@ export default function ExplorePage() {
                   </button>
                 )}
 
-                {/* Mobile Pagination Controls */}
-                <div className="md:hidden flex items-center justify-between pt-10 border-t border-gray-100 dark:border-gray-800">
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between pt-10 border-t border-gray-100 dark:border-gray-800 max-w-xl mx-auto w-full">
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -716,16 +736,16 @@ export default function ExplorePage() {
                       document.querySelector('.modal-scroll-area')?.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id) === 0}
-                    className="rounded-2xl h-14 px-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                    className="rounded-2xl h-12 md:h-14 px-4 md:px-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                   >
-                    <span className="material-symbols-outlined text-sm">arrow_back</span>
-                    Prev
+                    <span className="material-symbols-outlined text-sm md:text-base">arrow_back</span>
+                    <span className="hidden sm:inline">Prev</span>
                   </Button>
                   
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Explore</span>
-                    <span className="text-xs font-black text-primary leading-none">
-                      {allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id) + 1} of {allFilteredOptions.length}
+                    <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Explore</span>
+                    <span className="text-xs md:text-sm font-black text-primary leading-none">
+                      {allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id) + 1} <span className="text-slate-300 mx-1">/</span> {allFilteredOptions.length}
                     </span>
                   </div>
 
@@ -737,10 +757,10 @@ export default function ExplorePage() {
                       document.querySelector('.modal-scroll-area')?.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={allFilteredOptions.findIndex(o => o.option.id === viewingOption.option.id) === allFilteredOptions.length - 1}
-                    className="rounded-2xl h-14 px-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                    className="rounded-2xl h-12 md:h-14 px-4 md:px-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                   >
-                    Next
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="material-symbols-outlined text-sm md:text-base">arrow_forward</span>
                   </Button>
                 </div>
               </div>

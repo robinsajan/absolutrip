@@ -67,7 +67,7 @@ export function FullPageLoader() {
           style={{
             fontFamily:
               "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(3.5rem, 12vw, 7.5rem)",
+            fontSize: "clamp(3rem, 8vw, 5.5rem)",
             color: "#0F1324",
           }}
         >
@@ -80,7 +80,7 @@ export function FullPageLoader() {
           style={{
             fontFamily:
               "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(3.5rem, 12vw, 7.5rem)",
+            fontSize: "clamp(3rem, 8vw, 5.5rem)",
             color: "#0F1324",
           }}
         >
@@ -93,7 +93,7 @@ export function FullPageLoader() {
           style={{
             fontFamily:
               "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(3.5rem, 12vw, 7.5rem)",
+            fontSize: "clamp(3rem, 8vw, 5.5rem)",
             color: "#0F1324",
           }}
         >
@@ -103,8 +103,8 @@ export function FullPageLoader() {
             className="inline-flex items-center justify-center rounded-2xl"
             style={{
               background: "#3B67F6",
-              width: "clamp(4rem, 12vw, 7.5rem)",
-              height: "clamp(2.8rem, 8vw, 5rem)",
+              width: "clamp(3.5rem, 10vw, 5.5rem)",
+              height: "clamp(2.4rem, 6vw, 4rem)",
               flexShrink: 0,
               marginTop: "0.08em",
               marginBottom: "0.04em",
@@ -113,8 +113,8 @@ export function FullPageLoader() {
             <ArrowRight
               style={{
                 color: "#fff",
-                width: "clamp(1.4rem, 4vw, 2.8rem)",
-                height: "clamp(1.4rem, 4vw, 2.8rem)",
+                width: "clamp(1.2rem, 3.5vw, 2.2rem)",
+                height: "clamp(1.2rem, 3.5vw, 2.2rem)",
                 strokeWidth: 2.5,
               }}
             />
@@ -128,7 +128,7 @@ export function FullPageLoader() {
           style={{
             fontFamily:
               "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(3.5rem, 12vw, 7.5rem)",
+            fontSize: "clamp(3rem, 8vw, 5.5rem)",
             color: "#3B67F6",
           }}
         >

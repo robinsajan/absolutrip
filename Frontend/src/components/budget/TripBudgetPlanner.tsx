@@ -278,7 +278,7 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-0.5">
                                             <div className="flex flex-col">
-                                                <Badge className="bg-primary/10 text-primary border-none text-[7px] md:text-[8px] font-black uppercase px-2 w-fit mb-0.5">Day {stay.planned_day} &mdash; {stay.end_day || stay.planned_day}</Badge>
+                                                <Badge className="bg-primary/10 text-primary border-none text-[8px] md:text-[10px] font-black uppercase px-2 w-fit mb-0.5 whitespace-nowrap shrink-0">Day {stay.planned_day} &mdash; {stay.end_day || stay.planned_day}</Badge>
                                                 <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{getStayDates()}</span>
                                             </div>
                                             <span className="text-[9px] md:text-[10px] font-black text-primary ml-auto">₹{((stay.total_price || 0) / (travelers || 1)).toLocaleString()}</span>
@@ -689,7 +689,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                     <div>
                                                         <div className="flex justify-between items-start">
                                                             <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1 truncate">{opt.destination || trip.destination}</p>
-                                                            {isSelected && <Badge className="bg-green-500 text-white border-none text-[6px] md:text-[8px] font-black uppercase tracking-widest px-1.5 md:px-2">Selected</Badge>}
+                                                            {isSelected && <Badge className="bg-green-500 text-white border-none text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 whitespace-nowrap shrink-0">Selected</Badge>}
                                                         </div>
                                                         <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-xs md:text-sm leading-tight">{opt.title}</h4>
                                                         {opt.category === 'stay' && opt.check_in_date && (

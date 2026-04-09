@@ -36,21 +36,34 @@ export function useBackCloseController<T extends BackCloseControllerArgs>(props:
   const [uncontrolledOpen, setUncontrolledOpen] = useState<boolean>(props.defaultOpen ?? false);
   const open = isControlled ? props.open : uncontrolledOpen;
 
-  // Sync state with URL
+  // Sync state with URL (URL -> State)
   useEffect(() => {
     if (urlKey) {
       const currentVal = searchParams.get(urlKey);
-      const shouldBeOpen = currentVal === urlValue;
       
-      if (shouldBeOpen !== !!open) {
-        if (!isControlled) {
-          setUncontrolledOpen(shouldBeOpen);
-        }
-        // Always notify parent of change initiated by URL/history
-        props.onOpenChange?.(shouldBeOpen);
+      if (currentVal === null && open) {
+        // URL key removed (e.g., via Back button) -> Close modal
+        if (!isControlled) setUncontrolledOpen(false);
+        props.onOpenChange?.(false);
+      } else if (currentVal === urlValue && !open) {
+        // URL key matches our value and we are closed -> Open modal
+        if (!isControlled) setUncontrolledOpen(true);
+        props.onOpenChange?.(true);
       }
     }
-  }, [searchParams, urlKey, urlValue, isControlled, open, props.onOpenChange]);
+  }, [searchParams, urlKey, urlValue, isControlled, open]);
+
+  // Handle value changes while open (State -> URL)
+  useEffect(() => {
+    if (open && urlKey && urlValue && pushedRef.current) {
+      const currentVal = searchParams.get(urlKey);
+      if (currentVal !== null && currentVal !== urlValue) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set(urlKey, urlValue);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      }
+    }
+  }, [open, urlKey, urlValue, searchParams, router, pathname]);
 
 
   const pushedRef = useRef(false);
