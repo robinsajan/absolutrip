@@ -68,7 +68,7 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    Swagger(app, template=swagger_template, config=swagger_config)
+    # Swagger(app, template=swagger_template, config=swagger_config)
 
     from .routes import auth, trips, options, votes, expenses, budget
     app.register_blueprint(auth.bp)
@@ -81,5 +81,96 @@ def create_app(config_name=None):
     @app.route('/health')
     def health_check():
         return {'status': 'healthy'}
+
+    @app.route('/')
+    def index():
+        return '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrong Place Simon</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+        .emoji { font-size: 5rem; animation: shake 0.5s infinite; }
+        h1 {
+            font-size: 2.5rem;
+            color: #ff4444;
+            margin: 1rem 0;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        p {
+            font-size: 1.1rem;
+            color: #aaa;
+            margin: 0.5rem 0;
+        }
+        .warning {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: blink 1s infinite;
+        }
+        .go-back {
+            margin-top: 2rem;
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: #ff4444;
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+        }
+        .go-back:hover { background: #cc0000; }
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🚨</div>
+        <h1>Wrong Place, Simon</h1>
+        <p>You should NOT be here.</p>
+        <p>Close the tab. Walk away. Pretend this never happened.</p>
+        <div class="warning">⚠ UNAUTHORISED HUMAN DETECTED ⚠</div>
+        <br/>
+        <button class="go-back" onclick="history.back()">← GO BACK SIMON</button>
+    </div>
+</body>
+</html>
+''', 200
 
     return app
