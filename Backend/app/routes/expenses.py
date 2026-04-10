@@ -759,7 +759,7 @@ def upload_receipt():
         return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp, pdf'}), 400
 
     # Try Supabase upload first
-    result = SupabaseStorage.upload_file(file, folder="receipts")
+    result = SupabaseStorage.upload_file(file, folder="", target_bucket="receipts")
     
     if not result:
         # Fallback to local storage
@@ -770,7 +770,7 @@ def upload_receipt():
         final_url = f"/api/uploads/receipts/{filename}"
     else:
         # Use cloud storage path
-        storage_filename = result["filename"] # e.g. "receipts/uuid.jpg"
+        storage_filename = result["filename"] # e.g. "uuid.jpg"
         final_url = f"/api/expenses/receipts/{storage_filename}"
 
     return jsonify({
@@ -781,7 +781,7 @@ def upload_receipt():
 @bp.route('/expenses/receipts/<path:filename>', methods=['GET'])
 def serve_receipt_supabase(filename):
     # Secure bridge to private Supabase files
-    signed_url = SupabaseStorage.get_signed_url(filename, expires_in=120)
+    signed_url = SupabaseStorage.get_signed_url(filename, expires_in=120, target_bucket="receipts")
     
     if not signed_url:
         # Check if it exists locally as fallback

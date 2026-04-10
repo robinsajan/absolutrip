@@ -30,16 +30,19 @@ class SupabaseStorage:
         return cls._client
 
     @classmethod
-    def upload_file(cls, file, folder="options"):
+    def upload_file(cls, file, folder="options", target_bucket=None):
         client = cls.get_client()
         if not client:
             print("Supabase Storage: Upload skipped - Client not initialized.")
             return None
 
-        bucket_name = os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
         
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
-        filename = f"{folder}/{uuid.uuid4().hex}.{ext}"
+        
+        # If writing to a dedicated bucket like 'receipts', we don't necessarily need a folder prefix
+        # but we'll preserve it if folder is provided so it matches previous patterns
+        filename = f"{folder}/{uuid.uuid4().hex}.{ext}" if folder else f"{uuid.uuid4().hex}.{ext}"
         
         try:
             print(f"Uploading file '{file.filename}' to Supabase bucket '{bucket_name}' as '{filename}'...")
@@ -63,14 +66,13 @@ class SupabaseStorage:
             return None
 
     @classmethod
-    def get_signed_url(cls, filename, expires_in=60):
+    def get_signed_url(cls, filename, expires_in=60, target_bucket=None):
         client = cls.get_client()
         if not client:
             return None
 
-        bucket_name = os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
         try:
-            # res is usually a dict like {'signedURL': '...', ...} or just the URL string depending on version
             res = client.storage.from_(bucket_name).create_signed_url(filename, expires_in)
             if isinstance(res, dict) and "signedURL" in res:
                 return res["signedURL"]
@@ -80,12 +82,12 @@ class SupabaseStorage:
             return None
 
     @classmethod
-    def get_file(cls, filename):
+    def get_file(cls, filename, target_bucket=None):
         client = cls.get_client()
         if not client:
             return None
 
-        bucket_name = os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
         try:
             return client.storage.from_(bucket_name).download(filename)
         except Exception as e:
@@ -93,12 +95,12 @@ class SupabaseStorage:
             return None
 
     @classmethod
-    def delete_file(cls, filename):
+    def delete_file(cls, filename, target_bucket=None):
         client = cls.get_client()
         if not client:
             return False
 
-        bucket_name = os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
         try:
             client.storage.from_(bucket_name).remove([filename])
             return True
