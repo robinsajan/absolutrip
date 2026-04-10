@@ -41,7 +41,7 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
         {expenses.map((expense, index) => {
           const canModify = expense.paid_by === currentUserId;
           const isSettlement = expense.category === "settlement";
-          
+
           return (
             <div
               key={expense.id}
@@ -93,14 +93,14 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
 
                     if (iOwePortion > 0) {
                       return (
-                        <p className="text-[9px] font-black text-rose-500 uppercase tracking-tight whitespace-nowrap shrink-0">
+                        <p className="text-[9px] font-black text-rose-500  tracking-tight whitespace-nowrap shrink-0">
                           you pay ₹{Math.round(iOwePortion).toLocaleString('en-IN')}
                         </p>
                       );
                     }
                     if (othersOweMe > 0) {
                       return (
-                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tight whitespace-nowrap shrink-0">
+                        <p className="text-[9px] font-black text-emerald-600 tracking-tight whitespace-nowrap shrink-0">
                           you get back ₹{Math.round(othersOweMe).toLocaleString('en-IN')}
                         </p>
                       );

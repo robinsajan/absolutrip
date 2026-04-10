@@ -145,9 +145,9 @@ export function BudgetTour({ onComplete }: { onComplete: () => void }) {
         >
           <button 
             onClick={onComplete}
-            className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="absolute right-6 top-6 z-[600] inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg transition-all hover:bg-slate-800 dark:hover:bg-slate-100 hover:scale-110 active:scale-95 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
           >
-            <X className="size-5" />
+            <X className="h-4 w-4" />
           </button>
 
           <div className="flex flex-col items-center text-center space-y-4">

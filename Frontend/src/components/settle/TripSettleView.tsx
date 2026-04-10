@@ -212,31 +212,34 @@ export function TripSettleView({ tripId }: { tripId: string }) {
             </section>
           )}
 
-          <section>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 px-2">Settled</h3>
-            <div className="space-y-2">
-              {settledWithMe.length === 0 && owedByMe.length === 0 && owesMe.length === 0 && (
-                <div className="p-16 text-center">
-                  <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">check_circle</span>
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Everything is balanced!</p>
-                </div>
-              )}
-              {settledWithMe.map((b, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-900 dark:text-slate-100 font-extrabold text-xs">
-                      {getInitials(b.user_name)}
+          {owedByMe.length === 0 && owesMe.length === 0 ? (
+            <section className="bg-emerald-50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-8 rounded-3xl text-center shadow-sm">
+              <span className="material-symbols-outlined text-4xl mb-2 text-emerald-500">task_alt</span>
+              <p className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">You are all settled!</p>
+            </section>
+          ) : (
+            settledWithMe.length > 0 && (
+              <section>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 px-2">Settled</h3>
+                <div className="space-y-2">
+                  {settledWithMe.map((b, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-900 dark:text-slate-100 font-extrabold text-xs">
+                          {getInitials(b.user_name)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">{b.user_name}</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{b.expenses_paid} total expenses</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-slate-900 dark:text-white">₹0</span>
                     </div>
-                    <div>
-                      <p className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">{b.user_name}</p>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{b.expenses_paid} total expenses</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white">₹0</span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
+            )
+          )}
 
           {/* Section: Settlement History */}
           {settlementHistory.length > 0 && (

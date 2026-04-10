@@ -111,11 +111,19 @@ def login():
     login_user(user, remember=True)
     token = user.generate_jwt()
 
-    return jsonify({
+    response = jsonify({
         'message': 'Logged in successfully',
         'token': token,
         'user': user.to_dict()
-    }), 200
+    })
+    response.set_cookie(
+        'token',
+        token,
+        httponly=True,
+        secure=True,
+        samesite='None'
+    )
+    return response, 200
 
 
 @bp.route('/logout', methods=['POST'])
@@ -130,7 +138,16 @@ def login():
 })
 def logout():
     logout_user()
-    return jsonify({'message': 'Logged out successfully'}), 200
+    response = jsonify({'message': 'Logged out successfully'})
+    response.set_cookie(
+        'token',
+        '',
+        expires=0,
+        httponly=True,
+        secure=True,
+        samesite='None'
+    )
+    return response, 200
 
 
 @bp.route('/me', methods=['GET'])

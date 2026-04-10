@@ -126,42 +126,33 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
             <SheetContent 
                 side="bottom"
                 className="w-full h-full sm:max-w-none p-0 flex flex-col border-none shadow-none z-[300] bg-white dark:bg-slate-950"
-                showCloseButton={false}
             >
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 opacity-40 z-50 px-8" />
                 <SheetHeader className="p-8 pb-8 border-b relative pt-[calc(2.5rem+env(safe-area-inset-top,0px))]">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-6 top-6 h-8 w-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg z-50 p-0"
-                        onClick={onClose}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
 
-                    <div className="mb-4">
+                    {expense.paid_by === currentUserId && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-16 top-6 h-8 w-8 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/30 transition-all shadow-sm z-50 p-0"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+
+                    <div className="mb-4 pr-16">
                         <Badge variant="outline" className="gap-1.5 capitalize font-black text-[10px] tracking-widest text-primary border-primary/20 bg-primary/5">
                             {splitTypeIcons[expense.split_type as keyof typeof splitTypeIcons] || <Hash className="h-3 w-3" />}
                             {expense.split_type} split
                         </Badge>
                     </div>
 
-                    <div className="flex items-start justify-between gap-4 pr-4">
+                    <div className="flex items-start justify-between gap-4">
                         <SheetTitle className="text-3xl font-black italic tracking-tight text-slate-900 dark:text-white leading-tight">
                             {expense.description}
                         </SheetTitle>
-                        
-                        {expense.paid_by === currentUserId && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all rounded-full shrink-0 -mt-1"
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                            >
-                                <Trash2 className="h-5 w-5" />
-                            </Button>
-                        )}
                     </div>
 
                     <SheetDescription className="sr-only">
@@ -198,9 +189,8 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                     </div>
 
                 </SheetHeader>
-                <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-slate-50/50 dark:bg-slate-900/50">
-                    <ScrollArea className="flex-1">
-                        <div className="p-6 space-y-8">
+                <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="p-6 pb-[calc(12rem+env(safe-area-inset-bottom,0px))] md:pb-12 space-y-8">
                             {/* Splits Section */}
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
@@ -236,6 +226,39 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                             </section>
 
                             <Separator className="opacity-50" />
+
+                            {/* Receipt Section */}
+                            {expense.receipt_url && (
+                                <>
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                                <Paperclip className="h-3.5 w-3.5" />
+                                                Receipt Evidence
+                                            </h3>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-7 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5" 
+                                                onClick={() => setIsReceiptZoomed(true)}
+                                            >
+                                                View Full
+                                            </Button>
+                                        </div>
+                                        <div 
+                                            className="aspect-video relative rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm group cursor-zoom-in"
+                                            onClick={() => setIsReceiptZoomed(true)}
+                                        >
+                                            <img
+                                                src={getReceiptUrl(expense.receipt_url)}
+                                                alt="Expense receipt"
+                                                className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105"
+                                            />
+                                        </div>
+                                    </section>
+                                    <Separator className="opacity-50" />
+                                </>
+                            )}
 
                             {/* Discussion Section */}
                             <section className="space-y-4">
@@ -290,38 +313,6 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                                 </div>
                             </section>
 
-                            <Separator className="opacity-50" />
-
-                            {/* Receipt Section */}
-                            {expense.receipt_url && (
-                                <section className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                            <Paperclip className="h-3.5 w-3.5" />
-                                            Receipt Evidence
-                                        </h3>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-7 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5" 
-                                            onClick={() => setIsReceiptZoomed(true)}
-                                        >
-                                            View Full
-                                        </Button>
-                                    </div>
-                                    <div 
-                                        className="aspect-video relative rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm group cursor-zoom-in"
-                                        onClick={() => setIsReceiptZoomed(true)}
-                                    >
-                                        <img
-                                            src={getReceiptUrl(expense.receipt_url)}
-                                            alt="Expense receipt"
-                                            className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105"
-                                        />
-                                    </div>
-                                </section>
-                            )}
-
                             {/* Full Screen Receipt Preview */}
                             {isReceiptZoomed && expense.receipt_url && (
                                 <div 
@@ -373,7 +364,6 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                                 </div>
                             )}
                         </div>
-                    </ScrollArea>
                 </div>
             </SheetContent>
         </Sheet>
