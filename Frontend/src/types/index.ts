@@ -21,6 +21,7 @@ export interface Trip {
   budget?: number;
   num_travelers?: number;
   is_promoted?: boolean;
+  is_past?: boolean;
   members?: TripMember[];
 }
 

@@ -35,6 +35,14 @@ class Trip(db.Model):
         if not self.invite_code:
             self.invite_code = secrets.token_urlsafe(16)
 
+    @property
+    def is_past(self):
+        if not self.end_date:
+            return False
+        from datetime import date
+        # Trip is considered "past" (locked) immediately after it ends
+        return self.end_date < date.today()
+
     def to_dict(self, include_members=False):
         data = {
             'id': self.id,
@@ -48,7 +56,8 @@ class Trip(db.Model):
             'invite_code': self.invite_code,
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat(),
-            'google_maps_url': self.google_maps_url
+            'google_maps_url': self.google_maps_url,
+            'is_past': self.is_past
         }
         if include_members:
             data['members'] = [m.to_dict() for m in self.members.filter_by(status='approved').all()]

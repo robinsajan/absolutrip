@@ -30,6 +30,15 @@ import { trips as tripsApi, options as optionsApi } from "@/lib/api/endpoints";
 import type { Trip } from "@/types";
 import { useTripMembers, useAuth } from "@/lib/hooks";
 import { useSearchParams, usePathname } from "next/navigation";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ── Utility ──────────────────────────────────────────────────────────────────
 const getOptionImageUrl = (opt: any) => {
@@ -146,8 +155,8 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travel
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-400 pt-2 px-2">
-                             <Info className="size-3" />
-                             <p className="text-[8px] uppercase font-bold tracking-widest">Comprehensive Trip Calculation</p>
+                            <Info className="size-3" />
+                            <p className="text-[8px] uppercase font-bold tracking-widest">Comprehensive Trip Calculation</p>
                         </div>
                     </div>
                     {opt.notes && (
@@ -165,7 +174,7 @@ function OptionInfoSheet({ opt, open, onClose, onSelect, tripDestination, travel
     );
 }
 
-function BudgetHeader({ perPerson, adminTarget, onReset, onSave }: any) {
+function BudgetHeader({ perPerson, adminTarget, onReset, onSave, isPast }: any) {
     const diff = adminTarget ? perPerson - adminTarget : null;
 
     return (
@@ -215,15 +224,17 @@ function BudgetHeader({ perPerson, adminTarget, onReset, onSave }: any) {
                 {/* Action buttons */}
                 <div className="flex gap-3 pt-1">
                     <Button
-                        className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-5 font-black uppercase text-[10px] tracking-widest shadow-sm transition-all"
+                        className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-5 font-black uppercase text-[10px] tracking-widest shadow-sm transition-all disabled:opacity-50"
                         onClick={onSave}
+                        disabled={isPast}
                     >
-                        Save Plan
+                        {isPast ? "Budget Locked" : "Save Plan"}
                     </Button>
                     <Button
                         variant="ghost"
-                        className="flex-1 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-500 border-none py-5 font-black uppercase text-[10px] tracking-widest transition-all"
+                        className="flex-1 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-500 border-none py-5 font-black uppercase text-[10px] tracking-widest transition-all disabled:opacity-50"
                         onClick={onReset}
+                        disabled={isPast}
                     >
                         Reset
                     </Button>
@@ -316,9 +327,9 @@ function TripTimeline({ selections, onRemove, totalDays, startDate, travelers, o
                                         <div className="flex flex-col">
                                             <h4 className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{item.title}</h4>
                                             <span className="text-[7px] font-black text-slate-400 uppercase">
-                                                {item.check_in_date 
+                                                {item.check_in_date
                                                     ? format(parseISO(item.check_in_date), 'MMM d')
-                                                    : startDate 
+                                                    : startDate
                                                         ? format(addDays(parseISO(startDate), item.planned_day - 1), 'MMM d')
                                                         : `Day ${item.planned_day}`
                                                 }
@@ -374,6 +385,7 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     const [infoOpt, setInfoOpt] = useState<any | null>(null);
     const [allOptions, setAllOptions] = useState<any[]>([]);
     const [showInitializationPrompt, setShowInitializationPrompt] = useState(false);
+    const [showEndDialog, setShowEndDialog] = useState(trip?.is_past || false);
     const [pendingSelections, setPendingSelections] = useState<any[]>([]);
 
     const searchParams = useSearchParams();
@@ -505,6 +517,10 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
     };
 
     const saveScenario = async () => {
+        if (trip?.is_past) {
+            toast.error("BUDGET LOCKED: This trip has ended.");
+            return;
+        }
         setLoading(true);
         try {
             await axios.post(`/budget/plans/${tripId}`, {
@@ -578,11 +594,38 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
             const up = getUnitPrice(o, travelersCount);
             let dur = Math.max(1, o.duration_days || 1);
             if (o.category === 'stay' && o.check_in_date && o.check_out_date) {
-                try { dur = Math.max(1, differenceInDays(parseISO(o.check_out_date), parseISO(o.check_in_date))); } catch (_) {}
+                try { dur = Math.max(1, differenceInDays(parseISO(o.check_out_date), parseISO(o.check_in_date))); } catch (_) { }
             }
             return a + up * dur;
         }, 0)
         : (trip.budget ?? null);
+
+    if (trip?.is_past) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 animate-in fade-in duration-700">
+                <div className="size-24 rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-2xl shadow-black/5 rotate-3">
+                    <Calendar className="size-10 text-slate-300" />
+                </div>
+                <div className="text-center space-y-2">
+                    <h2 className="text-3xl font-black italic serif-title lowercase tracking-tight">Trip Expired</h2>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Budget Planning is Locked</p>
+                </div>
+                <div className="max-w-xs text-center">
+                    <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                        This journey has concluded and the records are archived.
+                        You can still manage your actual spends in the <span className="text-primary font-bold">Ledger</span>.
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    onClick={() => window.location.href = `/trip/${tripId}/ledger`}
+                    className="mt-4 rounded-2xl border-slate-200 text-slate-500 font-bold uppercase text-[9px] tracking-widest h-11 px-8"
+                >
+                    Go to Ledger
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
@@ -591,7 +634,30 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                 adminTarget={adminPickPerPerson}
                 onReset={() => { if (confirm("Are you sure? This will clear your current timeline selections.")) { setSelections([]); setCurrentDay(1); setActiveStayEndDay(null); setManualStep('stay'); } }}
                 onSave={saveScenario}
+                isPast={trip.is_past}
             />
+
+            <AlertDialog open={showEndDialog} onOpenChange={setShowEndDialog}>
+                <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden max-w-sm">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+                    <AlertDialogHeader className="pt-6">
+                        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                            <Calendar className="size-8 text-slate-400" />
+                        </div>
+                        <AlertDialogTitle className="text-center text-xl font-black italic serif-title lowercase">Trip Concuded</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-xs font-medium leading-relaxed px-2">
+                            This trip has officially ended. Budget planning and itinerary selections are now <span className="text-primary font-bold">read-only</span>.
+                            <br /><br />
+                            <span className="text-slate-500 font-bold uppercase text-[9px]">Note:</span> You can still manage expenses in the Ledger.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="p-2 pt-4">
+                        <AlertDialogAction className="w-full h-12 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-black font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+                            I Understand
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-8">
@@ -634,159 +700,159 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                 )}
 
                                 {planningMode === 'manual' ? (
-                            <div className="space-y-6 md:space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-                                <div className="space-y-4 md:space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-1 md:space-y-2">
-                                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary">
-                                                {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
-                                            </p>
-                                            <p className="text-[12px] md:text-[16px] font ">
-                                                {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Activities Catalog"}
-                                            </p>
-                                            <div className="flex items-center gap-4">
-                                                <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
-                                                    {currentDay <= totalDays
-                                                        ? (activeStayEndDay && activeStayEndDay >= currentDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
-                                                        : "Enhance Your Trip"
-                                                    }
-                                                </h2>
-                                            </div>
-                                            {currentDay <= totalDays && (
-                                                <p className="text-slate-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">{format(addDays(parseISO(trip.start_date!), currentDay - 1), 'MMMM do, yyyy')}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <Progress value={Math.min(100, (currentDay / totalDays) * 100)} className="h-1.5 md:h-2.5 rounded-full" />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {reservedOptions.filter(o => (currentDay > totalDays ? o.category !== 'stay' : o.category === manualStep) && matchesDay(o)).map((opt: any) => {
-                                        const isSelected = selections.some(s =>
-                                            s.id === opt.id &&
-                                            (s.category === 'stay'
-                                                ? (currentDay >= s.planned_day && currentDay <= (s.end_day || s.planned_day))
-                                                : (s.planned_day === currentDay))
-                                        );
-                                        return (
-                                            <Card
-                                                key={opt.id}
-                                                className={`rounded-[32px] md:rounded-[40px] transition-all p-3 flex flex-row gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative border-2 ${isSelected ? 'border-green-500 ring-4 ring-green-500/10' : 'border-primary/5 hover:border-primary'}`}
-                                                onClick={() => addSelection(opt)}
-                                            >
-                                                <button className="absolute bottom-4 right-4 z-20 size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-primary shadow-sm" onClick={e => { e.stopPropagation(); setInfoOpt(opt); }}><ChevronsRight className="size-4" /></button>
-                                                <div className="size-24 md:size-36 rounded-2xl md:rounded-[32px] overflow-hidden shrink-0 bg-slate-50 dark:bg-slate-800 relative">
-                                                    {getOptionImageUrl(opt) ? <img src={getOptionImageUrl(opt)!} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center"><Hotel className="opacity-20 size-6 md:size-10" /></div>}
-                                                    {isSelected && (
-                                                        <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
-                                                            <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-full shadow-lg scale-100 md:scale-110 animate-in zoom-in duration-300">
-                                                                <CheckCircle2 className="size-4 md:size-6" />
-                                                            </div>
-                                                        </div>
+                                    <div className="space-y-6 md:space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                                        <div className="space-y-4 md:space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1 md:space-y-2">
+                                                    <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary">
+                                                        {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
+                                                    </p>
+                                                    <p className="text-[12px] md:text-[16px] font ">
+                                                        {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Activities Catalog"}
+                                                    </p>
+                                                    <div className="flex items-center gap-4">
+                                                        <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
+                                                            {currentDay <= totalDays
+                                                                ? (activeStayEndDay && activeStayEndDay >= currentDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
+                                                                : "Enhance Your Trip"
+                                                            }
+                                                        </h2>
+                                                    </div>
+                                                    {currentDay <= totalDays && (
+                                                        <p className="text-slate-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">{format(addDays(parseISO(trip.start_date!), currentDay - 1), 'MMMM do, yyyy')}</p>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 flex flex-col justify-between py-1 md:py-2 grow pr-1 md:pr-2 gap-1.5 md:gap-2 min-w-0">
-                                                    <div>
-                                                        <div className="flex justify-between items-start">
-                                                            <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1 truncate">{opt.destination || trip.destination}</p>
-                                                            {isSelected && <Badge className="bg-green-500 text-white border-none text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 whitespace-nowrap shrink-0">Selected</Badge>}
-                                                        </div>
-                                                        <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-xs md:text-sm leading-tight">{opt.title}</h4>
-                                                        {opt.category === 'stay' && opt.check_in_date && (
-                                                            <p className="text-[8px] md:text-[9px] font-bold text-primary mt-1 flex items-center gap-1">
-                                                                <Calendar className="size-2 md:size-2.5" />
-                                                                {format(parseISO(opt.check_in_date), 'MMM d')} - {format(parseISO(opt.check_out_date), 'MMM d')}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-0 md:space-y-0.5 mt-auto">
-                                                        <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate Per Person Per Night</p>
-                                                        <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, travelersCount).toLocaleString()}</p>
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        );
-                                    })}
-                                    {reservedOptions.filter(o => o.category === manualStep && matchesDay(o)).length === 0 && (
-                                        <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
-                                            <MapPin className="size-10 text-slate-200 mx-auto mb-3" />
-                                            <p className="text-slate-400 font-bold italic">No options matched for this day in Comparison Hub.</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="bg-slate-900 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-2xl relative overflow-hidden group gap-6">
-                                    <div className="absolute right-0 top-0 opacity-10 -mr-10 -mt-10 animate-pulse transition-transform group-hover:scale-110 pointer-events-none transition-opacity duration-300"><Calendar className="size-32 md:size-48" /></div>
-                                    <div className="flex items-center gap-4 md:gap-5 relative z-10">
-                                        <div className="size-10 md:size-14 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-white shadow-lg"><CheckCircle2 className="size-6 md:size-8" /></div>
-                                        <div>
-                                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-0.5 md:mb-1">Status</p>
-                                            <p className="text-slate-300 text-xs md:text-sm font-bold">{currentDay <= totalDays ? `Day ${currentDay} in progress` : "All Stays Selected!"}</p>
-                                        </div>
-                                    </div>
-                                    {currentDay <= totalDays ? (
-                                        <Button className="w-full md:w-auto rounded-2xl md:rounded-[24px] px-8 md:px-12 py-5 md:py-7 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-white text-slate-900 hover:bg-primary hover:text-white transition-all shadow-xl gap-2 h-auto relative z-10" onClick={() => {
-                                            const n = activeStayEndDay ? activeStayEndDay + 1 : currentDay + 1;
-                                            if (n <= totalDays) { setCurrentDay(n); setActiveStayEndDay(null); setManualStep('stay'); }
-                                            else { setCurrentDay(totalDays + 1); setManualStep('activity'); }
-                                        }}>Next STAY <ArrowRight className="size-4" /></Button>
-                                    ) : <Badge className="bg-primary/20 text-primary rounded-full px-4 md:px-6 py-1.5 md:py-2 border-none font-black text-[9px] md:text-[10px]">ACTIVITIES MODE</Badge>}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-10 animate-in fade-in duration-500">
-                                {aiStep === 'budget' ? (
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[48px] p-16 flex flex-col items-center gap-10 text-center border-2 border-dashed border-slate-100 relative">
-                                        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 size-24 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-bounce"><Sparkles className="size-12" /></div>
-                                        <div className="space-y-3">
-                                            <h3 className="text-4xl font-black text-slate-900 italic">Smart AI Planner</h3>
-                                            <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Define your target budget and we'll build the best possible itinerary using only your comparison hub options.</p>
-                                        </div>
-                                        <div className="w-full max-w-xs space-y-6">
-                                            <div className="relative group">
-                                                <span className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-300 font-extrabold text-3xl transition-colors group-focus-within:text-purple-500">₹</span>
-                                                <input type="number" value={aiBudget} onChange={e => setAiBudget(e.target.value)} className="w-full pl-16 pr-8 py-8 rounded-[36px] border-2 border-transparent bg-white text-slate-900 font-black text-3xl focus:outline-none focus:border-purple-500 transition-all shadow-2xl text-center" placeholder="15000" />
                                             </div>
-                                            <Button className="w-full rounded-[28px] py-10 font-black uppercase tracking-[0.2em] text-xs gap-4 bg-black text-white hover:bg-slate-800 transition-all shadow-2xl h-auto" disabled={loading} onClick={fetchAiPlans}>
-                                                {loading ? <Loader2 className="animate-spin size-6" /> : <Sparkles className="size-6" />} Start Planning
-                                            </Button>
+                                            <Progress value={Math.min(100, (currentDay / totalDays) * 100)} className="h-1.5 md:h-2.5 rounded-full" />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {reservedOptions.filter(o => (currentDay > totalDays ? o.category !== 'stay' : o.category === manualStep) && matchesDay(o)).map((opt: any) => {
+                                                const isSelected = selections.some(s =>
+                                                    s.id === opt.id &&
+                                                    (s.category === 'stay'
+                                                        ? (currentDay >= s.planned_day && currentDay <= (s.end_day || s.planned_day))
+                                                        : (s.planned_day === currentDay))
+                                                );
+                                                return (
+                                                    <Card
+                                                        key={opt.id}
+                                                        className={`rounded-[32px] md:rounded-[40px] transition-all p-3 flex flex-row gap-4 cursor-pointer group shadow-sm bg-white hover:shadow-2xl hover:-translate-y-1 relative border-2 ${isSelected ? 'border-green-500 ring-4 ring-green-500/10' : 'border-primary/5 hover:border-primary'}`}
+                                                        onClick={() => addSelection(opt)}
+                                                    >
+                                                        <button className="absolute bottom-4 right-4 z-20 size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-primary shadow-sm" onClick={e => { e.stopPropagation(); setInfoOpt(opt); }}><ChevronsRight className="size-4" /></button>
+                                                        <div className="size-24 md:size-36 rounded-2xl md:rounded-[32px] overflow-hidden shrink-0 bg-slate-50 dark:bg-slate-800 relative">
+                                                            {getOptionImageUrl(opt) ? <img src={getOptionImageUrl(opt)!} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center"><Hotel className="opacity-20 size-6 md:size-10" /></div>}
+                                                            {isSelected && (
+                                                                <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
+                                                                    <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-full shadow-lg scale-100 md:scale-110 animate-in zoom-in duration-300">
+                                                                        <CheckCircle2 className="size-4 md:size-6" />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 flex flex-col justify-between py-1 md:py-2 grow pr-1 md:pr-2 gap-1.5 md:gap-2 min-w-0">
+                                                            <div>
+                                                                <div className="flex justify-between items-start">
+                                                                    <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1 truncate">{opt.destination || trip.destination}</p>
+                                                                    {isSelected && <Badge className="bg-green-500 text-white border-none text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 whitespace-nowrap shrink-0">Selected</Badge>}
+                                                                </div>
+                                                                <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-xs md:text-sm leading-tight">{opt.title}</h4>
+                                                                {opt.category === 'stay' && opt.check_in_date && (
+                                                                    <p className="text-[8px] md:text-[9px] font-bold text-primary mt-1 flex items-center gap-1">
+                                                                        <Calendar className="size-2 md:size-2.5" />
+                                                                        {format(parseISO(opt.check_in_date), 'MMM d')} - {format(parseISO(opt.check_out_date), 'MMM d')}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="space-y-0 md:space-y-0.5 mt-auto">
+                                                                <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400">Rate Per Person Per Night</p>
+                                                                <p className="text-lg md:text-xl font-black text-primary">₹{getUnitPrice(opt, travelersCount).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </Card>
+                                                );
+                                            })}
+                                            {reservedOptions.filter(o => o.category === manualStep && matchesDay(o)).length === 0 && (
+                                                <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
+                                                    <MapPin className="size-10 text-slate-200 mx-auto mb-3" />
+                                                    <p className="text-slate-400 font-bold italic">No options matched for this day in Comparison Hub.</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="bg-slate-900 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-2xl relative overflow-hidden group gap-6">
+                                            <div className="absolute right-0 top-0 opacity-10 -mr-10 -mt-10 animate-pulse transition-transform group-hover:scale-110 pointer-events-none transition-opacity duration-300"><Calendar className="size-32 md:size-48" /></div>
+                                            <div className="flex items-center gap-4 md:gap-5 relative z-10">
+                                                <div className="size-10 md:size-14 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-white shadow-lg"><CheckCircle2 className="size-6 md:size-8" /></div>
+                                                <div>
+                                                    <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-0.5 md:mb-1">Status</p>
+                                                    <p className="text-slate-300 text-xs md:text-sm font-bold">{currentDay <= totalDays ? `Day ${currentDay} in progress` : "All Stays Selected!"}</p>
+                                                </div>
+                                            </div>
+                                            {currentDay <= totalDays ? (
+                                                <Button className="w-full md:w-auto rounded-2xl md:rounded-[24px] px-8 md:px-12 py-5 md:py-7 font-black uppercase text-[9px] md:text-[10px] tracking-widest bg-white text-slate-900 hover:bg-primary hover:text-white transition-all shadow-xl gap-2 h-auto relative z-10" onClick={() => {
+                                                    const n = activeStayEndDay ? activeStayEndDay + 1 : currentDay + 1;
+                                                    if (n <= totalDays) { setCurrentDay(n); setActiveStayEndDay(null); setManualStep('stay'); }
+                                                    else { setCurrentDay(totalDays + 1); setManualStep('activity'); }
+                                                }}>Next STAY <ArrowRight className="size-4" /></Button>
+                                            ) : <Badge className="bg-primary/20 text-primary rounded-full px-4 md:px-6 py-1.5 md:py-2 border-none font-black text-[9px] md:text-[10px]">ACTIVITIES MODE</Badge>}
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-8">
-                                        <div className="flex items-center justify-between px-2">
-                                            <button onClick={() => setAiStep('budget')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-3 hover:text-primary transition-colors"><ArrowRight className="size-3 rotate-180" /> Change Budget</button>
-                                            <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">{Object.keys(aiResults || {}).length} Possible Itineraries</p>
-                                        </div>
-                                        <div className="space-y-6">
-                                            {Object.values(aiResults || {}).map((plan: any, idx: number) => (
-                                                <Card key={idx} className={`rounded-[48px] p-10 flex flex-col md:flex-row gap-10 items-center justify-between transition-all hover:scale-[1.01] ${idx === 0 ? "border-2 border-purple-500 shadow-2xl ring-4 ring-purple-50" : "border border-slate-100 shadow-sm"}`}>
-                                                    <div className="flex-1 text-left space-y-6">
-                                                        <Badge className={`rounded-full px-5 py-1.5 text-[9px] font-black uppercase tracking-widest ${idx === 0 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-500"}`}>{idx === 0 ? '🏆 Best Value' : `Suggested Plan ${idx + 1}`}</Badge>
-                                                        <div className="flex flex-wrap gap-3">
-                                                            {(plan.stays || []).map((s: any, i: number) => <div key={i} className="px-4 py-2 bg-slate-50 rounded-2xl text-xs font-bold border border-slate-100 flex items-center gap-2 text-slate-700"><Hotel className="size-3.5 text-primary" /> {s.title}</div>)}
-                                                            {(plan.activities || []).map((a: any, i: number) => <div key={i} className="px-4 py-2 bg-emerald-50 rounded-2xl text-xs font-bold border border-emerald-100 flex items-center gap-2 text-emerald-700"><Bike className="size-3.5 text-emerald-500" /> {a.title}</div>)}
-                                                        </div>
+                                    <div className="space-y-10 animate-in fade-in duration-500">
+                                        {aiStep === 'budget' ? (
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[48px] p-16 flex flex-col items-center gap-10 text-center border-2 border-dashed border-slate-100 relative">
+                                                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 size-24 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-bounce"><Sparkles className="size-12" /></div>
+                                                <div className="space-y-3">
+                                                    <h3 className="text-4xl font-black text-slate-900 italic">Smart AI Planner</h3>
+                                                    <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Define your target budget and we'll build the best possible itinerary using only your comparison hub options.</p>
+                                                </div>
+                                                <div className="w-full max-w-xs space-y-6">
+                                                    <div className="relative group">
+                                                        <span className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-300 font-extrabold text-3xl transition-colors group-focus-within:text-purple-500">₹</span>
+                                                        <input type="number" value={aiBudget} onChange={e => setAiBudget(e.target.value)} className="w-full pl-16 pr-8 py-8 rounded-[36px] border-2 border-transparent bg-white text-slate-900 font-black text-3xl focus:outline-none focus:border-purple-500 transition-all shadow-2xl text-center" placeholder="15000" />
                                                     </div>
-                                                    <div className="text-right shrink-0">
-                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">TOTAL ESTIMATE</p>
-                                                        <p className="text-5xl font-black text-slate-900 mb-6">₹{(plan.total_cost || 0).toLocaleString()}</p>
-                                                        <Button className={`rounded-[24px] px-12 py-6 font-black uppercase text-[10px] tracking-widest h-auto transition-all ${idx === 0 ? "bg-purple-600 hover:bg-purple-700 text-white shadow-xl" : "bg-black text-white"}`} onClick={() => {
-                                                            setSelections([]);
-                                                            (plan.stays || []).forEach((s: any) => setSelections(p => [...p, { ...s, end_day: s.planned_day + (s.duration_days || 1) - 1 }]));
-                                                            (plan.activities || []).forEach((a: any) => setSelections(p => [...p, a]));
-                                                            setPlanningMode('manual');
-                                                        }}>Apply Plan</Button>
-                                                    </div>
-                                                </Card>
-                                            ))}
-                                        </div>
+                                                    <Button className="w-full rounded-[28px] py-10 font-black uppercase tracking-[0.2em] text-xs gap-4 bg-black text-white hover:bg-slate-800 transition-all shadow-2xl h-auto" disabled={loading} onClick={fetchAiPlans}>
+                                                        {loading ? <Loader2 className="animate-spin size-6" /> : <Sparkles className="size-6" />} Start Planning
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-8">
+                                                <div className="flex items-center justify-between px-2">
+                                                    <button onClick={() => setAiStep('budget')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-3 hover:text-primary transition-colors"><ArrowRight className="size-3 rotate-180" /> Change Budget</button>
+                                                    <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">{Object.keys(aiResults || {}).length} Possible Itineraries</p>
+                                                </div>
+                                                <div className="space-y-6">
+                                                    {Object.values(aiResults || {}).map((plan: any, idx: number) => (
+                                                        <Card key={idx} className={`rounded-[48px] p-10 flex flex-col md:flex-row gap-10 items-center justify-between transition-all hover:scale-[1.01] ${idx === 0 ? "border-2 border-purple-500 shadow-2xl ring-4 ring-purple-50" : "border border-slate-100 shadow-sm"}`}>
+                                                            <div className="flex-1 text-left space-y-6">
+                                                                <Badge className={`rounded-full px-5 py-1.5 text-[9px] font-black uppercase tracking-widest ${idx === 0 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-500"}`}>{idx === 0 ? '🏆 Best Value' : `Suggested Plan ${idx + 1}`}</Badge>
+                                                                <div className="flex flex-wrap gap-3">
+                                                                    {(plan.stays || []).map((s: any, i: number) => <div key={i} className="px-4 py-2 bg-slate-50 rounded-2xl text-xs font-bold border border-slate-100 flex items-center gap-2 text-slate-700"><Hotel className="size-3.5 text-primary" /> {s.title}</div>)}
+                                                                    {(plan.activities || []).map((a: any, i: number) => <div key={i} className="px-4 py-2 bg-emerald-50 rounded-2xl text-xs font-bold border border-emerald-100 flex items-center gap-2 text-emerald-700"><Bike className="size-3.5 text-emerald-500" /> {a.title}</div>)}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">TOTAL ESTIMATE</p>
+                                                                <p className="text-5xl font-black text-slate-900 mb-6">₹{(plan.total_cost || 0).toLocaleString()}</p>
+                                                                <Button className={`rounded-[24px] px-12 py-6 font-black uppercase text-[10px] tracking-widest h-auto transition-all ${idx === 0 ? "bg-purple-600 hover:bg-purple-700 text-white shadow-xl" : "bg-black text-white"}`} onClick={() => {
+                                                                    setSelections([]);
+                                                                    (plan.stays || []).forEach((s: any) => setSelections(p => [...p, { ...s, end_day: s.planned_day + (s.duration_days || 1) - 1 }]));
+                                                                    (plan.activities || []).forEach((a: any) => setSelections(p => [...p, a]));
+                                                                    setPlanningMode('manual');
+                                                                }}>Apply Plan</Button>
+                                                            </div>
+                                                        </Card>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                            </div>
+                            </>
                         )}
-                        </>
-                    )}
                     </div>
                 </div>
 
@@ -802,13 +868,13 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                     />
                 </div>
             </div>
-            <OptionInfoSheet 
-                opt={infoOpt} 
-                open={!!infoOpt} 
-                onClose={() => setInfoOpt(null)} 
-                onSelect={addSelection} 
-                tripDestination={trip!.destination} 
-                travelers={travelersCount} 
+            <OptionInfoSheet
+                opt={infoOpt}
+                open={!!infoOpt}
+                onClose={() => setInfoOpt(null)}
+                onSelect={addSelection}
+                tripDestination={trip!.destination}
+                travelers={travelersCount}
                 urlKey="optionId"
                 urlValue={infoOpt?.id?.toString()}
             />

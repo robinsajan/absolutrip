@@ -1,27 +1,87 @@
 import requests
-from bs4 import BeautifulSoup
+import time
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept-Encoding': 'gzip, deflate',
-}
+# 🔑 Add your Unsplash API Key here
+UNSPLASH_ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"
 
-url = "https://www.booking.com/hotel/in/ama-stays-and-trails.html" # A test URL
+# 🌍 Fetch places from Overpass API
+def fetch_places(lat, lon, radius=3000, amenity="restaurant"):
+    overpass_url = "https://overpass-api.de/api/interpreter"
 
-try:
-    response = requests.get(url, headers=HEADERS, timeout=15)
-    print(f"Status Code: {response.status_code}")
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
-    og_title = soup.find('meta', property='og:title')
-    itemprop_name = soup.find('meta', itemprop='name')
-    print(f"Title: {og_title['content'] if og_title else (itemprop_name['content'] if itemprop_name else 'Not found')}")
-    
-    og_image = soup.find('meta', property='og:image')
-    itemprop_image = soup.find('meta', itemprop='image')
-    print(f"Image: {og_image['content'] if og_image else (itemprop_image['content'] if itemprop_image else 'Not found')}")
-    
-except Exception as e:
-    print(f"Error: {e}")
+    query = f"""
+    [out:json];
+    node
+      ["amenity"="{amenity}"]
+      (around:{radius},{lat},{lon});
+    out;
+    """
+
+    response = requests.post(overpass_url, data=query)
+    data = response.json()
+
+    places = []
+    for element in data.get("elements", []):
+        name = element.get("tags", {}).get("name")
+        if name:
+            places.append({
+                "name": name,
+                "lat": element.get("lat"),
+                "lon": element.get("lon")
+            })
+
+    return places
+
+
+# 📸 Fetch image from Unsplash
+def fetch_image(query):
+    url = "https://api.unsplash.com/search/photos"
+
+    params = {
+        "query": query,
+        "client_id": UNSPLASH_ACCESS_KEY,
+        "per_page": 1
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    results = data.get("results")
+    if results:
+        return results[0]["urls"]["regular"]
+
+    return None
+
+
+# 🔗 Combine places + images
+def get_places_with_images(lat, lon):
+    places = fetch_places(lat, lon)
+
+    final_data = []
+
+    for place in places[:10]:  # limit to 10 to avoid API overuse
+        image = fetch_image(place["name"])
+
+        final_data.append({
+            "name": place["name"],
+            "location": {
+                "lat": place["lat"],
+                "lon": place["lon"]
+            },
+            "image": image
+        })
+
+        time.sleep(0.5)  # avoid rate limits
+
+    return final_data
+
+
+# 🚀 Run Example (Navi Mumbai coords)
+if __name__ == "__main__":
+    LAT = 19.0330
+    LON = 73.0297
+
+    results = get_places_with_images(LAT, LON)
+
+    for place in results:
+        print("\n📍", place["name"])
+        print("🖼️", place["image"])

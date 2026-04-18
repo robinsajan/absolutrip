@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store";
-import { announcements as announcementsApi } from "@/lib/api/endpoints";
+import { cn } from "@/lib/utils";
+import { announcements as announcementsApi, notifications as notificationsApi } from "@/lib/api/endpoints";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ export function AnnouncementSection({ tripId }: { tripId: string }) {
   const { user, activeTrip } = useAppStore();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
   const [newContent, setNewContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -45,8 +47,24 @@ export function AnnouncementSection({ tripId }: { tripId: string }) {
 
   const fetchAnnouncements = async () => {
     try {
-      const res = await announcementsApi.list(tripId);
-      setAnnouncements(res.announcements);
+      // Fetch both announcements and notifications
+      const [annRes, notifRes] = await Promise.all([
+        announcementsApi.list(tripId),
+        notificationsApi.list()
+      ]);
+
+      setAnnouncements(annRes.announcements);
+
+      // Find IDs of unread announcements from notifications
+      const unreadAnnouncements = notifRes.notifications
+        .filter((n: any) => n.type === 'announcement' && !n.is_read)
+        .map((n: any) => n.related_id);
+      setUnreadIds(new Set(unreadAnnouncements));
+
+      // Mark all as read after identifying them
+      if (notifRes.unread_count > 0) {
+        await notificationsApi.markAllAsRead();
+      }
     } catch (error) {
       toast.error("Failed to load announcements");
     } finally {
@@ -166,7 +184,12 @@ export function AnnouncementSection({ tripId }: { tripId: string }) {
           </div>
         ) : (
           announcements.map((a) => (
-            <Card key={a.id} className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden overflow-visible py-0">
+            <Card key={a.id} className={cn(
+              "border transition-all duration-500 bg-white dark:bg-slate-900 rounded-2xl overflow-hidden overflow-visible py-0",
+              unreadIds.has(String(a.id))
+                ? "border-primary shadow-[0_0_20px_rgba(var(--primary),0.1)] ring-1 ring-primary/20"
+                : "border-slate-200 dark:border-slate-800 shadow-sm"
+            )}>
               <CardContent className="px-4 py-2.5 space-y-1.5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-1">

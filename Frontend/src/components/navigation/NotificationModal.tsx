@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { notifications as notificationsApi } from "@/lib/api/endpoints";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, Check } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -11,7 +11,7 @@ import { Notification } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function NotificationPopover() {
+export function NotificationModal() {
     const router = useRouter();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -72,8 +72,8 @@ export function NotificationPopover() {
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
                 <button className="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                     <Bell className="size-5" />
                     {unreadCount > 0 && (
@@ -82,26 +82,26 @@ export function NotificationPopover() {
                         </span>
                     )}
                 </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80 p-0 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 overflow-hidden" align="center" sideOffset={10}>
-                <div className="flex items-center justify-between p-4 border-b border-slate-50 dark:border-slate-800">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">
-                        Notifications
+            </DialogTrigger>
+            <DialogContent className="w-[92vw] sm:max-w-md p-0 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 overflow-hidden sm:rounded-3xl focus:outline-none">
+                <div className="flex items-center justify-between p-6 border-b border-slate-50 dark:border-slate-800">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">
+                        {unreadCount > 0 ? `${unreadCount} new notifications` : 'Notifications'}
                     </h3>
                     {unreadCount > 0 && (
                         <button
                             onClick={handleMarkAllAsRead}
-                            className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline transition-all"
+                            className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline transition-all"
                         >
                             Read All
                         </button>
                     )}
                 </div>
-                <ScrollArea className="h-80">
+                <ScrollArea className="h-[450px] max-h-[60vh]">
                     {notifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400">
-                            <Bell className="size-8 opacity-20 mb-2" />
-                            <p className="text-[10px] font-bold uppercase tracking-widest">No notifications yet</p>
+                        <div className="flex flex-col items-center justify-center h-full p-20 text-center text-slate-400">
+                            <Bell className="size-12 opacity-10 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">No notifications yet</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -110,21 +110,21 @@ export function NotificationPopover() {
                                     key={n.id}
                                     onClick={() => handleNotificationClick(n)}
                                     className={cn(
-                                        "p-4 transition-colors relative group",
+                                        "p-5 transition-all relative group",
                                         n.path && "cursor-pointer",
                                         !n.is_read ? "bg-primary/5" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                     )}
                                 >
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-4">
                                         <div className={cn(
-                                            "size-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
+                                            "size-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-active:scale-90",
                                             n.type === 'announcement' ? "bg-amber-100 text-amber-600" :
                                                 n.type === 'join_request' ? "bg-blue-100 text-blue-600" :
                                                     n.type === 'join_approved' ? "bg-emerald-100 text-emerald-600" :
                                                         n.type === 'join_rejected' ? "bg-red-100 text-red-600" :
                                                             "bg-slate-100 text-slate-600"
                                         )}>
-                                            <span className="material-symbols-outlined text-base">
+                                            <span className="material-symbols-outlined text-xl">
                                                 {n.type === 'announcement' ? 'campaign' :
                                                     n.type === 'join_request' ? 'person_add' :
                                                         n.type === 'join_approved' ? 'check_circle' :
@@ -134,12 +134,12 @@ export function NotificationPopover() {
                                         </div>
                                         <div className="flex-1 min-w-0 pr-6">
                                             <p className={cn(
-                                                "text-xs leading-relaxed",
-                                                !n.is_read ? "font-bold text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"
+                                                "text-[13px] leading-relaxed",
+                                                !n.is_read ? "font-black text-slate-900 dark:text-white" : "font-medium text-slate-500 dark:text-slate-400"
                                             )}>
                                                 {n.content}
                                             </p>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase mt-1.5 tracking-wider">
                                                 {formatDistanceToNow(parseISO(n.created_at), { addSuffix: true })}
                                             </p>
                                         </div>
@@ -150,10 +150,10 @@ export function NotificationPopover() {
                                                 e.stopPropagation();
                                                 handleMarkAsRead(n.id);
                                             }}
-                                            className="absolute right-3 top-4 opacity-0 group-hover:opacity-100 p-1 rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 text-primary transition-all"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700 text-primary transition-all hover:scale-110 active:scale-90"
                                             title="Mark as read"
                                         >
-                                            <Check className="size-3" />
+                                            <Check className="size-4" />
                                         </button>
                                     )}
                                 </div>
@@ -161,10 +161,10 @@ export function NotificationPopover() {
                         </div>
                     )}
                 </ScrollArea>
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/20 text-center">
-                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">End of Notifications</p>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/20 text-center">
+                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">End of Notifications</p>
                 </div>
-            </PopoverContent>
-        </Popover>
+            </DialogContent>
+        </Dialog>
     );
 }

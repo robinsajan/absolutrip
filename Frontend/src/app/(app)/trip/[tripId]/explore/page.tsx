@@ -66,14 +66,14 @@ function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string })
       {imageUrls.length > 1 && (
         <>
 
-          <button 
-            onClick={prevImg} 
+          <button
+            onClick={prevImg}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all hover:bg-black/60 z-20 flex items-center justify-center backdrop-blur-sm"
           >
             <span className="material-symbols-outlined text-sm">chevron_left</span>
           </button>
-          <button 
-            onClick={nextImg} 
+          <button
+            onClick={nextImg}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all hover:bg-black/60 z-20 flex items-center justify-center backdrop-blur-sm"
           >
             <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -204,6 +204,10 @@ export default function ExplorePage() {
   }, [user, members]);
 
   const handleVote = async (optionId: number, score: number) => {
+    if (activeTrip?.is_past) {
+      toast.error("VOTING BLOCKED: This trip has ended.");
+      return;
+    }
     try {
       await votesApi.cast(optionId, score);
       mutate();
@@ -215,13 +219,21 @@ export default function ExplorePage() {
 
 
   const handleAddOption = async (data: any) => {
+    if (activeTrip?.is_past) {
+      toast.error("EDITING BLOCKED: This trip has ended.");
+      return { option: { id: 0 } };
+    }
     const result = await optionsApi.create(tripId, data);
     mutate();
     setShowAddOption(false);
     return result;
   };
-  
+
   const handleUpdateOption = async (data: any) => {
+    if (activeTrip?.is_past) {
+      toast.error("EDITING BLOCKED: This trip has ended.");
+      return { option: { id: 0 } };
+    }
     if (!editingOption) return { option: { id: 0 } };
     const result = await optionsApi.update(editingOption.option.id, data);
     mutate();
@@ -236,6 +248,10 @@ export default function ExplorePage() {
   };
 
   const handleFinalize = async (optionId: number) => {
+    if (activeTrip?.is_past) {
+      toast.error("SELECTION BLOCKED: This trip has ended.");
+      return;
+    }
     const optionToFinalize = (rankedOptions || []).find(ro => ro.option.id === optionId)?.option;
     if (!optionToFinalize) return;
 
@@ -274,6 +290,10 @@ export default function ExplorePage() {
   };
 
   const handleUnfinalize = async (optionId: number) => {
+    if (activeTrip?.is_past) {
+      toast.error("SELECTION BLOCKED: This trip has ended.");
+      return;
+    }
     try {
       await optionsApi.unfinalize(optionId);
       toast.success("Selection removed");
@@ -284,6 +304,10 @@ export default function ExplorePage() {
   };
 
   const handleDelete = async (optionId: number) => {
+    if (activeTrip?.is_past) {
+      toast.error("DELETION BLOCKED: This trip has ended.");
+      return;
+    }
     try {
       if (confirm("Are you sure you want to delete this option?")) {
         await optionsApi.delete(optionId);
@@ -320,10 +344,10 @@ export default function ExplorePage() {
       <div key={ro.option.id} className={cn(
         "group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 transition-all hover:-translate-y-1 shrink-0",
         "w-[60%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] xl:w-[calc(20%-1.5rem)] 2xl:w-[calc(14.28%-1.5rem)]",
-        isFinalized 
-          ? "border-green-500 shadow-2xl scale-[1.02] bg-white dark:bg-gray-900 z-10" 
-          : hasVoted 
-            ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-gray-900" 
+        isFinalized
+          ? "border-green-500 shadow-2xl scale-[1.02] bg-white dark:bg-gray-900 z-10"
+          : hasVoted
+            ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-gray-900"
             : "border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg bg-white dark:bg-gray-900"
       )}>
         <div className="relative h-32 md:h-48 overflow-hidden rounded-t-[1.5rem] md:rounded-t-[2rem]">
@@ -407,7 +431,7 @@ export default function ExplorePage() {
 
   return (
     <div className="bg-background font-sans text-gray-900 dark:text-gray-100">
-      <main className="w-full px-3 pt-4 pb-12 md:px-6 md:py-12">
+      <div className="w-full px-4 pt-10 pb-12 md:px-6 md:pt-16 md:pb-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 px-2">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
@@ -423,7 +447,7 @@ export default function ExplorePage() {
                 <PopoverContent className="p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden bg-white dark:bg-slate-900 z-[200]" align="start">
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                     <Button
-                      variant="ghost" 
+                      variant="ghost"
                       onClick={() => {
                         setSelectedDate(null);
                         setIsPopoverOpen(false);
@@ -524,7 +548,7 @@ export default function ExplorePage() {
                         <span className="material-symbols-outlined text-3xl">arrow_forward</span>
                       </div>
                       <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors text-center leading-tight">
-                        view all<br/>stays
+                        view all<br />stays
                       </span>
                     </Link>
                   )}
@@ -559,7 +583,7 @@ export default function ExplorePage() {
                         <span className="material-symbols-outlined text-3xl">arrow_forward</span>
                       </div>
                       <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors text-center leading-tight">
-                        view all<br/>activities
+                        view all<br />activities
                       </span>
                     </Link>
                   )}
@@ -573,7 +597,7 @@ export default function ExplorePage() {
             )}
           </div>
         )}
-      </main>
+      </div>
 
 
 
@@ -595,8 +619,8 @@ export default function ExplorePage() {
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog 
-        open={!!viewingOption} 
+      <Dialog
+        open={!!viewingOption}
         onOpenChange={(open) => !open && setViewingOption(null)}
         urlKey="viewing"
         urlValue={viewingOption?.option.id.toString()}
@@ -741,7 +765,7 @@ export default function ExplorePage() {
                     <span className="material-symbols-outlined text-sm md:text-base">arrow_back</span>
                     <span className="hidden sm:inline">Prev</span>
                   </Button>
-                  
+
                   <div className="flex flex-col items-center">
                     <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Explore</span>
                     <span className="text-xs md:text-sm font-black text-primary leading-none">
@@ -768,8 +792,8 @@ export default function ExplorePage() {
           )}
         </DialogContent>
       </Dialog>
-      <Dialog 
-        open={!!editingOption} 
+      <Dialog
+        open={!!editingOption}
         onOpenChange={(open) => !open && setEditingOption(null)}
         urlKey="editing"
         urlValue={editingOption?.option.id.toString()}
