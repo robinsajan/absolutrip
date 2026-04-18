@@ -110,9 +110,9 @@ export default function RegisterPage() {
         </div>
 
         {/* Right Side (Form) */}
-        <div className="flex-1 bg-[#fbfbf9] dark:bg-background-dark p-8 md:p-16 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full mx-auto flex-1 flex flex-col h-full items-center justify-center">
-            <div className="w-full flex justify-start mb-16">
+        <div className="flex-1 bg-[#fbfbf9] dark:bg-background-dark px-8 pt-[calc(2rem+env(safe-area-inset-top,0px))] pb-8 md:p-16 flex flex-col items-center justify-center">
+          <div className="max-w-md w-full mx-auto flex-1 flex flex-col h-full items-center justify-start md:justify-center">
+            <div className="w-full flex justify-start mb-8 md:mb-16">
               <Link className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-semibold text-sm" href="/">
                 <span className="material-symbols-outlined text-lg outline-icon">arrow_back</span>
                 back home

@@ -46,7 +46,7 @@ export function LandingPage() {
   return (
     <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen">
       {/* Navigation */}
-      <nav className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
+      <nav className="max-w-7xl mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-6 flex items-center justify-between relative z-50">
         <div className="flex items-center gap-2">
           <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center">
             <span className="material-symbols-outlined">flight_takeoff</span>
