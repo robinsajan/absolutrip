@@ -1,45 +1,17 @@
-"use client";
+import ClientLayout from "./ClientLayout";
 
-import { useEffect } from "react";
-import { useParams, usePathname } from "next/navigation";
-import { MobileTabBar, DesktopSidebar, TripHeader } from "@/components/navigation";
-import { useTrip } from "@/lib/hooks";
-import { useAppStore } from "@/lib/store";
-import { FullPageLoader } from "@/components/common/FullPageLoader";
+// This satisfies the 'output: export' requirement for dynamic routes.
+// We return an empty list or a placeholder. 
+// Capacitor will use the 404.html -> index.html fallback to handle
+// actual trip IDs at runtime.
+export function generateStaticParams() {
+  return [{ tripId: "_fallback" }];
+}
 
-export default function TripLayout({
+export default function RootTripLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const params = useParams();
-  const tripId = params.tripId as string;
-  const pathname = usePathname();
-  const { trip, isLoading } = useTrip(tripId);
-  const setActiveTrip = useAppStore((state) => state.setActiveTrip);
-
-  useEffect(() => {
-    if (trip) {
-      setActiveTrip(trip);
-    }
-    return () => {
-      setActiveTrip(null);
-    };
-  }, [trip, setActiveTrip]);
-
-  if (isLoading) {
-    return <FullPageLoader />;
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <TripHeader trip={trip} />
-
-      <main className="flex-1 font-sans pb-32 md:pb-0">
-        {children}
-      </main>
-
-      <MobileTabBar tripId={tripId} />
-    </div>
-  );
+  return <ClientLayout>{children}</ClientLayout>;
 }

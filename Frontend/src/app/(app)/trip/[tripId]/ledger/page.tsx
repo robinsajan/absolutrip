@@ -1,11 +1,9 @@
-"use client";
+import LedgerPageClient from "./LedgerPageClient";
 
-import { useParams } from "next/navigation";
-import { TripLedgerView } from "@/components/ledger/TripLedgerView";
+export function generateStaticParams() {
+  return [{ tripId: "_fallback" }];
+}
 
 export default function LedgerPage() {
-  const params = useParams();
-  const tripId = params.tripId as string;
-
-  return <TripLedgerView tripId={tripId} />;
+  return <LedgerPageClient />;
 }

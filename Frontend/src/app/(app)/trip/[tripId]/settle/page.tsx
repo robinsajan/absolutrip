@@ -1,11 +1,9 @@
-"use client";
+import SettlePageClient from "./SettlePageClient";
 
-import { useParams } from "next/navigation";
-import { TripSettleView } from "@/components/settle/TripSettleView";
+export function generateStaticParams() {
+  return [{ tripId: "_fallback" }];
+}
 
 export default function SettlePage() {
-  const params = useParams();
-  const tripId = params.tripId as string;
-
-  return <TripSettleView tripId={tripId} />;
+  return <SettlePageClient />;
 }
