@@ -334,3 +334,45 @@ export const votes = {
     return res.data;
   },
 };
+
+export const announcements = {
+  list: async (tripId: string) => {
+    const res = await api.get<{ announcements: any[] }>(`/trips/${tripId}/announcements`);
+    return res.data;
+  },
+
+  create: async (tripId: string, content: string) => {
+    const res = await api.post<{ message: string; announcement: any }>(`/trips/${tripId}/announcements`, { content });
+    return res.data;
+  },
+
+  update: async (tripId: string, announcementId: number, content: string) => {
+    const res = await api.put<{ message: string; announcement: any }>(`/trips/${tripId}/announcements/${announcementId}`, { content });
+    return res.data;
+  },
+
+  delete: async (tripId: string, announcementId: number) => {
+    const res = await api.delete<{ message: string }>(`/trips/${tripId}/announcements/${announcementId}`);
+    return res.data;
+  },
+
+  react: async (tripId: string, announcementId: number, type: 'like' | 'dislike') => {
+    const res = await api.post<{ message: string; announcement: any }>(`/trips/${tripId}/announcements/${announcementId}/react`, { type });
+    return res.data;
+  },
+};
+
+export const notifications = {
+  list: async () => {
+    const res = await api.get<{ notifications: any[]; unread_count: number }>('/notifications');
+    return res.data;
+  },
+  markAsRead: async (id: number) => {
+    const res = await api.put<{ message: string }>(`/notifications/${id}/read`);
+    return res.data;
+  },
+  markAllAsRead: async () => {
+    const res = await api.post<{ message: string }>('/notifications/read-all');
+    return res.data;
+  },
+};

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5ceae348-1734-453d-9d71-3d0235aafdec" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/budget/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/budget/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/explore/[category]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/explore/[category]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/explore/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/explore/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/itinerary/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/itinerary/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/ledger/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/ledger/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/members/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/members/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/settings/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/settings/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/settle/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/trip/[tripId]/settle/page.tsx" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="3CDtIYZ0wsrCiVyKOqI9eH0BlJl" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "suggestions",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/test/Desktop/tripsync/Frontend"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5ceae348-1734-453d-9d71-3d0235aafdec" name="Changes" comment="" />
+      <created>1775931891188</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1775931891188</updated>
+    </task>
+    <servers />
+  </component>
+</project>

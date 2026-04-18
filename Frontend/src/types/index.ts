@@ -225,3 +225,34 @@ export interface PersonalSettlementData {
 }
 
 export type ExpenseCategory = 'food' | 'transport' | 'stay' | 'activity' | 'other' | 'settlement';
+
+export interface Announcement {
+  id: number;
+  trip_id: string;
+  content: string;
+  created_by: number;
+  creator_name: string;
+  created_at: string;
+  updated_at: string;
+  reactions: AnnouncementReaction[];
+}
+
+export interface AnnouncementReaction {
+  id: number;
+  announcement_id: number;
+  user_id: number;
+  user_name: string;
+  type: 'like' | 'dislike';
+}
+
+export interface Notification {
+  id: number;
+  user_id: number;
+  trip_id: string;
+  type: string;
+  content: string;
+  related_id: string;
+  path: string | null;
+  is_read: boolean;
+  created_at: string;
+}

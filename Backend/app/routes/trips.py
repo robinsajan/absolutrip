@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from flasgger import swag_from
 from ..extensions import db
-from ..models import Trip, TripMember
+from ..models import Trip, TripMember, Notification
 from ..utils.decorators import trip_member_required, trip_owner_required
 
 bp = Blueprint('trips', __name__, url_prefix='/api/trips')
@@ -263,6 +263,32 @@ def join_trip(invite_code):
     db.session.add(membership)
     db.session.commit()
 
+    # Notify trip owner
+    owner = TripMember.query.filter_by(trip_id=trip.id, role='owner').first()
+    if owner:
+        notification = Notification(
+            user_id=owner.user_id,
+            trip_id=trip.id,
+            type='join_request',
+            content=f"{current_user.name} requested to join {trip.name}",
+            related_id=trip.id,
+            path=f"/trip/{trip.id}/members"
+        )
+        db.session.add(notification)
+
+        # Notify the applicant (confirmation)
+        user_notif = Notification(
+            user_id=current_user.id,
+            trip_id=trip.id,
+            type='join_request',
+            content=f"Your request to join {trip.name} has been sent and is pending approval.",
+            related_id=trip.id,
+            path='/trips'
+        )
+        db.session.add(user_notif)
+
+        db.session.commit()
+
     return jsonify({
         'message': 'Join request sent. Waiting for admin approval.',
         'trip': {'name': trip.name, 'id': trip.id},
@@ -319,6 +345,37 @@ def approve_join_request(trip_id, request_id, trip, membership):
         option.update_pricing()
         
     db.session.commit()
+
+    # Notify user
+    notification = Notification(
+        user_id=join_request.user_id,
+        trip_id=trip_id,
+        type='join_approved',
+        content=f"Your request to join {trip.name} has been approved!",
+        related_id=trip_id,
+        path=f"/trip/{trip_id}"
+    )
+    db.session.add(notification)
+
+    # Notify admin (confirmation)
+    admin_notif = Notification(
+        user_id=current_user.id,
+        trip_id=trip_id,
+        type='join_approved',
+        content=f"{join_request.user.name} is now a member of {trip.name}",
+        related_id=trip_id,
+        path=f"/trip/{trip_id}/members"
+    )
+    db.session.add(admin_notif)
+
+    # Mark the original join request notification as read for the admin
+    Notification.query.filter_by(
+        user_id=current_user.id,
+        trip_id=trip_id,
+        type='join_request'
+    ).update({Notification.is_read: True})
+
+    db.session.commit()
     
     return jsonify({
         'message': 'Join request approved',
@@ -348,6 +405,18 @@ def reject_join_request(trip_id, request_id, trip, membership):
         return jsonify({'error': 'Join request not found'}), 404
     
     join_request.status = 'rejected'
+    db.session.commit()
+
+    # Notify user
+    notification = Notification(
+        user_id=join_request.user_id,
+        trip_id=trip_id,
+        type='join_rejected',
+        content=f"Your request to join {trip.name} was not approved.",
+        related_id=trip_id,
+        path='/trips'
+    )
+    db.session.add(notification)
     db.session.commit()
     
     return jsonify({'message': 'Join request rejected'}), 200

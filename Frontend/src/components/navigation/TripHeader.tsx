@@ -86,12 +86,12 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
               <button
                 className={cn(
                   "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-                  pathname.includes("/members") || pathname.includes("/settings")
+                  pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary")
                     ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
                     : "text-slate-500 hover:text-primary"
                 )}
               >
-                <span className={cn("material-symbols-outlined text-[13px]", (pathname.includes("/members") || pathname.includes("/settings")) ? "material-symbols-filled" : "outline-icon")}>
+                <span className={cn("material-symbols-outlined text-[13px]", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary")) ? "material-symbols-filled" : "outline-icon")}>
                   settings
                 </span>
                 Settings
@@ -114,6 +114,14 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                 >
                   <span className="material-symbols-outlined text-base">group</span>
                   Members
+                </Link>
+                <Link
+                  href={`/trip/${tripId}/announcements`}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-base">campaign</span>
+                  Announcements
                 </Link>
                 <Link
                   href={`/trip/${tripId}/settings`}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/hooks";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { NotificationPopover } from "./NotificationPopover";
 import {
     Popover,
     PopoverContent,
@@ -41,9 +42,7 @@ export function Header() {
 
                 {/* Right Section: Actions */}
                 <div className="flex items-center gap-3 md:gap-5">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined outline-icon text-lg">notifications</span>
-                    </button>
+                    <NotificationPopover />
 
                     <Popover>
                         <PopoverTrigger asChild>
