@@ -186,17 +186,18 @@ function BudgetHeader({ perPerson, adminTarget, onReset, onSave, isPast }: any) 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            Your Plan Total:
+                            Your Plan :
                         </p>
                         <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-none">
                             ₹{perPerson.toLocaleString('en-IN')}
                         </p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">per person</p>
                     </div>
 
                     {adminTarget != null && adminTarget > 0 && (
                         <div className="space-y-1 text-right">
                             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                Target (Admin Pick):
+                                Current plan :
                             </p>
                             <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-none">
                                 ₹{Math.round(adminTarget).toLocaleString('en-IN')}
@@ -708,13 +709,13 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                         {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
                                                     </p>
                                                     <p className="text-[12px] md:text-[16px] font ">
-                                                        {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Activities Catalog"}
+                                                        {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Pick up from where you left or to start a new one click Reset"}
                                                     </p>
                                                     <div className="flex items-center gap-4">
                                                         <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
                                                             {currentDay <= totalDays
                                                                 ? (activeStayEndDay && activeStayEndDay >= currentDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
-                                                                : "Enhance Your Trip"
+                                                                : "Enhance Your Trip with Activities"
                                                             }
                                                         </h2>
                                                     </div>
