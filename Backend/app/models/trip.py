@@ -21,6 +21,7 @@ class Trip(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     google_maps_url = db.Column(db.String(1500), nullable=True)
     default_currency = db.Column(db.String(3), default='INR')
+    image_url = db.Column(db.String(1000), nullable=True)
 
     creator = db.relationship('User', back_populates='created_trips')
     members = db.relationship('TripMember', back_populates='trip', lazy='dynamic',
@@ -57,6 +58,7 @@ class Trip(db.Model):
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat(),
             'google_maps_url': self.google_maps_url,
+            'image_url': self.image_url,
             'is_past': self.is_past
         }
         if include_members:

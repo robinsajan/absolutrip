@@ -5,6 +5,7 @@ from flasgger import swag_from
 from ..extensions import db
 from ..models import Trip, TripMember, Notification
 from ..utils.decorators import trip_member_required, trip_owner_required
+from ..utils.unsplash import fetch_trip_image
 
 bp = Blueprint('trips', __name__, url_prefix='/api/trips')
 
@@ -59,12 +60,16 @@ def create_trip():
         except ValueError:
             return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
 
+    # Fetch image from Unsplash
+    image_url = fetch_trip_image(name)
+
     trip = Trip(
         name=name,
         start_date=start_date,
         end_date=end_date,
         google_maps_url=data.get('google_maps_url'),
-        created_by=current_user.id
+        created_by=current_user.id,
+        image_url=image_url
     )
     db.session.add(trip)
     db.session.flush()

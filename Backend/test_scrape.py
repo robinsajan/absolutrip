@@ -2,22 +2,45 @@ import requests
 import time
 
 # 🔑 Add your Unsplash API Key here
-UNSPLASH_ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"
+UNSPLASH_ACCESS_KEY = "3hh8QM24kPfF1cr-JMYW-sOy9zSyIAirNemem8Uukyo"
 
 # 🌍 Fetch places from Overpass API
 def fetch_places(lat, lon, radius=3000, amenity="restaurant"):
-    overpass_url = "https://overpass-api.de/api/interpreter"
+    query = f'[out:json];node["amenity"="{amenity}"](around:{radius},{lat},{lon});out;'
 
-    query = f"""
-    [out:json];
-    node
-      ["amenity"="{amenity}"]
-      (around:{radius},{lat},{lon});
-    out;
-    """
+    # Try multiple Overpass endpoints in case one is down or rate-limiting
+    endpoints = [
+        "http://overpass-api.de/api/interpreter",
+        "https://lz4.overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://z.overpass-api.de/api/interpreter"
+    ]
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    response = requests.post(overpass_url, data=query)
-    data = response.json()
+    data = None
+    for overpass_url in endpoints:
+        try:
+            response = requests.post(
+                overpass_url, 
+                data={'data': query}, 
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Referer": "https://overpass-turbo.eu/"
+                }, 
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                break
+        except Exception:
+            continue
+
+    if not data:
+        return []
 
     places = []
     for element in data.get("elements", []):
@@ -43,7 +66,16 @@ def fetch_image(query):
     }
 
     response = requests.get(url, params=params)
-    data = response.json()
+    
+    if response.status_code != 200:
+        print(f"Error: Unsplash API returned status {response.status_code}")
+        return None
+
+    try:
+        data = response.json()
+    except requests.exceptions.JSONDecodeError:
+        print("Error: Unsplash API returned invalid JSON.")
+        return None
 
     results = data.get("results")
     if results:
