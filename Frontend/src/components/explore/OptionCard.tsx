@@ -28,6 +28,7 @@ const CATEGORY_ICONS: Record<OptionCategory, React.ReactNode> = {
   activity: <Ticket className="h-3 w-3" />,
   food: <Utensils className="h-3 w-3" />,
   transport: <Car className="h-3 w-3" />,
+  poll: <Award className="h-3 w-3" />,
 };
 
 const CATEGORY_COLORS: Record<OptionCategory, string> = {
@@ -35,6 +36,7 @@ const CATEGORY_COLORS: Record<OptionCategory, string> = {
   activity: "bg-purple-100 text-purple-800",
   food: "bg-orange-100 text-orange-800",
   transport: "bg-green-100 text-green-800",
+  poll: "bg-blue-100 text-blue-800",
 };
 
 export function OptionCard({
@@ -79,6 +81,7 @@ export function OptionCard({
     activity: Ticket,
     food: Utensils,
     transport: Car,
+    poll: Award,
   };
 
   return (
