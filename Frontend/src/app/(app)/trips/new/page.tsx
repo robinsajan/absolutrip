@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, ArrowRight, Copy, Share2, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Copy, Share2, Check, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { trips as tripsApi } from "@/lib/api/endpoints";
 import { useTrips } from "@/lib/hooks";
 import type { Trip } from "@/types";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { FullscreenDatePicker } from "@/components/ui/fullscreen-date-picker";
 import { DateRange } from "react-day-picker";
 
 type Step = "name" | "dates" | "invite";
@@ -156,30 +157,53 @@ export default function NewTripPage() {
         )}
 
         {step === "dates" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>When are you going?</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Trip Dates</Label>
-                <DatePickerWithRange
-                  date={dateRange}
-                  setDate={setDateRange}
-                  placeholder="Select trip duration"
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className="w-full"
-                onClick={handleNext}
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating..." : "Create Trip"}
-              </Button>
-            </CardFooter>
-          </Card>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold tracking-tight">When are you going?</h2>
+              <p className="text-muted-foreground">Pick the start and end dates for your trip.</p>
+            </div>
+
+            <div className="space-y-4">
+              <FullscreenDatePicker
+                date={dateRange}
+                onSelect={setDateRange}
+                title="Select Trip Dates"
+                confirmText="Save Dates"
+                trigger={
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full h-20 justify-start rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 text-left font-semibold text-lg transition-all active:scale-[0.98] shadow-sm",
+                      !dateRange?.from && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-3 h-6 w-6 text-primary" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+                        </span>
+                      ) : (
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {format(dateRange.from, "MMM d, yyyy")}
+                        </span>
+                      )
+                    ) : (
+                      "Select your trip dates"
+                    )}
+                  </Button>
+                }
+              />
+            </div>
+
+            <Button
+              className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20"
+              onClick={handleNext}
+              disabled={isLoading || !dateRange?.from || !dateRange?.to}
+            >
+              {isLoading ? "Creating..." : "Create Trip"}
+            </Button>
+          </div>
         )}
 
         {step === "invite" && createdTrip && (

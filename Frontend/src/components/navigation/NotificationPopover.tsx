@@ -122,14 +122,16 @@ export function NotificationPopover() {
                                                 n.type === 'join_request' ? "bg-blue-100 text-blue-600" :
                                                     n.type === 'join_approved' ? "bg-emerald-100 text-emerald-600" :
                                                         n.type === 'join_rejected' ? "bg-red-100 text-red-600" :
-                                                            "bg-slate-100 text-slate-600"
+                                                            n.type === 'poll_pending' ? "bg-purple-100 text-purple-600" :
+                                                                "bg-slate-100 text-slate-600"
                                         )}>
                                             <span className="material-symbols-outlined text-base">
                                                 {n.type === 'announcement' ? 'campaign' :
                                                     n.type === 'join_request' ? 'person_add' :
                                                         n.type === 'join_approved' ? 'check_circle' :
                                                             n.type === 'join_rejected' ? 'cancel' :
-                                                                'notifications'}
+                                                                n.type === 'poll_pending' ? 'how_to_vote' :
+                                                                    'notifications'}
                                             </span>
                                         </div>
                                         <div className="flex-1 min-w-0 pr-6">

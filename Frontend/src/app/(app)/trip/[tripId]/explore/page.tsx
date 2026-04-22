@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { format, parseISO, differenceInDays, eachDayOfInterval, isSameDay } from "date-fns";
 import { useRankedOptions, useTripMembers, useAuth, useTrip } from "@/lib/hooks";
 import { useAppStore } from "@/lib/store";
-import { options as optionsApi, votes as votesApi } from "@/lib/api/endpoints";
+import { options as optionsApi, votes as votesApi, polls as pollsApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
 import { getOptionImages } from "@/lib/image";
-import type { RankedOption, TripMember } from "@/types";
+import type { RankedOption, TripMember, Poll } from "@/types";
 import { AddOptionForm } from "@/components/explore";
 import {
   Dialog,
@@ -105,6 +105,20 @@ export default function ExplorePage() {
   const [viewingOption, setViewingOption] = useState<RankedOption | null>(null);
   const [editingOption, setEditingOption] = useState<RankedOption | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [tripPolls, setTripPolls] = useState<Poll[]>([]);
+
+  const fetchPolls = async () => {
+    try {
+      const data = await pollsApi.list(tripId);
+      setTripPolls(data.polls);
+    } catch (err) {
+      console.error("Failed to fetch polls", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPolls();
+  }, [tripId]);
 
   const stays = useMemo(() => {
     let list = (rankedOptions || []).filter(ro => ro.option.category === 'stay');
@@ -223,6 +237,14 @@ export default function ExplorePage() {
       toast.error("EDITING BLOCKED: This trip has ended.");
       return { option: { id: 0 } };
     }
+
+    if (data.category === 'poll') {
+      const result = await pollsApi.create(tripId, data);
+      fetchPolls();
+      setShowAddOption(false);
+      return { option: { id: result.poll.id } }; // Mocking option id for compatibility
+    }
+
     const result = await optionsApi.create(tripId, data);
     mutate();
     setShowAddOption(false);
@@ -429,6 +451,99 @@ export default function ExplorePage() {
     );
   };
 
+  const renderPollCard = (poll: Poll) => {
+    const totalVotes = poll.total_votes;
+    const userVotedOptionIds = poll.options
+      .filter(opt => opt.has_voted)
+      .map(opt => opt.id);
+
+    const handlePollVote = async (optionId: number) => {
+      let nextOptionIds: number[] = [];
+      if (poll.allow_multiple) {
+        if (userVotedOptionIds.includes(optionId)) {
+          nextOptionIds = userVotedOptionIds.filter(id => id !== optionId);
+        } else {
+          nextOptionIds = [...userVotedOptionIds, optionId];
+        }
+      } else {
+        if (userVotedOptionIds.includes(optionId)) {
+          nextOptionIds = [];
+        } else {
+          nextOptionIds = [optionId];
+        }
+      }
+
+      try {
+        await pollsApi.vote(poll.id, nextOptionIds);
+        fetchPolls();
+      } catch (err) {
+        toast.error("Failed to vote on poll");
+      }
+    };
+
+    const handleDeletePoll = async () => {
+      if (confirm("Delete this poll?")) {
+        try {
+          await pollsApi.delete(poll.id);
+          fetchPolls();
+          toast.success("Poll deleted");
+        } catch (err) {
+          toast.error("Failed to delete poll");
+        }
+      }
+    };
+
+    return (
+      <div key={poll.id} className="group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 w-[85%] sm:w-[calc(50%-1rem)] md:w-[calc(33.33%-1.5rem)] lg:w-[calc(25%-1.5rem)] shrink-0 transition-all hover:shadow-lg">
+        <div className="flex justify-between items-start mb-4">
+          <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-primary/5">
+            Poll
+          </div>
+          {(isOwner || poll.created_by === user?.id) && (
+            <button onClick={handleDeletePoll} className="text-gray-400 hover:text-red-500 transition-colors">
+              <span className="material-symbols-outlined text-sm">delete</span>
+            </button>
+          )}
+        </div>
+        <h3 className="text-base md:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-tight mb-4">{poll.question}</h3>
+        <div className="space-y-3">
+          {poll.options.map(opt => {
+            const isSelected = userVotedOptionIds.includes(opt.id);
+            const percentage = totalVotes > 0 ? Math.round((opt.vote_count / totalVotes) * 100) : 0;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => handlePollVote(opt.id)}
+                className={cn(
+                  "w-full relative h-10 rounded-xl border transition-all text-left overflow-hidden flex items-center px-4 group/opt",
+                  isSelected
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                )}
+              >
+                <div
+                  className={cn(
+                    "absolute left-0 top-0 h-full transition-all duration-500",
+                    isSelected ? "bg-primary/10" : "bg-gray-50 dark:bg-gray-800"
+                  )}
+                  style={{ width: `${percentage}%` }}
+                />
+                <div className="relative flex justify-between w-full items-center z-10">
+                  <span className="text-xs font-bold truncate pr-2">{opt.text}</span>
+                  <span className="text-[10px] font-black opacity-60 shrink-0">{percentage}%</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <span>{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</span>
+          {poll.allow_multiple && <span className="opacity-60 italic">multiple choices</span>}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-background font-sans text-gray-900 dark:text-gray-100">
       <div className="w-full px-4 pt-10 pb-12 md:px-6 md:pt-16 md:pb-24">
@@ -486,10 +601,11 @@ export default function ExplorePage() {
               <div className="flex flex-col">
                 <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Filtering</span>
                 <span className="text-sm md:text-lg font-extrabold text-black dark:text-white serif-title italic leading-none">
-                  {selectedDate ? format(selectedDate, "MMM d, yyyy") : "all days"}
+                  {selectedDate ? format(selectedDate as Date, "MMM d, yyyy") : "all days"}
                 </span>
               </div>
             </div>
+
           </div>
 
           <button
@@ -513,7 +629,7 @@ export default function ExplorePage() {
 
         {isLoading ? (
           <FullPageLoader />
-        ) : rankedOptions?.length === 0 ? (
+        ) : (rankedOptions?.length === 0 && tripPolls.length === 0) ? (
           <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-20 text-center border border-gray-100 dark:border-gray-800">
             <h3 className="text-3xl font-extrabold mb-4">No options yet</h3>
             <p className="text-gray-500">Help your group decide! Add stays or activities.</p>
@@ -590,6 +706,43 @@ export default function ExplorePage() {
                 </div>
               </div>
             )}
+
+            {tripPolls.length > 0 && (
+              <div className="pt-8">
+                <div className="flex items-center justify-between mb-8 pl-2">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Decisions</span>
+                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">active polls ({tripPolls.length})</h2>
+                  </div>
+                  {tripPolls.length > 4 && (
+                    <Link
+                      href={`/trip/${tripId}/explore/polls`}
+                      className="group flex items-center gap-1.5 transition-all"
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">View all polls</span>
+                      <span className="material-symbols-outlined text-sm text-black dark:text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </Link>
+                  )}
+                </div>
+                <div className="flex overflow-x-auto gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                  {tripPolls.slice(0, 4).map(renderPollCard)}
+                  {tripPolls.length > 4 && (
+                    <Link
+                      href={`/trip/${tripId}/explore/polls`}
+                      className="min-w-[200px] md:min-w-[240px] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-primary transition-all group snap-start"
+                    >
+                      <div className="size-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="material-symbols-outlined text-2xl text-primary">ballot</span>
+                      </div>
+                      <span className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors text-center leading-tight">
+                        view all<br />polls ({tripPolls.length})
+                      </span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
             {stays.length === 0 && activities.length === 0 && (
               <div className="py-20 text-center bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800">
                 <p className="text-slate-400 font-bold italic lowercase tracking-widest">no options matched for this day</p>

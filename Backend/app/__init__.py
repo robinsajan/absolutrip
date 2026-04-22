@@ -70,7 +70,8 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     # Swagger(app, template=swagger_template, config=swagger_config)
 
-    from .routes import auth, trips, options, votes, expenses, budget, announcements, notifications
+    from .routes import auth, trips, options, votes, expenses, budget, announcements, notifications, polls
+    app.register_blueprint(polls.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(trips.bp)
     app.register_blueprint(options.bp)

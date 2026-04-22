@@ -708,11 +708,11 @@ export function TripBudgetPlanner({ tripId }: { tripId: string }) {
                                                     <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary">
                                                         {currentDay <= totalDays ? "Stay Selection \u2014 Please select your stay" : "Activities Catalog"}
                                                     </p>
-                                                    <p className="text-[12px] md:text-[16px] font ">
-                                                        {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Pick up from where you left or to start a new one click Reset"}
+                                                    <p className="text-[12px] md:text-[16px] font-medium text-slate-500">
+                                                        {currentDay <= totalDays ? "Pick up from where you left or to start a new one click Reset" : "Select from the recommended activities or add your own"}
                                                     </p>
                                                     <div className="flex items-center gap-4">
-                                                        <h2 className="text-2xl md:text-4xl font-black italic text-slate-900 dark:text-white leading-none">
+                                                        <h2 className="text-2xl md:text-3xl font-black italic text-slate-900 dark:text-white leading-none">
                                                             {currentDay <= totalDays
                                                                 ? (activeStayEndDay && activeStayEndDay >= currentDay ? `Days ${currentDay}\u2014${activeStayEndDay}` : `Day ${currentDay}`)
                                                                 : "Enhance Your Trip with Activities"

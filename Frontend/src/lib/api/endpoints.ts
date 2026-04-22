@@ -16,6 +16,9 @@ import type {
   ExpensesByDate,
   BudgetByDate,
   PersonalSettlementData,
+  Poll,
+  PollOptionType,
+  PollVote,
 } from '@/types';
 
 export const auth = {
@@ -373,6 +376,28 @@ export const notifications = {
   },
   markAllAsRead: async () => {
     const res = await api.post<{ message: string }>('/notifications/read-all');
+    return res.data;
+  },
+};
+
+export const polls = {
+  list: async (tripId: string) => {
+    const res = await api.get<{ polls: Poll[] }>(`/trips/${tripId}/polls`);
+    return res.data;
+  },
+
+  create: async (tripId: string, data: { question: string; options: string[]; allow_multiple: boolean }) => {
+    const res = await api.post<{ message: string; poll: Poll }>(`/trips/${tripId}/polls`, data);
+    return res.data;
+  },
+
+  vote: async (pollId: number, optionIds: number[]) => {
+    const res = await api.post<{ message: string; poll: Poll }>(`/polls/${pollId}/vote`, { option_ids: optionIds });
+    return res.data;
+  },
+
+  delete: async (pollId: number) => {
+    const res = await api.delete<{ message: string }>(`/polls/${pollId}`);
     return res.data;
   },
 };

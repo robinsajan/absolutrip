@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { FullscreenDatePicker } from "@/components/ui/fullscreen-date-picker";
 import { DateRange } from "react-day-picker";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
 import { SafeImage } from "@/components/common/SafeImage";
@@ -266,12 +266,23 @@ export default function TripsPage() {
                       onChange={(e) => setMapsUrl(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 pt-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Dates</Label>
-                    <DatePickerWithRange
+                    <FullscreenDatePicker
                       date={dateRange}
-                      setDate={setDateRange}
-                      placeholder="Select start and end dates"
+                      onSelect={setDateRange}
+                      title="Select Trip Dates"
+                      confirmText="Confirm Dates"
+                      trigger={
+                        <button className="w-full h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center px-4 gap-3 text-sm font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-[0.98]">
+                          <span className="material-symbols-outlined text-lg">calendar_today</span>
+                          {dateRange?.from ? (
+                            dateRange.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}` : format(dateRange.from, "MMM d, yyyy")
+                          ) : (
+                            "Select start and end dates"
+                          )}
+                        </button>
+                      }
                     />
                   </div>
                   <button
@@ -357,14 +368,23 @@ export default function TripsPage() {
                     onChange={(e) => setMapsUrl(e.target.value)}
                   />
                 </div>
-                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
+                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all h-full">
                   <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Dates</label>
-                  <DatePickerWithRange
+                  <FullscreenDatePicker
                     date={dateRange}
-                    setDate={setDateRange}
-                    className="grid gap-0"
-                    buttonClassName="h-auto border-none p-0 bg-transparent text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs items-center"
-                    placeholder="Select dates"
+                    onSelect={setDateRange}
+                    title="Select Trip Dates"
+                    confirmText="Save Dates"
+                    trigger={
+                      <button type="button" className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs items-center flex gap-2 h-full">
+                        <span className="material-symbols-outlined text-xs">calendar_today</span>
+                        {dateRange?.from ? (
+                          dateRange.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}` : format(dateRange.from, "MMM d")
+                        ) : (
+                          "Select dates"
+                        )}
+                      </button>
+                    }
                   />
                 </div>
                 <button

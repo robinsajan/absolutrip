@@ -145,7 +145,36 @@ export interface BudgetByDate {
   expense_count: number;
 }
 
-export type OptionCategory = 'stay' | 'activity' | 'transport' | 'food';
+export type OptionCategory = 'stay' | 'activity' | 'transport' | 'food' | 'poll';
+
+export interface Poll {
+  id: number;
+  trip_id: string;
+  question: string;
+  allow_multiple: boolean;
+  created_by: number;
+  creator_name: string;
+  created_at: string;
+  is_active: boolean;
+  options: PollOptionType[];
+  total_votes: number;
+}
+
+export interface PollOptionType {
+  id: number;
+  poll_id: number;
+  text: string;
+  vote_count: number;
+  has_voted?: boolean;
+}
+
+export interface PollVote {
+  id: number;
+  poll_id: number;
+  option_id: number;
+  user_id: number;
+  created_at: string;
+}
 
 export interface Vote {
   id: number;
