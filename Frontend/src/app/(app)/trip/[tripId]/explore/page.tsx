@@ -222,11 +222,36 @@ export default function ExplorePage() {
       toast.error("VOTING BLOCKED: This trip has ended.");
       return;
     }
+
+    // Optimistic update
+    const currentOptions = rankedOptions || [];
+    const optimisticOptions = currentOptions.map(ro => {
+      if (ro.option.id === optionId) {
+        const userVote = ro.voters.find(v => v.user_id === user?.id);
+        const oldScore = userVote ? userVote.score : 0;
+        const newVoters = userVote
+          ? ro.voters.map(v => v.user_id === user?.id ? { ...v, score } : v)
+          : [...ro.voters, { user_id: user!.id, score, user_name: user!.name }];
+
+        return {
+          ...ro,
+          vote_count: ro.vote_count + (score > 0 ? (oldScore > 0 ? 0 : 1) : (oldScore > 0 ? -1 : 0)),
+          total_score: ro.total_score - oldScore + score,
+          voters: newVoters
+        };
+      }
+      return ro;
+    });
+
     try {
+      // Update SWR cache immediately
+      mutate({ ...rankedOptions, ranked_options: optimisticOptions }, false);
+
       await votesApi.cast(optionId, score);
-      mutate();
+      mutate(); // Revalidate from server
       toast.success(score > 0 ? "Voted!" : "Vote removed");
     } catch (error: any) {
+      mutate(); // Rollback on error
       toast.error(error.response?.data?.error || "Failed to vote");
     }
   };
@@ -458,25 +483,50 @@ export default function ExplorePage() {
       .map(opt => opt.id);
 
     const handlePollVote = async (optionId: number) => {
-      let nextOptionIds: number[] = [];
-      if (poll.allow_multiple) {
-        if (userVotedOptionIds.includes(optionId)) {
-          nextOptionIds = userVotedOptionIds.filter(id => id !== optionId);
-        } else {
-          nextOptionIds = [...userVotedOptionIds, optionId];
-        }
-      } else {
-        if (userVotedOptionIds.includes(optionId)) {
-          nextOptionIds = [];
-        } else {
-          nextOptionIds = [optionId];
-        }
+      if (activeTrip?.is_past) {
+        toast.error("VOTING BLOCKED: This trip has ended.");
+        return;
       }
+
+      const originalPolls = [...tripPolls];
+      const nextPolls = tripPolls.map(p => {
+        if (p.id === poll.id) {
+          const isRemoving = p.options.find(o => o.id === optionId)?.has_voted;
+          const nextOptions = p.options.map(opt => {
+            if (opt.id === optionId) {
+              return {
+                ...opt,
+                has_voted: !opt.has_voted,
+                vote_count: opt.vote_count + (!opt.has_voted ? 1 : -1)
+              };
+            }
+            if (!p.allow_multiple && !isRemoving) {
+              return {
+                ...opt,
+                has_voted: false,
+                vote_count: opt.has_voted ? opt.vote_count - 1 : opt.vote_count
+              };
+            }
+            return opt;
+          });
+
+          const nextTotalVotes = nextOptions.reduce((acc, curr) => acc + curr.vote_count, 0);
+          return { ...p, options: nextOptions, total_votes: nextTotalVotes };
+        }
+        return p;
+      });
+
+      setTripPolls(nextPolls);
+
+      let nextOptionIds: number[] = [];
+      const updatedPoll = nextPolls.find(p => p.id === poll.id)!;
+      nextOptionIds = updatedPoll.options.filter(o => o.has_voted).map(o => o.id);
 
       try {
         await pollsApi.vote(poll.id, nextOptionIds);
         fetchPolls();
       } catch (err) {
+        setTripPolls(originalPolls);
         toast.error("Failed to vote on poll");
       }
     };
@@ -640,8 +690,8 @@ export default function ExplorePage() {
               <div>
                 <div className="flex items-center justify-between mb-2 pl-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Accommodation</span>
-                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Stays ({stays.length})</h2>
+                    <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Stays ({stays.length})</span>
+                    {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Stays ({stays.length})</h2> */}
                   </div>
                   {(stays.length > 6 || (stays.length > 2)) && (
                     <Link
@@ -675,8 +725,8 @@ export default function ExplorePage() {
               <div>
                 <div className="flex items-center justify-between mb-8 pl-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Itinerary</span>
-                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Activities ({activities.length})</h2>
+                    <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Activities ({activities.length})</span>
+                    {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Activities ({activities.length})</h2> */}
                   </div>
                   {(activities.length > 6 || (activities.length > 2)) && (
                     <Link
@@ -711,8 +761,8 @@ export default function ExplorePage() {
               <div className="pt-8">
                 <div className="flex items-center justify-between mb-8 pl-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Decisions</span>
-                    <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">active polls ({tripPolls.length})</h2>
+                    <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Polls ({tripPolls.length})</span>
+                    {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">active polls ({tripPolls.length})</h2> */}
                   </div>
                   {tripPolls.length > 4 && (
                     <Link
@@ -755,7 +805,7 @@ export default function ExplorePage() {
 
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption} urlKey="modal" urlValue="add-option">
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 pt-[70px] overflow-hidden border-none bg-white dark:bg-slate-900">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
@@ -778,7 +828,7 @@ export default function ExplorePage() {
         urlKey="viewing"
         urlValue={viewingOption?.option.id.toString()}
       >
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 overflow-hidden border-none bg-white dark:bg-slate-900">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
@@ -951,7 +1001,7 @@ export default function ExplorePage() {
         urlKey="editing"
         urlValue={editingOption?.option.id.toString()}
       >
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 pt-[70px] overflow-hidden border-none bg-white dark:bg-slate-900">
 
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">

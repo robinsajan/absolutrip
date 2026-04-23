@@ -75,10 +75,14 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed inset-0 z-[210] grid w-full h-[100dvh] gap-4 border border-border shadow-lg duration-200 outline-none overflow-auto rounded-none",
-          "pt-[calc(60px+env(safe-area-inset-top,0px))] pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] px-6",
-          "sm:inset-auto sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] sm:w-full sm:max-w-[calc(100%-2rem)] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl",
-          "sm:pt-[calc(60px+env(safe-area-inset-top,0px))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:max-w-lg",
+          "bg-background fixed z-[210] grid gap-4 border border-border shadow-2xl transition-all outline-none",
+          // MOBILE: Fullscreen + Zoom/Fade Animation
+          "inset-0 w-full h-[100dvh] overflow-auto rounded-none py-6 px-6 pt-[calc(60px+env(safe-area-inset-top,0px))] pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-300",
+
+          // DESKTOP: Right Side Panel + Slide Animation
+          "sm:inset-y-0 sm:right-0 sm:left-auto sm:top-0 sm:h-full sm:w-full sm:max-w-lg sm:translate-x-0 sm:translate-y-0 sm:rounded-none sm:border-l sm:shadow-[-20px_0_50px_rgba(0,0,0,0.1)]",
+          "sm:data-[state=open]:slide-in-from-right sm:data-[state=closed]:slide-out-to-right sm:data-[state=open]:zoom-in-100 sm:data-[state=closed]:zoom-out-100 sm:duration-500",
           className
         )}
         {...props}

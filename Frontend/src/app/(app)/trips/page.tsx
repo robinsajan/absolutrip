@@ -26,11 +26,12 @@ import { cn } from "@/lib/utils";
 function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
   const start = new Date(trip.start_date);
-  const end = new Date(trip.end_date);
+  const bonusEnd = new Date(trip.end_date);
+  bonusEnd.setDate(bonusEnd.getDate() + 2); // Mark hasEnded ONLY 2 days after end_date starts (so 1 full day after it ends)
 
   const isPast = trip.is_past;
-  const isPresent = now >= start && now <= end;
-  const hasEnded = now > end;
+  const isPresent = now >= start && now <= bonusEnd;
+  const hasEnded = now >= bonusEnd;
 
   const status = isPast || hasEnded ? "past" : isPresent ? "active" : "upcoming";
   const statusColor = (status === "past")
@@ -243,7 +244,7 @@ export default function TripsPage() {
                   new trip
                 </button>
               </DialogTrigger>
-              <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[3rem] sm:shadow-2xl flex flex-col">
+              <DialogContent className="p-0 overflow-hidden border-none flex flex-col bg-white dark:bg-slate-900">
                 <div className="bg-primary p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] text-white text-center shrink-0">
                   <h2 className="text-2xl font-black italic serif-title">Plan a new trip</h2>
                 </div>
@@ -308,7 +309,7 @@ export default function TripsPage() {
                   join trip
                 </button>
               </DialogTrigger>
-              <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-md sm:h-auto sm:rounded-[3rem] sm:shadow-2xl flex flex-col">
+              <DialogContent className="p-0 overflow-hidden border-none flex flex-col bg-white dark:bg-slate-900">
                 <div className="bg-primary p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] text-white text-center shrink-0">
                   <h2 className="text-2xl font-black italic serif-title">Join a Trip</h2>
                 </div>
@@ -411,7 +412,11 @@ export default function TripsPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {[...trips]
-                  .filter(t => new Date() <= new Date(t.end_date))
+                  .filter(t => {
+                    const bonusEnd = new Date(t.end_date);
+                    bonusEnd.setDate(bonusEnd.getDate() + 2);
+                    return new Date() < bonusEnd;
+                  })
                   .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
                   .map(trip => (
                     <TripCard key={trip.id} trip={trip} />
@@ -424,42 +429,50 @@ export default function TripsPage() {
               )}
             </div>
 
-            {trips.some(t => new Date() > new Date(t.end_date)) && (
-              <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
-                {!showAllTrips ? (
-                  <button
-                    onClick={() => setShowAllTrips(true)}
-                    className="w-full group py-10 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-[2.5rem] transition-all border border-dashed border-slate-200 dark:border-slate-800"
-                  >
-                    <span className="material-symbols-outlined text-4xl text-slate-300 group-hover:text-primary transition-colors">history</span>
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-primary transition-colors">View Past Trips</span>
-                  </button>
-                ) : (
-                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-3">
-                        <span className="h-px w-8 bg-slate-200"></span>
-                        Past Journeys
-                      </h2>
-                      <button
-                        onClick={() => setShowAllTrips(false)}
-                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline transition-all"
-                      >
-                        Hide Past
-                      </button>
+            {trips.some(t => {
+              const bonusEnd = new Date(t.end_date);
+              bonusEnd.setDate(bonusEnd.getDate() + 2);
+              return new Date() >= bonusEnd;
+            }) && (
+                <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+                  {!showAllTrips ? (
+                    <button
+                      onClick={() => setShowAllTrips(true)}
+                      className="w-full group py-10 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-[2.5rem] transition-all border border-dashed border-slate-200 dark:border-slate-800"
+                    >
+                      <span className="material-symbols-outlined text-4xl text-slate-300 group-hover:text-primary transition-colors">history</span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-primary transition-colors">View Past Trips</span>
+                    </button>
+                  ) : (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-3">
+                          <span className="h-px w-8 bg-slate-200"></span>
+                          Past Journeys
+                        </h2>
+                        <button
+                          onClick={() => setShowAllTrips(false)}
+                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline transition-all"
+                        >
+                          Hide Past
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 opacity-60 hover:opacity-100 transition-opacity">
+                        {[...trips]
+                          .filter(t => {
+                            const bonusEnd = new Date(t.end_date);
+                            bonusEnd.setDate(bonusEnd.getDate() + 2);
+                            return new Date() >= bonusEnd;
+                          })
+                          .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())
+                          .map(trip => (
+                            <TripCard key={trip.id} trip={trip} />
+                          ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 opacity-60 hover:opacity-100 transition-opacity">
-                      {[...trips]
-                        .filter(t => new Date() > new Date(t.end_date))
-                        .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())
-                        .map(trip => (
-                          <TripCard key={trip.id} trip={trip} />
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-20 text-center border border-slate-100 dark:border-slate-800 shadow-sm">

@@ -83,7 +83,7 @@ export function NotificationModal() {
                     )}
                 </button>
             </DialogTrigger>
-            <DialogContent className="w-[92vw] sm:max-w-md p-0 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 overflow-hidden sm:rounded-3xl focus:outline-none">
+            <DialogContent className="p-0 border-none bg-white dark:bg-slate-900 overflow-hidden focus:outline-none">
                 <div className="flex items-center justify-between p-6 border-b border-slate-50 dark:border-slate-800">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">
                         {unreadCount > 0 ? `${unreadCount} new notifications` : 'Notifications'}

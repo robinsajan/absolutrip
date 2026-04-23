@@ -123,7 +123,7 @@ export function FullscreenDatePicker({
             >
                 <div className="flex flex-col h-full bg-background">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-4 border-b">
+                    <div className="flex items-center justify-between px-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-4 border-b">
                         <div className="w-10" />
                         <DialogTitle className="text-lg font-bold">{title}</DialogTitle>
                         <Button
@@ -198,8 +198,8 @@ export function FullscreenDatePicker({
                             className="w-full p-0"
                             classNames={{
                                 root: "w-full",
-                                months: "flex flex-col gap-14 w-full",
-                                month: "w-full space-y-4",
+                                months: "flex flex-col md:flex-row gap-14 md:gap-24 w-full md:justify-center md:items-start",
+                                month: "w-full md:w-auto space-y-4",
                                 head_row: "flex w-full mb-4 px-1 gap-4",
                                 head_cell: "text-slate-500 font-medium text-[7px] w-full flex-1 text-center font-sans",
                                 table: "w-full border-collapse",
@@ -235,7 +235,7 @@ export function FullscreenDatePicker({
                     </div>
 
                     {/* Footer */}
-                    <div className="absolute bottom-0 inset-x-0 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-t p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] flex flex-col gap-4 shadow-[0_-8px_30px_rgb(0,0,0,0.08)] z-50">
+                    <div className="absolute bottom-0 inset-x-0 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-t p-4 px-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] flex flex-col gap-4 shadow-[0_-8px_30px_rgb(0,0,0,0.08)] z-50">
                         <div className="flex items-center justify-between px-2">
                             <div className="flex flex-col">
                                 <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider mb-1">Check-in</span>

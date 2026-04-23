@@ -65,14 +65,14 @@ function ImageCarousel({ imageUrls, alt }: { imageUrls: string[], alt: string })
       />
       {imageUrls.length > 1 && (
         <>
-          <button 
-            onClick={prevImg} 
+          <button
+            onClick={prevImg}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all hover:bg-black/60 z-20 flex items-center justify-center backdrop-blur-sm"
           >
             <span className="material-symbols-outlined text-sm">chevron_left</span>
           </button>
-          <button 
-            onClick={nextImg} 
+          <button
+            onClick={nextImg}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all hover:bg-black/60 z-20 flex items-center justify-center backdrop-blur-sm"
           >
             <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -212,10 +212,10 @@ export default function CategoryExplorePage() {
   const filteredOptions = useMemo(() => {
     if (!rankedOptions) return [];
     const normalizedCategory = category === "stays" ? "stay" : "activity";
-    let list = (rankedOptions || []).filter(ro => 
+    let list = (rankedOptions || []).filter(ro =>
       category === "stays" ? ro.option.category === 'stay' : ro.option.category !== 'stay'
     );
-    
+
     if (selectedDate) {
       list = list.filter(ro => {
         if (!ro.option.check_in_date) return false;
@@ -245,8 +245,8 @@ export default function CategoryExplorePage() {
     const unitPrice = ro.option.price_per_day_pp ?? (ro.option.price / memberCount);
 
     return (
-      <div 
-        key={ro.option.id} 
+      <div
+        key={ro.option.id}
         onClick={() => setViewingOption(ro)}
         className={cn(
           "group w-full mb-10 cursor-pointer transition-all active:scale-[0.98]"
@@ -278,22 +278,22 @@ export default function CategoryExplorePage() {
             <h3 className="text-base font-bold text-gray-900 dark:text-white line-clamp-1">{ro.option.title}</h3>
             <div className="flex items-center gap-1 shrink-0">
               {ro.option.added_by === user?.id && (
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingOption(ro);
-                  }} 
+                  }}
                   className="text-slate-400 hover:text-primary transition-colors ml-1"
                 >
                   <span className="material-symbols-outlined text-sm md:text-lg">edit</span>
                 </button>
               )}
               {(isOwner || ro.option.added_by === user?.id) && (
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete(ro.option.id);
-                  }} 
+                  }}
                   className="text-red-400 hover:text-red-600 transition-colors"
                 >
                   <span className="material-symbols-outlined text-sm md:text-lg">delete</span>
@@ -301,28 +301,28 @@ export default function CategoryExplorePage() {
               )}
             </div>
           </div>
-          
+
           <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
             {ro.option.notes || "Beautiful stay in " + (activeTrip?.destination || "your destination")}
           </p>
-          
+
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {ro.option.check_in_date ? format(parseISO(ro.option.check_in_date), "MMM d") : "Dates TBD"}
             {ro.option.check_out_date ? ` - ${format(parseISO(ro.option.check_out_date), "MMM d")}` : ""}
           </p>
 
           <div className="flex items-center justify-between mt-1">
-             <div className="flex items-center gap-2">
-               <span className="text-base font-bold text-gray-900 dark:text-white">
-                 ₹{Math.round(unitPrice).toLocaleString('en-IN')}
-               </span>
-               <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">
-                 per person
-               </span>
-             </div>
-             <div className="size-10 rounded-full border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-black dark:group-hover:text-white transition-colors">
-               <span className="material-symbols-outlined text-xl">arrow_forward</span>
-             </div>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-gray-900 dark:text-white">
+                ₹{Math.round(unitPrice).toLocaleString('en-IN')}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">
+                per person
+              </span>
+            </div>
+            <div className="size-10 rounded-full border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-xl">arrow_forward</span>
+            </div>
           </div>
         </div>
       </div>
@@ -356,7 +356,7 @@ export default function CategoryExplorePage() {
                 <PopoverContent className="p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden bg-white dark:bg-slate-900 z-[200]" align="end">
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                     <Button
-                      variant="ghost" 
+                      variant="ghost"
                       onClick={() => {
                         setSelectedDate(null);
                         setIsPopoverOpen(false);
@@ -400,7 +400,7 @@ export default function CategoryExplorePage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-1">Browse Category</span>
             <h1 className="text-3xl md:text-5xl font-black text-black dark:text-white tracking-tighter serif-title italic lowercase">
@@ -414,8 +414,8 @@ export default function CategoryExplorePage() {
             filteredOptions.map(renderOptionCard)
           ) : (
             <div className="w-full py-20 text-center bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800">
-               <span className="material-symbols-outlined text-4xl text-slate-200 mb-4">search_off</span>
-               <p className="text-lg font-bold text-slate-400">no {category} found</p>
+              <span className="material-symbols-outlined text-4xl text-slate-200 mb-4">search_off</span>
+              <p className="text-lg font-bold text-slate-400">no {category} found</p>
             </div>
           )}
         </div>
@@ -432,7 +432,7 @@ export default function CategoryExplorePage() {
       </main>
 
       <Dialog open={showAddOption} onOpenChange={setShowAddOption} urlKey="modal" urlValue="add-option">
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 pt-[70px] overflow-hidden border-none bg-white dark:bg-slate-900">
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-8">
               <DialogTitle className="text-3xl font-extrabold serif-title italic">add new {category === 'stays' ? 'stay' : 'activity'}</DialogTitle>
@@ -449,13 +449,13 @@ export default function CategoryExplorePage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog 
-        open={!!viewingOption} 
+      <Dialog
+        open={!!viewingOption}
         onOpenChange={(open) => !open && setViewingOption(null)}
         urlKey="viewing"
         urlValue={viewingOption?.option.id.toString()}
       >
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-3xl sm:h-[90vh] sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 overflow-hidden border-none bg-white dark:bg-slate-900">
           <DialogTitle className="sr-only">Option Details</DialogTitle>
           {viewingOption && (
             <div className="relative h-full overflow-y-auto scrollbar-hide modal-scroll-area">
@@ -592,7 +592,7 @@ export default function CategoryExplorePage() {
                     <span className="material-symbols-outlined text-sm">arrow_back</span>
                     Prev
                   </Button>
-                  
+
                   <div className="flex flex-col items-center">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Explore</span>
                     <span className="text-xs font-black text-primary leading-none">
@@ -620,13 +620,13 @@ export default function CategoryExplorePage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog 
-        open={!!editingOption} 
+      <Dialog
+        open={!!editingOption}
         onOpenChange={(open) => !open && setEditingOption(null)}
         urlKey="editing"
         urlValue={editingOption?.option.id.toString()}
       >
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 pt-[70px] overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95%] sm:max-w-2xl sm:h-auto sm:rounded-[3rem] sm:shadow-2xl">
+        <DialogContent className="p-0 pt-[70px] overflow-hidden border-none bg-white dark:bg-slate-900">
           <div className="h-full overflow-y-auto px-8 py-10 scrollbar-hide">
             <DialogHeader className="pb-6">
               <DialogTitle className="text-3xl font-extrabold serif-title italic">edit option</DialogTitle>

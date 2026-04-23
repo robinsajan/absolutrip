@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/lib/hooks";
+import { useAuth, useTrip } from "@/lib/hooks";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { NotificationPopover } from "./NotificationPopover";
@@ -16,6 +16,7 @@ export function Header() {
     const router = useRouter();
     const params = useParams();
     const tripId = params.tripId as string;
+    const { trip } = useTrip(tripId);
 
     const handleLogout = async () => {
         try {
@@ -35,7 +36,7 @@ export function Header() {
                         <div className="bg-primary p-2 rounded-xl text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
                             <span className="material-symbols-outlined outline-icon text-lg">flight_takeoff</span>
                         </div>
-                        <span className="text-xl font-black tracking-tight text-black dark:text-white lowercase">absolutrip</span>
+                        <span className="text-xl font-black tracking-tight text-black dark:text-white lowercase truncate max-w-[120px] md:max-w-xs">{tripId && trip ? trip.name : "absolutrip"}</span>
                     </Link>
 
                 </div>

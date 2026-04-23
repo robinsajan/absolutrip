@@ -382,7 +382,7 @@ export function ExpenseForm({
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 w-full h-full max-w-none p-0 overflow-hidden border-none rounded-none shadow-none bg-white dark:bg-slate-900 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[90%] sm:max-w-md sm:h-auto sm:max-h-[90vh] sm:rounded-[2.5rem] sm:shadow-2xl z-[300]">
+        <DialogContent className="p-0 overflow-hidden border-none bg-white dark:bg-slate-900 z-[300]">
           <div className="max-h-[inherit] overflow-y-auto px-6 py-10 pt-[calc(3rem+env(safe-area-inset-top,0px))] pb-[calc(3rem+env(safe-area-inset-bottom,0px))] md:px-10 md:py-12 relative">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50 opacity-50" />
 
@@ -452,7 +452,7 @@ export function ExpenseForm({
                         )}
                         disabled={isLoading}
                       >
-                         <span className="material-symbols-outlined text-[14px] md:text-[18px] mr-1.5 md:mr-2">
+                        <span className="material-symbols-outlined text-[14px] md:text-[18px] mr-1.5 md:mr-2">
                           {cat.value === "stay" ? "home" : cat.value === "activity" ? "stars" : cat.value === "food" ? "restaurant" : cat.value === "transport" ? "directions_car" : "more_horiz"}
                         </span>
                         {cat.label}

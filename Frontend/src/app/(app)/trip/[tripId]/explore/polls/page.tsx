@@ -43,25 +43,49 @@ export default function AllPollsPage() {
             .map(opt => opt.id);
 
         const handlePollVote = async (optionId: number) => {
-            let nextOptionIds: number[] = [];
-            if (poll.allow_multiple) {
-                if (userVotedOptionIds.includes(optionId)) {
-                    nextOptionIds = userVotedOptionIds.filter(id => id !== optionId);
-                } else {
-                    nextOptionIds = [...userVotedOptionIds, optionId];
-                }
-            } else {
-                if (userVotedOptionIds.includes(optionId)) {
-                    nextOptionIds = [];
-                } else {
-                    nextOptionIds = [optionId];
-                }
+            if (activeTrip?.is_past) {
+                toast.error("VOTING BLOCKED: This trip has ended.");
+                return;
             }
+
+            const originalPolls = [...polls];
+            const nextPolls = polls.map(p => {
+                if (p.id === poll.id) {
+                    const isRemoving = p.options.find(o => o.id === optionId)?.has_voted;
+                    const nextOptions = p.options.map(opt => {
+                        if (opt.id === optionId) {
+                            return {
+                                ...opt,
+                                has_voted: !opt.has_voted,
+                                vote_count: opt.vote_count + (!opt.has_voted ? 1 : -1)
+                            };
+                        }
+                        if (!p.allow_multiple && !isRemoving) {
+                            return {
+                                ...opt,
+                                has_voted: false,
+                                vote_count: opt.has_voted ? opt.vote_count - 1 : opt.vote_count
+                            };
+                        }
+                        return opt;
+                    });
+
+                    const nextTotalVotes = nextOptions.reduce((acc, curr) => acc + curr.vote_count, 0);
+                    return { ...p, options: nextOptions, total_votes: nextTotalVotes };
+                }
+                return p;
+            });
+
+            setPolls(nextPolls);
+
+            const updatedPoll = nextPolls.find(p => p.id === poll.id)!;
+            const nextOptionIds = updatedPoll.options.filter(o => o.has_voted).map(o => o.id);
 
             try {
                 await pollsApi.vote(poll.id, nextOptionIds);
                 fetchPolls();
             } catch (err) {
+                setPolls(originalPolls);
                 toast.error("Failed to vote on poll");
             }
         };

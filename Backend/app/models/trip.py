@@ -40,9 +40,10 @@ class Trip(db.Model):
     def is_past(self):
         if not self.end_date:
             return False
-        from datetime import date
-        # Trip is considered "past" (locked) immediately after it ends
-        return self.end_date < date.today()
+        from datetime import date, timedelta
+        # Trip is considered "past" (locked) only a day after the last day
+        # This gives users time to settle expenses on the following day
+        return self.end_date < date.today() - timedelta(days=1)
 
     def to_dict(self, include_members=False):
         data = {
