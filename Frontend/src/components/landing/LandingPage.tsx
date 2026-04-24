@@ -344,11 +344,11 @@ export function LandingPage() {
   if (!mounted) return null;
 
   return (
-    <div className="bg-white text-slate-900 selection:bg-accent-lime selection:text-slate-900 overflow-x-hidden font-jakarta">
+    <div className="bg-white text-slate-900 selection:bg-accent-lime selection:text-slate-900 overflow-x-hidden font-jakarta pb-[env(safe-area-inset-bottom)]">
       <CustomCursor />
 
       {/* --- NAV --- */}
-      <nav className="fixed top-0 left-0 right-0 z-[500] px-6 py-4 md:px-12 md:py-6 flex items-center justify-between bg-white/80 backdrop-blur-xl border-b border-slate-100">
+      <nav className="absolute top-0 left-0 right-0 z-[500] px-6 pt-[max(env(safe-area-inset-top),1rem)] pb-4 md:px-12 md:pt-[max(env(safe-area-inset-top),1.5rem)] md:pb-6 flex items-center justify-between bg-transparent md:bg-white/80 md:backdrop-blur-xl border-b border-transparent md:border-slate-100">
         <Link href="/" className="flex items-center gap-3 no-underline">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
             <span className="material-symbols-outlined text-[22px]">flight_takeoff</span>
@@ -451,9 +451,9 @@ export function LandingPage() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
               <div className="relative z-10">
                 <h3 className="text-4xl md:text-5xl font-black mb-8 leading-tight">Group Travel Planning <br /> Made Simple</h3>
-                <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed mb-10 max-w-2xl">
+                {/* <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed mb-10 max-w-2xl">
                   From the streets of Lisbon to the temples of Kyoto, absoluTrip helps your group turn travel ideas into a clear, stress-free itinerary.
-                </p>
+                </p> */}
                 <div className="space-y-4 mb-12">
                   {[
                     "Build a day-by-day group itinerary",
