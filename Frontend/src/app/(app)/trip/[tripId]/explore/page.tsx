@@ -597,7 +597,7 @@ export default function ExplorePage() {
   return (
     <div className="bg-background font-sans text-gray-900 dark:text-gray-100">
       <div className="w-full px-4 pt-10 pb-12 md:px-6 md:pt-16 md:pb-24">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 px-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <Popover open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
@@ -622,14 +622,16 @@ export default function ExplorePage() {
                       Show All Days
                     </Button>
                   </div>
-                  <div className="p-2">
+                  <div className="px-4 pb-4 pt-2">
                     <Calendar
+                      className="p-0 sm:p-0 font-sans"
                       mode="single"
                       selected={selectedDate || undefined}
                       onSelect={(d) => {
                         setSelectedDate(d || null);
                         setIsPopoverOpen(false);
                       }}
+                      defaultMonth={activeTrip?.start_date ? parseISO(activeTrip.start_date) : undefined}
                       disabled={(date) => {
                         if (!activeTrip?.start_date || !activeTrip?.end_date) return false;
                         const start = parseISO(activeTrip.start_date);
@@ -643,7 +645,7 @@ export default function ExplorePage() {
                       fromDate={activeTrip?.start_date ? parseISO(activeTrip.start_date) : undefined}
                       toDate={activeTrip?.end_date ? parseISO(activeTrip.end_date) : undefined}
                       initialFocus
-                      className="font-sans"
+
                     />
                   </div>
                 </PopoverContent>
@@ -688,7 +690,7 @@ export default function ExplorePage() {
           <div className="space-y-4">
             {stays.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-2 pl-2">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex flex-col">
                     <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Stays ({stays.length})</span>
                     {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Stays ({stays.length})</h2> */}
@@ -703,7 +705,7 @@ export default function ExplorePage() {
                     </Link>
                   )}
                 </div>
-                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 scrollbar-hide snap-x">
                   {stays.slice(0, 6).map(renderOptionCard)}
                   {stays.length > 6 && (
                     <Link
@@ -723,7 +725,7 @@ export default function ExplorePage() {
             )}
             {activities.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-8 pl-2">
+                <div className="flex items-center justify-between mb-8">
                   <div className="flex flex-col">
                     <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Activities ({activities.length})</span>
                     {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">Activities ({activities.length})</h2> */}
@@ -738,7 +740,7 @@ export default function ExplorePage() {
                     </Link>
                   )}
                 </div>
-                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                <div className="flex overflow-x-auto md:flex md:flex-wrap gap-4 md:gap-6 pt-1 pb-8 scrollbar-hide snap-x">
                   {activities.slice(0, 6).map(renderOptionCard)}
                   {activities.length > 6 && (
                     <Link
@@ -759,7 +761,7 @@ export default function ExplorePage() {
 
             {tripPolls.length > 0 && (
               <div className="pt-8">
-                <div className="flex items-center justify-between mb-8 pl-2">
+                <div className="flex items-center justify-between mb-8">
                   <div className="flex flex-col">
                     <span className="text-[14px] font-black uppercase tracking-widest text-black dark:text-white hover:text-primary transition-colors">Polls ({tripPolls.length})</span>
                     {/* <h2 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic serif-title lowercase">active polls ({tripPolls.length})</h2> */}
@@ -774,7 +776,7 @@ export default function ExplorePage() {
                     </Link>
                   )}
                 </div>
-                <div className="flex overflow-x-auto gap-4 md:gap-6 pt-1 pb-8 px-2 scrollbar-hide snap-x">
+                <div className="flex overflow-x-auto gap-4 md:gap-6 pt-1 pb-8 scrollbar-hide snap-x">
                   {tripPolls.slice(0, 4).map(renderPollCard)}
                   {tripPolls.length > 4 && (
                     <Link

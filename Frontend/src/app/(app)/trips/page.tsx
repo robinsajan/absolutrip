@@ -27,7 +27,7 @@ function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
   const start = new Date(trip.start_date);
   const bonusEnd = new Date(trip.end_date);
-  bonusEnd.setDate(bonusEnd.getDate() + 2); // Mark hasEnded ONLY 2 days after end_date starts (so 1 full day after it ends)
+  bonusEnd.setHours(23, 59, 59, 999); // Mark hasEnded ONLY after the full end day is over
 
   const isPast = trip.is_past;
   const isPresent = now >= start && now <= bonusEnd;
@@ -228,7 +228,16 @@ export default function TripsPage() {
           <div>
             <h1 className="text-2xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic truncate max-w-full">Welcome back, {user?.name}!</h1>
             <p className="text-slate-500 font-bold tracking-widest text-[10px] md:text-s">
-              {isLoading ? "loading your adventures..." : `You have ${trips?.length || 0} trip${(trips?.length || 0) !== 1 ? 's' : ''} coming up. Ready for your next adventure?`}
+              {isLoading ? "loading your adventures..." : (
+                (() => {
+                  const comingUpCount = trips?.filter(t => {
+                    const expiry = new Date(t.end_date);
+                    expiry.setHours(23, 59, 59, 999);
+                    return new Date() < expiry;
+                  }).length || 0;
+                  return `You have ${comingUpCount} trip${comingUpCount !== 1 ? 's' : ''} coming up. Ready for your next adventure?`;
+                })()
+              )}
             </p>
           </div>
           <div className="flex gap-2">
@@ -414,7 +423,7 @@ export default function TripsPage() {
                 {[...trips]
                   .filter(t => {
                     const bonusEnd = new Date(t.end_date);
-                    bonusEnd.setDate(bonusEnd.getDate() + 2);
+                    bonusEnd.setHours(23, 59, 59, 999);
                     return new Date() < bonusEnd;
                   })
                   .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
@@ -431,7 +440,7 @@ export default function TripsPage() {
 
             {trips.some(t => {
               const bonusEnd = new Date(t.end_date);
-              bonusEnd.setDate(bonusEnd.getDate() + 2);
+              bonusEnd.setHours(23, 59, 59, 999);
               return new Date() >= bonusEnd;
             }) && (
                 <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
@@ -461,7 +470,7 @@ export default function TripsPage() {
                         {[...trips]
                           .filter(t => {
                             const bonusEnd = new Date(t.end_date);
-                            bonusEnd.setDate(bonusEnd.getDate() + 2);
+                            bonusEnd.setHours(23, 59, 59, 999);
                             return new Date() >= bonusEnd;
                           })
                           .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())

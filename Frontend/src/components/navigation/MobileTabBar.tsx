@@ -26,7 +26,7 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[95] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 md:hidden p-1 pb-[calc(env(safe-area-inset-bottom,0.5rem)+0.25rem)] shadow-[0_-4px_20px_rgba(0,0,0,0.01)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[95] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 min-[750px]:hidden p-1 pb-[calc(env(safe-area-inset-bottom,0.5rem)+0.25rem)] shadow-[0_-4px_20px_rgba(0,0,0,0.01)]">
       <div className="flex items-center justify-around h-14">
         {tabs.map((tab) => {
           const isActive = pathname.includes(`/trip/${tripId}/${tab.href}`);

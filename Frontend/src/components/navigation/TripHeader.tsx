@@ -41,9 +41,9 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
     : "Dates not set";
 
   return (
-    <div className="hidden md:block sticky top-0 z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-4 py-2 my-[5px]">
-      <div className="w-full flex items-center justify-between gap-4">
-        <div className="flex flex-col min-w-0">
+    <div className="hidden min-[750px]:block sticky top-[calc(4rem+10px+env(safe-area-inset-top,0px))] z-40 bg-white/40 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-primary/5 px-4 py-2 my-[5px]">
+      <div className="w-full flex items-center justify-center min-[1000px]:justify-between gap-4">
+        <div className="hidden min-[1000px]:flex flex-col min-w-0">
           <h2 className="text-lg font-black text-black dark:text-white truncate tracking-tight lowercase">
             {title || trip?.name || "Trip"}
           </h2>
@@ -54,7 +54,7 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
         </div>
 
         {/* Global Nav */}
-        <nav className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700">
+        <nav className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700">
           {[
             { name: "Compare", href: `explore`, icon: "dashboard_customize" },
             { name: "Budget", href: `budget`, icon: "receipt_long" },
@@ -136,11 +136,11 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
           </Popover>
         </nav>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="hidden min-[1000px]:flex items-center gap-3 shrink-0">
           {trip?.invite_code && (
             <button
               onClick={copyInviteCode}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tight text-slate-400 hover:text-primary transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tight text-slate-400 hover:text-primary transition-all"
             >
               <span className="material-symbols-outlined text-[11px]">content_copy</span>
               {trip.invite_code}
