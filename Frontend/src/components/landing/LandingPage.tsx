@@ -338,6 +338,7 @@ function FeatureFolder() {
 export function LandingPage() {
   const [mounted, setMounted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -360,6 +361,7 @@ export function LandingPage() {
           <div className="hidden md:flex items-center gap-10 mr-4">
             <Link href="#features" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors no-underline">Features</Link>
             <Link href="#how-it-works" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors no-underline">How It Works</Link>
+            <button onClick={() => setIsContactOpen(true)} className="text-sm font-bold text-slate-500 hover:text-primary transition-colors no-underline">Contact</button>
             <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors no-underline">Log In</Link>
           </div>
           <Link href="/register">
@@ -667,13 +669,94 @@ export function LandingPage() {
           <div className="flex flex-wrap justify-center gap-8 text-sm font-bold text-slate-400">
             <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Contact Us</Link>
+            <button onClick={() => setIsContactOpen(true)} className="hover:text-primary transition-colors font-bold">Contact Us</button>
           </div>
           <div className="text-sm font-bold text-slate-400">
             © {new Date().getFullYear()} absoluTrip
           </div>
         </div>
       </footer>
+
+      {/* --- CONTACT MODAL --- */}
+      <AnimatePresence>
+        {isContactOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 md:p-12 overflow-y-auto"
+            onClick={() => setIsContactOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 50, scale: 0.95 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#121212] max-w-2xl w-full rounded-[40px] p-8 md:p-14 relative "
+            >
+              <button
+                onClick={() => setIsContactOpen(false)}
+                className="absolute top-6 right-6 md:top-8 md:right-8 w-12 h-12 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-white transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+
+              <div className="mb-10 max-w-lg">
+                <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-4">Get in touch</div>
+                <h3 className="text-5xl md:text-6xl font-black mb-6 text-white tracking-tight">
+                  Let's <span className="text-primary">talk.</span>
+                </h3>
+                <p className="text-slate-400 font-medium text-lg md:text-xl leading-relaxed">
+                  Have a question, feature request, or just want to say hi? We'd love to hear from you. Our team usually responds within 24 hours.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-6 p-6 md:px-8 md:py-7 rounded-2xl bg-[#1c1c1e] border border-white/5 hover:border-white/10 transition-colors">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/15 text-primary shrink-0">
+                    <span className="material-symbols-outlined text-2xl">mail</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Email</div>
+                    <div className="text-white font-bold text-lg">absolutrips@gmail.com</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 p-6 md:px-8 md:py-7 rounded-2xl bg-[#1c1c1e] border border-white/5 hover:border-white/10 transition-colors">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/15 text-primary shrink-0">
+                    <span className="material-symbols-outlined text-2xl">chat</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Live Chat</div>
+                    <div className="text-white font-bold text-lg">Available Mon–Fri, 9am–6pm IST</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 p-6 md:px-8 md:py-7 rounded-2xl bg-[#1c1c1e] border border-white/5 hover:border-white/10 transition-colors">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/15 text-primary shrink-0">
+                    <span className="material-symbols-outlined text-2xl">location_on</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Based in</div>
+                    <div className="text-white font-bold text-lg">Mumbai, India <span className="text-slate-500 text-sm">IN</span></div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 p-6 md:px-8 md:py-7 rounded-2xl bg-[#1c1c1e] border border-white/5 hover:border-white/10 transition-colors cursor-pointer group" onClick={() => setIsContactOpen(false)}>
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/15 text-primary shrink-0">
+                    <span className="material-symbols-outlined text-2xl">help</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Quick Help</div>
+                    <div className="text-white font-bold text-lg group-hover:text-primary transition-colors">Browse our FAQ &rarr;</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
