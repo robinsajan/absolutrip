@@ -5,3 +5,8 @@
 .env
 /tests
 /uploads/
+*.db    
+/instance/
+/migrations/
+*.pyc
+/__pycache__/
