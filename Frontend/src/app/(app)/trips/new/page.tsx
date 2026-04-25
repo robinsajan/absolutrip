@@ -357,7 +357,7 @@ export default function NewTripPage() {
                   Share this code with your travel buddies
                 </p>
                 <div className="bg-muted rounded-lg p-4">
-                  <p className="text-2xl font-mono font-bold tracking-wider">
+                  <p className="text-l font-mono font-bold tracking-wider">
                     {createdTrip.invite_code}
                   </p>
                 </div>
