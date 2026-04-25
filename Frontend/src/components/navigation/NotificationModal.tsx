@@ -17,14 +17,20 @@ export function NotificationModal() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
 
+    const isValidPath = (path: string | null | undefined): boolean => {
+        if (!path) return false;
+        // Guard against corrupted paths with literal 'undefined' in them
+        if (path.includes('undefined') || path.includes('null')) return false;
+        return true;
+    };
+
     const handleNotificationClick = (n: Notification) => {
+        if (!isValidPath(n.path)) return;
         if (!n.is_read) {
             handleMarkAsRead(n.id);
         }
-        if (n.path) {
-            router.push(n.path);
-            setIsOpen(false);
-        }
+        router.push(n.path!);
+        setIsOpen(false);
     };
 
     const fetchNotifications = async () => {
@@ -111,7 +117,7 @@ export function NotificationModal() {
                                     onClick={() => handleNotificationClick(n)}
                                     className={cn(
                                         "p-5 transition-all relative group",
-                                        n.path && "cursor-pointer",
+                                        isValidPath(n.path) ? "cursor-pointer" : "cursor-default",
                                         !n.is_read ? "bg-primary/5" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                     )}
                                 >

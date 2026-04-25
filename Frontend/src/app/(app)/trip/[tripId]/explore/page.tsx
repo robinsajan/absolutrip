@@ -108,6 +108,7 @@ export default function ExplorePage() {
   const [tripPolls, setTripPolls] = useState<Poll[]>([]);
 
   const fetchPolls = async () => {
+    if (!tripId || tripId === "undefined") return;
     try {
       const data = await pollsApi.list(tripId);
       setTripPolls(data.polls);
@@ -117,6 +118,7 @@ export default function ExplorePage() {
   };
 
   useEffect(() => {
+    if (!tripId || tripId === "undefined") return;
     fetchPolls();
   }, [tripId]);
 

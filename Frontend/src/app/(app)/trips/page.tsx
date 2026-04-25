@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTrips, useAuth } from "@/lib/hooks";
@@ -17,17 +17,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FullscreenDatePicker } from "@/components/ui/fullscreen-date-picker";
-import { DateRange } from "react-day-picker";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
 import { SafeImage } from "@/components/common/SafeImage";
 import { cn } from "@/lib/utils";
+import { Plus, MapPin, Sparkles, ArrowRight } from "lucide-react";
 
 function TripCard({ trip }: { trip: Trip }) {
   const now = new Date();
   const start = new Date(trip.start_date);
   const bonusEnd = new Date(trip.end_date);
-  bonusEnd.setHours(23, 59, 59, 999); // Mark hasEnded ONLY after the full end day is over
+  bonusEnd.setHours(23, 59, 59, 999);
 
   const isPast = trip.is_past;
   const isPresent = now >= start && now <= bonusEnd;
@@ -71,7 +70,6 @@ function TripCard({ trip }: { trip: Trip }) {
             </div>
           </div>
           <div className="flex items-center text-slate-500 text-sm">
-
             <span>{format(new Date(trip.start_date), "MMM dd")} - {format(new Date(trip.end_date), "MMM dd, yyyy")}</span>
           </div>
         </div>
@@ -96,7 +94,7 @@ function TripCard({ trip }: { trip: Trip }) {
           </div>
           <Link
             href={`/trip/${trip.id}/explore`}
-            className="text-[#1877F2] font-black text-sm flex items-center gap-1 group-hover:gap-2 transition-all  tracking-tight"
+            className="text-[#1877F2] font-black text-sm flex items-center gap-1 group-hover:gap-2 transition-all tracking-tight"
           >
             View Trip
             <span className="material-symbols-outlined text-lg outline-icon">arrow_forward</span>
@@ -113,84 +111,22 @@ export default function TripsPage() {
   const { trips, isLoading, mutate } = useTrips();
   const [mounted, setMounted] = useState(false);
 
-  // Create Trip form state
-  const [tripName, setTripName] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [mapsUrl, setMapsUrl] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-
   // Join Trip dialog state
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showAllTrips, setShowAllTrips] = useState(false);
-  const [showOverlapDialog, setShowOverlapDialog] = useState(false);
-  const [pendingTripData, setPendingTripData] = useState<any>(null);
 
   const searchParams = useSearchParams();
   useEffect(() => {
     setMounted(true);
-
     const modal = searchParams.get("modal");
-    if (modal === "new-trip") setCreateDialogOpen(true);
     if (modal === "join-trip") setJoinDialogOpen(true);
-    if (modal === "date-conflict") setShowOverlapDialog(true);
   }, [searchParams]);
 
   const handleLogout = async () => {
     await logout();
     router.push("/login");
-  };
-
-  const handleCreateTrip = async (e?: React.FormEvent, force: boolean = false) => {
-    if (e) e.preventDefault();
-    const data = pendingTripData || {
-      name: tripName.trim(),
-      start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "",
-      end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "",
-      google_maps_url: mapsUrl,
-    };
-
-    if (!data.name || !data.start_date || !data.end_date) {
-      toast.error("Please fill in trip name and dates");
-      return;
-    }
-
-    // Overlap Check (Bonus)
-    if (!force) {
-      const newStart = new Date(data.start_date);
-      const newEnd = new Date(data.end_date);
-      const overlap = trips?.find(t => {
-        const tStart = new Date(t.start_date);
-        const tEnd = new Date(t.end_date);
-        return (newStart <= tEnd && newEnd >= tStart);
-      });
-
-      if (overlap) {
-        setPendingTripData(data);
-        setShowOverlapDialog(true);
-        return;
-      }
-    }
-
-    setIsCreating(true);
-    try {
-      const result = await tripsApi.create(data);
-      toast.success("Trip created!");
-      mutate();
-      setTripName("");
-      setDateRange(undefined);
-      setMapsUrl("");
-      setPendingTripData(null);
-      setShowOverlapDialog(false);
-      setCreateDialogOpen(false);
-      router.push(`/trip/${result.trip.id}/explore`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to create trip");
-    } finally {
-      setIsCreating(false);
-    }
   };
 
   const handleJoinTrip = async () => {
@@ -224,6 +160,8 @@ export default function TripsPage() {
   return (
     <div className="bg-[#fbfbf9] dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto px-6 pt-10 pb-12 md:pt-16 md:pb-24">
+
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h1 className="text-2xl md:text-6xl font-extrabold tracking-tight mb-2 serif-title italic truncate max-w-full">Welcome back, {user?.name}!</h1>
@@ -240,72 +178,18 @@ export default function TripsPage() {
               )}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Dialog
-              open={createDialogOpen}
-              onOpenChange={setCreateDialogOpen}
-              urlKey="modal"
-              urlValue="new-trip"
-            >
-              <DialogTrigger asChild>
-                <button className="md:hidden bg-primary text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-lg shadow-primary/20">
-                  <span className="material-symbols-outlined text-base">add</span>
-                  new trip
-                </button>
-              </DialogTrigger>
-              <DialogContent className="p-0 overflow-hidden border-none flex flex-col bg-white dark:bg-slate-900">
-                <div className="bg-primary p-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] text-white text-center shrink-0">
-                  <h2 className="text-2xl font-black italic serif-title">Plan a new trip</h2>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Name</Label>
-                    <Input
-                      placeholder="Goa Trip"
-                      className="rounded-xl h-12"
-                      value={tripName}
-                      onChange={(e) => setTripName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Location Link</Label>
-                    <Input
-                      placeholder="Google Maps URL"
-                      className="rounded-xl h-12"
-                      value={mapsUrl}
-                      onChange={(e) => setMapsUrl(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5 pt-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Dates</Label>
-                    <FullscreenDatePicker
-                      date={dateRange}
-                      onSelect={setDateRange}
-                      title="Select Trip Dates"
-                      confirmText="Confirm Dates"
-                      trigger={
-                        <button className="w-full h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center px-4 gap-3 text-sm font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-[0.98]">
-                          <span className="material-symbols-outlined text-lg">calendar_today</span>
-                          {dateRange?.from ? (
-                            dateRange.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}` : format(dateRange.from, "MMM d, yyyy")
-                          ) : (
-                            "Select start and end dates"
-                          )}
-                        </button>
-                      }
-                    />
-                  </div>
-                  <button
-                    onClick={() => handleCreateTrip()}
-                    disabled={isCreating}
-                    className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-primary/10 hover:opacity-90 transition-all"
-                  >
-                    {isCreating ? "creating..." : "Create Trip ✨"}
-                  </button>
-                </div>
-              </DialogContent>
-            </Dialog>
 
+          <div className="flex gap-2">
+            {/* Mobile: Link button to /trips/new */}
+            <Link
+              href="/trips/new"
+              className="md:hidden bg-primary text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-lg shadow-primary/20"
+            >
+              <Plus className="w-4 h-4" />
+              new trip
+            </Link>
+
+            {/* Join trip dialog — same on both */}
             <Dialog
               open={joinDialogOpen}
               onOpenChange={setJoinDialogOpen}
@@ -345,68 +229,45 @@ export default function TripsPage() {
           </div>
         </div>
 
-        {/* Quick Create Section */}
+        {/* Desktop: Plan a New Trip CTA Banner */}
         <section className="mb-16 hidden md:block">
-          <div className="bg-primary rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl shadow-primary/10">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
+          <Link href="/trips/new" className="block group">
+            <div className="bg-primary rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl shadow-primary/10 transition-all group-hover:shadow-primary/25 group-hover:scale-[1.01]">
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-white/3 rounded-full blur-[80px] -ml-24 -mb-24 pointer-events-none" />
+              <div className="relative z-10 flex items-center justify-between">
                 <div>
-                  <p className="text-blue-200 font-bold uppercase tracking-widest text-[8px] mb-2">quick start</p>
-                  <h2 className="text-3xl font-extrabold tracking-tight">Plan a new trip</h2>
+                  <p className="text-blue-200 font-bold uppercase tracking-widest text-[8px] mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3" />
+                    quick start
+                  </p>
+                  <h2 className="text-3xl font-extrabold tracking-tight mb-1">Plan a new trip</h2>
+                  <p className="text-blue-200 text-sm font-medium opacity-80">
+                    Name it, pin it on the map, set your dates — all in one flow
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* Feature pills */}
+                  <div className="hidden lg:flex flex-col gap-2 text-right">
+                    <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+                      <MapPin className="w-3 h-3" /> Map Location
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-xs">calendar_today</span> Trip Dates
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-xs">group_add</span> Invite Friends
+                    </span>
+                  </div>
+
+                  {/* Arrow CTA */}
+                  <div className="w-16 h-16 bg-white/15 border border-white/20 rounded-2xl flex items-center justify-center group-hover:bg-accent-lime group-hover:border-transparent transition-all shadow-inner">
+                    <ArrowRight className="w-7 h-7 group-hover:text-black transition-colors" />
+                  </div>
                 </div>
               </div>
-
-              <form onSubmit={handleCreateTrip} className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-2 bg-white/5 p-2 rounded-[2rem] border border-white/10">
-                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
-                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Trip name</label>
-                  <input
-                    className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs"
-                    placeholder="Goa Trip"
-                    type="text"
-                    value={tripName}
-                    onChange={(e) => setTripName(e.target.value)}
-                  />
-                </div>
-                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all">
-                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Location Link</label>
-                  <input
-                    className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs"
-                    placeholder="Google Maps URL"
-                    type="text"
-                    value={mapsUrl}
-                    onChange={(e) => setMapsUrl(e.target.value)}
-                  />
-                </div>
-                <div className="lg:col-span-2 bg-white/10 rounded-2xl p-2.5 border border-white/10 focus-within:bg-white/20 transition-all h-full">
-                  <label className="block text-[7px] font-black uppercase tracking-widest text-blue-100 mb-0.5 opacity-70">Dates</label>
-                  <FullscreenDatePicker
-                    date={dateRange}
-                    onSelect={setDateRange}
-                    title="Select Trip Dates"
-                    confirmText="Save Dates"
-                    trigger={
-                      <button type="button" className="w-full bg-transparent border-none p-0 text-white placeholder:text-white/30 focus:ring-0 font-extrabold text-xs items-center flex gap-2 h-full">
-                        <span className="material-symbols-outlined text-xs">calendar_today</span>
-                        {dateRange?.from ? (
-                          dateRange.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}` : format(dateRange.from, "MMM d")
-                        ) : (
-                          "Select dates"
-                        )}
-                      </button>
-                    }
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isCreating}
-                  className="bg-accent-lime text-black font-extrabold px-10 py-5 md:px-6 md:py-0 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10 text-sm uppercase tracking-widest"
-                >
-                  {isCreating ? "..." : "create"}
-                </button>
-              </form>
             </div>
-          </div>
+          </Link>
         </section>
 
         {/* Trips Grid */}
@@ -492,45 +353,9 @@ export default function TripsPage() {
             <p className="text-slate-500 font-medium max-w-sm mx-auto mb-10 text-lg">Your passport looks a bit lonely. Start planning a new journey above!</p>
           </div>
         )}
-
-        {/* Overlap Warning Dialog */}
-        <Dialog
-          open={showOverlapDialog}
-          onOpenChange={setShowOverlapDialog}
-          urlKey="modal"
-          urlValue="date-conflict"
-        >
-          <DialogContent className="dark:bg-slate-900 border-none rounded-[2rem] max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-amber-500 flex items-center gap-2">
-                <span className="material-symbols-outlined">warning</span>
-                Sync Conflict
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6 pt-4">
-              <p className="text-slate-500 font-medium">
-                Oops! Looks like you already have a trip scheduled during these dates. Do you want to create it anyway?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowOverlapDialog(false)}
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-bold transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleCreateTrip(undefined, true)}
-                  className="flex-1 bg-primary text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all"
-                >
-                  Yes, Continue
-                </button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
-      {/* Footer / Credits */}
+      {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-100 dark:border-slate-800 text-center">
         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
           © {new Date().getFullYear()} absolutrip — made for the modern explorer
