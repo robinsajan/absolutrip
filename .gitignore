@@ -1,0 +1,10 @@
+*.db
+*.pyc
+/__pycache__
+test_*.py
+*.env
+seed_budget.py
+.env.example
+/migrations
+/instance
+*.md
