@@ -39,7 +39,7 @@ def register():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
     password = data.get('password')
     name = data.get('name')
 
@@ -94,7 +94,7 @@ def login():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
     password = data.get('password')
 
     if not email or not password:
@@ -106,7 +106,10 @@ def login():
         return jsonify({'error': 'Invalid email or password'}), 401
 
     if not user.is_verified:
-        return jsonify({'error': 'Please verify your email address before logging in.'}), 401
+        return jsonify({
+            'error': "You can't log in because your email isn't verified yet. Please verify your email, then try again.",
+            'code': 'EMAIL_NOT_VERIFIED'
+        }), 403
 
     login_user(user, remember=True)
     token = user.generate_jwt()
@@ -181,6 +184,8 @@ def get_current_user():
 })
 def verify_email(token):
     email = confirm_verification_token(token)
+    if email:
+        email = email.strip().lower()
     
     if not email:
         return jsonify({'error': 'The confirmation link is invalid or has expired.'}), 400
@@ -221,7 +226,7 @@ def verify_email(token):
 })
 def resend_verification():
     data = request.get_json()
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
 
     if not email:
         return jsonify({'error': 'Email is required'}), 400
@@ -264,7 +269,7 @@ def resend_verification():
 })
 def forgot_password():
     data = request.get_json()
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
 
     if not email:
         return jsonify({'error': 'Email is required'}), 400
@@ -272,6 +277,11 @@ def forgot_password():
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({'error': 'No account found with this email.'}), 404
+    if not user.is_verified:
+        return jsonify({
+            'error': "Password reset is disabled until your email is verified. Please verify your email first.",
+            'code': 'EMAIL_NOT_VERIFIED'
+        }), 403
 
     token = generate_verification_token(user.email, salt='password-reset-salt')
     send_password_reset_email(user.email, token)
@@ -310,6 +320,8 @@ def reset_password():
         return jsonify({'error': 'Token and password are required'}), 400
 
     email = confirm_verification_token(token, salt='password-reset-salt')
+    if email:
+        email = email.strip().lower()
     if not email:
         return jsonify({'error': 'The reset link is invalid or has expired.'}), 400
 

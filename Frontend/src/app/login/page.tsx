@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/hooks";
 import { useTheme } from "next-themes";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
+import { InlineAlert, InlineAlertButton, InlineAlertLink } from "@/components/common/InlineAlert";
+import { auth } from "@/lib/api/endpoints";
 
 
 export default function LoginPage() {
@@ -19,6 +21,9 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [inlineError, setInlineError] = useState<string | null>(null);
+    const [showResend, setShowResend] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -42,14 +47,39 @@ export default function LoginPage() {
         }
 
         setIsLoading(true);
+        setInlineError(null);
+        setShowResend(false);
         try {
             await login(email, password);
             toast.success("Welcome back!");
             router.push("/trips");
         } catch (error: any) {
-            toast.error(error.response?.data?.error || "Invalid credentials");
+            const code = error.response?.data?.code as string | undefined;
+            const msg = (error.response?.data?.error as string | undefined) || "Invalid credentials";
+            if (code === "EMAIL_NOT_VERIFIED" || /verify/i.test(msg)) {
+                setInlineError(msg);
+                setShowResend(true);
+            } else {
+                toast.error(msg);
+            }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        if (!email) {
+            toast.error("Please enter your email first");
+            return;
+        }
+        setResendLoading(true);
+        try {
+            const res = await auth.resendVerification(email);
+            toast.success(res.message || "Verification email resent.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Failed to resend verification email");
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -116,6 +146,24 @@ export default function LoginPage() {
                         </div>
 
                         <form className="w-full space-y-6 flex-1 h-full" onSubmit={handleSubmit}>
+                            {inlineError ? (
+                                <InlineAlert
+                                    variant="warning"
+                                    title="Email not verified — login blocked"
+                                    actions={
+                                        showResend ? (
+                                            <>
+                                                <InlineAlertButton onClick={handleResend} disabled={resendLoading}>
+                                                    {resendLoading ? "Resending..." : "Resend verification email"}
+                                                </InlineAlertButton>
+                                                <InlineAlertLink href="/verify">I already have a link</InlineAlertLink>
+                                            </>
+                                        ) : undefined
+                                    }
+                                >
+                                    {inlineError}
+                                </InlineAlert>
+                            ) : null}
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">email</label>
                                 <input

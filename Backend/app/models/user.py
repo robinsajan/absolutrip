@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from flask import current_app
 from flask_login import UserMixin
+from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager
 
@@ -17,6 +18,12 @@ class User(UserMixin, db.Model):
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     show_budget_tour = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @validates('email')
+    def _normalize_email(self, key, value):
+        if value is None:
+            return None
+        return value.strip().lower()
 
     trip_memberships = db.relationship('TripMember', back_populates='user', lazy='dynamic')
     created_trips = db.relationship('Trip', back_populates='creator', lazy='dynamic')

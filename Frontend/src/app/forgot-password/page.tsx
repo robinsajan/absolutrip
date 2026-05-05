@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { auth } from "@/lib/api/endpoints";
+import { InlineAlert, InlineAlertButton, InlineAlertLink } from "@/components/common/InlineAlert";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
+    const [inlineError, setInlineError] = useState<string | null>(null);
+    const [resendLoading, setResendLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,14 +22,37 @@ export default function ForgotPasswordPage() {
         }
 
         setIsLoading(true);
+        setInlineError(null);
         try {
             const res = await auth.forgotPassword(email);
             toast.success(res.message);
             setIsSent(true);
         } catch (error: any) {
-            toast.error(error.response?.data?.error || "Failed to send reset link");
+            const code = error.response?.data?.code as string | undefined;
+            const msg = (error.response?.data?.error as string | undefined) || "Failed to send reset link";
+            if (code === "EMAIL_NOT_VERIFIED" || /verify/i.test(msg)) {
+                setInlineError(msg);
+            } else {
+                toast.error(msg);
+            }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        if (!email) {
+            toast.error("Please enter your email first");
+            return;
+        }
+        setResendLoading(true);
+        try {
+            const res = await auth.resendVerification(email);
+            toast.success(res.message || "Verification email resent.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Failed to resend verification email");
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -49,6 +75,22 @@ export default function ForgotPasswordPage() {
 
                 {!isSent ? (
                     <form className="w-full space-y-6" onSubmit={handleSubmit}>
+                        {inlineError ? (
+                            <InlineAlert
+                                variant="warning"
+                                title="Email not verified — password reset blocked"
+                                actions={
+                                    <>
+                                        <InlineAlertButton onClick={handleResend} disabled={resendLoading}>
+                                            {resendLoading ? "Resending..." : "Resend verification email"}
+                                        </InlineAlertButton>
+                                        <InlineAlertLink href="/login">Back to login</InlineAlertLink>
+                                    </>
+                                }
+                            >
+                                {inlineError}
+                            </InlineAlert>
+                        ) : null}
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 font-inter">email address</label>
                             <input

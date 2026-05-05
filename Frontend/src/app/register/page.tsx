@@ -8,6 +8,8 @@ import { useAuth } from "@/lib/hooks";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
+import { InlineAlert, InlineAlertButton, InlineAlertLink } from "@/components/common/InlineAlert";
+import { auth } from "@/lib/api/endpoints";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,6 +22,9 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [registerMessage, setRegisterMessage] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -49,12 +54,25 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       const res = await register(email, password, name);
-      toast.success(res.message || "Account created! Please verify your email.");
-      router.push("/login");
+      setRegisteredEmail(email);
+      setRegisterMessage(res.message || "Account created. Please verify your email to continue.");
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create account");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!registeredEmail) return;
+    setResendLoading(true);
+    try {
+      const res = await auth.resendVerification(registeredEmail);
+      toast.success(res.message || "Verification email resent.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to resend verification email");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -125,64 +143,88 @@ export default function RegisterPage() {
                 <Link className="text-primary hover:underline" href="/login">log in</Link>
               </p>
             </div>
-            <form className="w-full space-y-6 flex-1 h-full" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">full name</label>
-                <input
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
-                  placeholder="Alex Wanderer"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">email</label>
-                <input
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
-                  placeholder="you@email.com"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2 relative">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">password</label>
-                <div className="relative">
-                  <input
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
-                    placeholder="••••••••"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                  />
+            <div className="w-full">
+              {registeredEmail ? (
+                <InlineAlert
+                  variant="success"
+                  title="Account created. Verify your email to continue."
+                  actions={
+                    <>
+                      <InlineAlertButton onClick={handleResend} disabled={resendLoading}>
+                        {resendLoading ? "Resending..." : "Resend verification email"}
+                      </InlineAlertButton>
+                      <InlineAlertLink href="/login">Go to login</InlineAlertLink>
+                    </>
+                  }
+                >
+                  <div className="space-y-2">
+                    <p>
+                      We sent a verification link to <span className="font-extrabold text-primary">{registeredEmail}</span>.
+                    </p>
+                    {registerMessage ? <p className="opacity-90">{registerMessage}</p> : null}
+                  </div>
+                </InlineAlert>
+              ) : (
+                <form className="w-full space-y-6 flex-1 h-full" onSubmit={handleSubmit}>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">full name</label>
+                    <input
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                      placeholder="Alex Wanderer"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">email</label>
+                    <input
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                      placeholder="you@email.com"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2 relative">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">password</label>
+                    <div className="relative">
+                      <input
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                        placeholder="••••••••"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                      />
+                      <button
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <span className="material-symbols-outlined outline-icon">
+                          {showPassword ? "visibility_off" : "visibility"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                   <button
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                    type="submit"
+                    disabled={isLoading}
                   >
-                    <span className="material-symbols-outlined outline-icon">
-                      {showPassword ? "visibility_off" : "visibility"}
-                    </span>
+                    {isLoading ? "creating account..." : "create account"}
+                    {!isLoading && (
+                      <span className="material-symbols-outlined outline-icon group-hover:translate-x-1 transition-transform">
+                        arrow_forward
+                      </span>
+                    )}
                   </button>
-                </div>
-              </div>
-              <button
-                className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? "creating account..." : "create account"}
-                {!isLoading && (
-                  <span className="material-symbols-outlined outline-icon group-hover:translate-x-1 transition-transform">
-                    arrow_forward
-                  </span>
-                )}
-              </button>
-            </form>
+                </form>
+              )}
+            </div>
             <div className="mt-12 text-center">
               <p className="text-[11px] text-slate-400 font-medium">
                 By signing up you agree to our{" "}
