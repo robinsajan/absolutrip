@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks";
+import { useAuth, useNotifications } from "@/lib/hooks";
 import { Header } from "@/components/navigation";
 import { FullPageLoader } from "@/components/common/FullPageLoader";
 
@@ -13,6 +13,7 @@ export default function AppLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  useNotifications();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

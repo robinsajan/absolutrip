@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     show_budget_tour = db.Column(db.Boolean, default=True, nullable=False)
+    fcm_token = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     @validates('email')

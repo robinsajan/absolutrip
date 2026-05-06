@@ -68,6 +68,9 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    
+    from .utils.push import init_firebase
+    init_firebase(app)
     # Swagger(app, template=swagger_template, config=swagger_config)
 
     from .routes import auth, trips, options, votes, expenses, budget, announcements, notifications, polls

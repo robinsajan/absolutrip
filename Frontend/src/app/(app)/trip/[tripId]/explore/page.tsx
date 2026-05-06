@@ -797,7 +797,7 @@ export default function ExplorePage() {
               </div>
             )}
 
-            {stays.length === 0 && activities.length === 0 && (
+            {stays.length === 0 && activities.length === 0 && tripPolls.length === 0 && (
               <div className="py-20 text-center bg-white dark:bg-gray-900 rounded-[3rem] border border-gray-100 dark:border-gray-800">
                 <p className="text-slate-400 font-bold italic lowercase tracking-widest">no options matched for this day</p>
               </div>

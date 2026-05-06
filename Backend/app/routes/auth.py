@@ -370,3 +370,38 @@ def update_tour():
         'message': 'Tour status updated successfully',
         'user': current_user.to_dict()
     }), 200
+
+@bp.route('/update-fcm-token', methods=['POST'])
+@login_required
+@swag_from({
+    'tags': ['Auth'],
+    'summary': 'Update user FCM token for push notifications',
+    'parameters': [{
+        'name': 'body',
+        'in': 'body',
+        'required': True,
+        'schema': {
+            'type': 'object',
+            'required': ['fcm_token'],
+            'properties': {
+                'fcm_token': {'type': 'string', 'example': 'fcm-token-string'}
+            }
+        }
+    }],
+    'responses': {
+        200: {'description': 'FCM token updated successfully'},
+        400: {'description': 'Missing fcm_token field'},
+        401: {'description': 'Not authenticated'}
+    }
+})
+def update_fcm_token():
+    data = request.get_json()
+    if not data or 'fcm_token' not in data:
+        return jsonify({'error': 'fcm_token is required'}), 400
+    
+    current_user.fcm_token = data['fcm_token']
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'FCM token updated successfully'
+    }), 200
