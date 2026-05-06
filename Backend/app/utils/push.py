@@ -42,6 +42,7 @@ def send_push_notification(user, title, body, data=None):
     if not user.fcm_token:
         return False
 
+    from datetime import datetime
     try:
         message = messaging.Message(
             notification=messaging.Notification(
@@ -50,6 +51,31 @@ def send_push_notification(user, title, body, data=None):
             ),
             data=data or {},
             token=user.fcm_token,
+            # High priority for Android/Mobile
+            android=messaging.AndroidConfig(
+                priority='high',
+                notification=messaging.AndroidNotification(
+                    sound='default',
+                    default_sound=True,
+                    priority='max' # Corrected parameter name
+                ),
+            ),
+            # High priority for Web browsers
+            webpush=messaging.WebpushConfig(
+                headers={
+                    'Urgency': 'high'
+                },
+                notification=messaging.WebpushNotification(
+                    title=title,
+                    body=body,
+                    icon='/icon-192x192.png',
+                    badge='/icon-192x192.png',
+                    require_interaction=True, # Keeps the notification open until user clicks
+                    silent=False, # Explicitly request sound
+                    timestamp_millis=int(datetime.now().timestamp() * 1000),
+                    renotify=True
+                )
+            )
         )
         response = messaging.send(message)
         logger.info(f"Successfully sent push notification to user {user.id}: {response}")
