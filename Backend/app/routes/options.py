@@ -320,7 +320,7 @@ def upload_option_image(option_id, option, membership):
         return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp'}), 400
 
     # Try Supabase upload first
-    result = SupabaseStorage.upload_file(file)
+    result = SupabaseStorage.upload_file(file, target_bucket=os.environ.get("SUPABASE_BUCKET", "trip-images"))
     
     if not result:
         # Fallback to local storage if Supabase is not configured yet or fails

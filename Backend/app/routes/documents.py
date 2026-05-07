@@ -33,8 +33,8 @@ def upload_document(trip_id, trip, membership):
         if not allowed_file(file.filename):
             continue
 
-        # Upload to Supabase - using default bucket (which now looks at DOCUMENT_BUCKET)
-        result = SupabaseStorage.upload_file(file, folder="documents")
+        # Upload to Supabase - using DOCUMENT_BUCKET
+        result = SupabaseStorage.upload_file(file, folder="documents", target_bucket=os.environ.get("DOCUMENT_BUCKET", "documents"))
         
         if result:
             uploaded_paths.append(result['filename'])
@@ -96,7 +96,7 @@ def delete_document(doc_id):
     # Delete all files from Supabase
     paths = document.file_path.split(',')
     for p in paths:
-        SupabaseStorage.delete_file(p)
+        SupabaseStorage.delete_file(p, target_bucket=os.environ.get("DOCUMENT_BUCKET", "documents"))
     
     db.session.delete(document)
     db.session.commit()
@@ -117,7 +117,7 @@ def view_document_file(doc_id, file_index):
         return jsonify({'error': 'File not found'}), 404
 
     file_path = paths[file_index]
-    signed_url = SupabaseStorage.get_signed_url(file_path, expires_in=300)
+    signed_url = SupabaseStorage.get_signed_url(file_path, expires_in=300, target_bucket=os.environ.get("DOCUMENT_BUCKET", "documents"))
     
     if not signed_url:
         # Fallback to public URL if signed URL fails
