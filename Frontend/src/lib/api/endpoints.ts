@@ -16,9 +16,9 @@ import type {
   ExpensesByDate,
   BudgetByDate,
   PersonalSettlementData,
-  Poll,
   PollOptionType,
   PollVote,
+  Document,
 } from '@/types';
 
 export const auth = {
@@ -398,6 +398,39 @@ export const polls = {
 
   delete: async (pollId: number) => {
     const res = await api.delete<{ message: string }>(`/polls/${pollId}`);
+    return res.data;
+  },
+};
+
+export const documents = {
+  list: async (tripId: string, params?: { start_date?: string; end_date?: string; tag?: string }) => {
+    const res = await api.get<{ documents: Document[] }>(`/trips/${tripId}/documents`, { params });
+    return res.data;
+  },
+
+  upload: async (tripId: string, data: { files: File[]; title?: string; tags?: string }) => {
+    const formData = new FormData();
+    data.files.forEach((file) => {
+      formData.append('files', file);
+    });
+    if (data.title) formData.append('title', data.title);
+    if (data.tags) formData.append('tags', data.tags);
+
+    const res = await api.post<{ message: string; document: Document }>(
+      `/trips/${tripId}/documents`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return res.data;
+  },
+
+  delete: async (docId: number) => {
+    const res = await api.delete<{ message: string }>(`/documents/${docId}`);
+    return res.data;
+  },
+
+  getTags: async (tripId: string) => {
+    const res = await api.get<{ tags: string[] }>(`/trips/${tripId}/documents/tags`);
     return res.data;
   },
 };

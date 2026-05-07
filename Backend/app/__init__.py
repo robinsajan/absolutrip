@@ -69,11 +69,9 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     
-    from .utils.push import init_firebase
-    init_firebase(app)
     # Swagger(app, template=swagger_template, config=swagger_config)
 
-    from .routes import auth, trips, options, votes, expenses, budget, announcements, notifications, polls
+    from .routes import auth, trips, options, votes, expenses, budget, announcements, notifications, polls, documents
     app.register_blueprint(polls.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(trips.bp)
@@ -82,6 +80,7 @@ def create_app(config_name=None):
     app.register_blueprint(expenses.bp)
     app.register_blueprint(budget.bp)
     app.register_blueprint(announcements.bp)
+    app.register_blueprint(documents.bp)
     app.register_blueprint(notifications.notifications_bp, url_prefix='/api/notifications')
 
     @app.route('/health')

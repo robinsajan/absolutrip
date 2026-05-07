@@ -1,174 +1,203 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse, urljoin
+import os
+import json
+import re
+import asyncio
 import logging
+from urllib.parse import urlparse, urljoin
+from playwright.async_api import async_playwright
+from bs4 import BeautifulSoup
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# =========================
+# CONFIG
+# =========================
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MODEL = "llama-3.3-70b-versatile"
+
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 class LinkScraperService:
-    TIMEOUT = 15
-    HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0',
-    }
+    @staticmethod
+    def clean_html(html: str) -> str:
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Remove unwanted tags
+        for tag in soup([
+            "script",
+            "style",
+            "noscript",
+            "svg",
+            "footer",
+            "header",
+            "nav"
+        ]):
+            tag.decompose()
+
+        text = soup.get_text(separator="\n")
+
+        # Clean whitespace
+        text = re.sub(r"\n+", "\n", text)
+        text = re.sub(r"[ \t]+", " ", text)
+
+        return text[:25000]  # limit tokens
+
+    @staticmethod
+    def extract_json_ld(html: str):
+        soup = BeautifulSoup(html, "html.parser")
+        scripts = soup.find_all("script", type="application/ld+json")
+        json_data = []
+
+        for script in scripts:
+            try:
+                content = script.string
+                if content:
+                    parsed = json.loads(content)
+                    json_data.append(parsed)
+            except Exception:
+                pass
+        return json_data
+
+    @staticmethod
+    async def _async_scrape_page(url: str):
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                )
+            )
+            page = await context.new_page()
+            
+            logger.info(f"Opening: {url}")
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                await page.wait_for_timeout(3000)
+
+                # auto scroll
+                await page.evaluate("""
+                    async () => {
+                        await new Promise((resolve) => {
+                            let totalHeight = 0;
+                            let distance = 500;
+                            let timer = setInterval(() => {
+                                let scrollHeight = document.body.scrollHeight;
+                                window.scrollBy(0, distance);
+                                totalHeight += distance;
+                                if(totalHeight >= scrollHeight){
+                                    clearInterval(timer);
+                                    resolve();
+                                }
+                            }, 300);
+                        });
+                    }
+                """)
+                html = await page.content()
+                return html
+            finally:
+                await browser.close()
+
+    @staticmethod
+    def extract_with_groq(text, json_ld):
+        if not client:
+            logger.error("Groq client not initialized. Check GROQ_API_KEY.")
+            return None
+
+        prompt = f"""
+You are a travel property extraction AI.
+Extract ALL useful information from the content.
+Return ONLY VALID JSON.
+
+Required format:
+{{
+  "platform": "",
+  "title": "",
+  "description": "",
+  "amenities": [],
+  "images": [],
+}}
+
+JSON-LD DATA:
+{json.dumps(json_ld, indent=2)}
+
+PAGE CONTENT:
+{text}
+"""
+        try:
+            completion = client.chat.completions.create(
+                model=MODEL,
+                temperature=0,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            response = completion.choices[0].message.content
+            return json.loads(response)
+        except Exception as e:
+            logger.error(f"Groq extraction failed: {str(e)}")
+            return None
 
     @staticmethod
     def scrape_link(url):
         """
-        Scrape Open Graph metadata from a URL.
-        Returns dict with image_url, link_title, link_description.
+        Scrape property information using Playwright and Groq.
+        Maintains backward compatibility with the expected return format.
         """
         if not url:
             return None
 
         try:
-            parsed = urlparse(url)
-            if not parsed.scheme:
-                url = 'https://' + url
+            # Run the async scraper in a sync context
+            # Use a new event loop to avoid conflicts with existing loops if any
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            html = loop.run_until_complete(LinkScraperService._async_scrape_page(url))
+            loop.close()
+
+            if not html:
+                return None
+
+            json_ld = LinkScraperService.extract_json_ld(html)
+            cleaned_text = LinkScraperService.clean_html(html)
             
-            base_url = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme else f"https://{parsed.netloc}"
+            extracted_data = LinkScraperService.extract_with_groq(cleaned_text, json_ld)
+            
+            if not extracted_data:
+                return None
 
-            session = requests.Session()
-            response = session.get(
-                url,
-                headers=LinkScraperService.HEADERS,
-                timeout=LinkScraperService.TIMEOUT,
-                allow_redirects=True,
-                verify=True
-            )
-            response.raise_for_status()
+            # Map the extracted data to the format expected by the app
+            # Note: The app expects image_url, link_title, link_description
+            images = extracted_data.get('images', [])
+            image_url = images[0] if images else None
+            
+            # If no image found in Groq extraction, try a quick fallback from BeautifulSoup
+            if not image_url:
+                soup = BeautifulSoup(html, 'html.parser')
+                og_image = soup.find('meta', property='og:image')
+                if og_image:
+                    image_url = og_image.get('content')
 
-            if response.status_code == 202:
-                logger.warning(f"Got 202 for {url}, using fallback")
-                return {
-                    'image_url': None,
-                    'link_title': LinkScraperService._extract_title_from_url(url),
-                    'link_description': None
-                }
-
-            soup = BeautifulSoup(response.content, 'html.parser')
-
-            result = {
-                'image_url': None,
-                'link_title': None,
-                'link_description': None
+            return {
+                'image_url': image_url,
+                'link_title': extracted_data.get('title'),
+                'link_description': extracted_data.get('description'),
+                'amenities': extracted_data.get('amenities', []),
+                'platform': extracted_data.get('platform')
             }
 
-            og_image = soup.find('meta', property='og:image')
-            itemprop_image = soup.find('meta', itemprop='image')
-            if (og_image and og_image.get('content')) or (itemprop_image and itemprop_image.get('content')):
-                img_url = (og_image['content'] if og_image else itemprop_image['content'])
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                elif img_url.startswith('/'):
-                    img_url = urljoin(base_url, img_url)
-                result['image_url'] = img_url
-            else:
-                twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
-                if twitter_image and twitter_image.get('content'):
-                    img_url = twitter_image['content']
-                    if img_url.startswith('//'):
-                        img_url = 'https:' + img_url
-                    elif img_url.startswith('/'):
-                        img_url = urljoin(base_url, img_url)
-                    result['image_url'] = img_url
-                else:
-                    first_img = soup.find('img', src=True)
-                    if first_img:
-                        img_url = first_img['src']
-                        if img_url.startswith('//'):
-                            img_url = 'https:' + img_url
-                        elif img_url.startswith('/'):
-                            img_url = urljoin(base_url, img_url)
-                        elif not img_url.startswith('http'):
-                            img_url = urljoin(url, img_url)
-                        if not img_url.endswith(('.svg', '.gif')) and 'logo' not in img_url.lower():
-                            result['image_url'] = img_url
-                    
-                    if not result['image_url']:
-                        # Booking.com specific image search
-                        bk_img = soup.find('img', class_='bh-photo-grid-item-link') or soup.find('img', class_='hotel_main_img')
-                        if bk_img and bk_img.get('src'):
-                             result['image_url'] = urljoin(base_url, bk_img['src']) if bk_img['src'].startswith('/') else bk_img['src']
-
-            og_title = soup.find('meta', property='og:title')
-            itemprop_name = soup.find('meta', itemprop='name')
-            if (og_title and og_title.get('content')) or (itemprop_name and itemprop_name.get('content')):
-                result['link_title'] = (og_title['content'] if og_title else itemprop_name['content'])
-            else:
-                twitter_title = soup.find('meta', attrs={'name': 'twitter:title'})
-                if twitter_title and twitter_title.get('content'):
-                    result['link_title'] = twitter_title['content']
-                else:
-                    title_tag = soup.find('title')
-                    if title_tag:
-                        result['link_title'] = title_tag.get_text(strip=True)
-                
-                if not result['link_title']:
-                    # Booking.com specific title search
-                    bk_title = soup.find('h2', class_='pp-header__title') or soup.find('h2', id='hp_hotel_name')
-                    if bk_title:
-                        result['link_title'] = bk_title.get_text(strip=True)
-
-            og_desc = soup.find('meta', property='og:description')
-            if og_desc and og_desc.get('content'):
-                result['link_description'] = og_desc['content']
-            else:
-                twitter_desc = soup.find('meta', attrs={'name': 'twitter:description'})
-                if twitter_desc and twitter_desc.get('content'):
-                    result['link_description'] = twitter_desc['content']
-                else:
-                    meta_desc = soup.find('meta', attrs={'name': 'description'})
-                    if meta_desc and meta_desc.get('content'):
-                        result['link_description'] = meta_desc['content']
-                    else:
-                        first_p = soup.find('p')
-                        if first_p:
-                            text = first_p.get_text(strip=True)
-                            if len(text) > 20:
-                                result['link_description'] = text
-
-            # Final fallbacks from URL only if title is still missing
-            if not result['link_title'] and url:
-                fallback = LinkScraperService._extract_title_from_url(url)
-                if fallback:
-                    result['link_title'] = fallback
-
-            if result['link_title'] and len(result['link_title']) > 300:
-                result['link_title'] = result['link_title'][:297] + '...'
-
-            if result['link_description'] and len(result['link_description']) > 500:
-                result['link_description'] = result['link_description'][:497] + '...'
-
-            logger.info(f"Successfully scraped {url}: title={result['link_title'][:50] if result['link_title'] else None}")
-            return result
-
-        except requests.Timeout:
-            logger.warning(f"Timeout scraping {url}")
-            return None
-        except requests.RequestException as e:
-            logger.warning(f"Request error scraping {url}: {str(e)}")
-            return None
         except Exception as e:
-            logger.error(f"Unexpected error scraping {url}: {str(e)}")
+            logger.error(f"Scraping error for {url}: {str(e)}")
             return None
 
     @staticmethod
     def scrape_and_update_option(option):
         """
         Scrape metadata from option's link and update the option object.
-        Returns True if successful, False otherwise.
         """
         if not option.link:
             return False
@@ -180,10 +209,16 @@ class LinkScraperService:
         if metadata.get('image_url') and not option.image_path:
             option.image_url = metadata['image_url']
 
-        if metadata.get('link_title') and not option.link_title:
+        if metadata.get('link_title'):
             option.link_title = metadata['link_title']
+            # Update the main title as requested
+            option.title = metadata['link_title']
 
         if metadata.get('link_description') and not option.link_description:
             option.link_description = metadata['link_description']
+            
+        # If the model has amenities or other fields, we could store them in notes or a JSON field
+        if metadata.get('amenities') and not option.notes:
+            option.notes = f"Amenities: {', '.join(metadata['amenities'][:10])}"
 
         return True

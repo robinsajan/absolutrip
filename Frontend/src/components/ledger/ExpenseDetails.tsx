@@ -133,7 +133,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute right-16 top-6 h-8 w-8 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/30 transition-all shadow-sm z-50 p-0"
+                            className="absolute right-16 top-[calc(1.5rem+env(safe-area-inset-top,0px))] h-8 w-8 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/30 transition-all shadow-sm z-50 p-0"
                             onClick={handleDelete}
                             disabled={isDeleting}
                         >

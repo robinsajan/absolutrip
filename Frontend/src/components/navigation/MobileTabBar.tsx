@@ -100,6 +100,14 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
                 Announcements
               </Link>
               <Link
+                href={`/trip/${tripId}/docs`}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+              >
+                <Layers className="h-4 w-4" />
+                Docs
+              </Link>
+              <Link
                 href={`/trip/${tripId}/settings`}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"

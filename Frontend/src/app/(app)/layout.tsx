@@ -30,7 +30,7 @@ export default function AppLayout({
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-full">
       <Header />
       <main className="flex-1 pt-[calc(4rem+10px+env(safe-area-inset-top,0px))]">
         {children}

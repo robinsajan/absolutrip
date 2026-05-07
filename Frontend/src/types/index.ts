@@ -286,3 +286,18 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+export interface Document {
+  id: number;
+  trip_id: string;
+  user_id: number;
+  user_name: string;
+  title: string;
+  files: {
+    path: string;
+    url: string;
+    type: string;
+  }[];
+  tags: string[];
+  created_at: string;
+}

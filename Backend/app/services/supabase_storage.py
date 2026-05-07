@@ -16,14 +16,8 @@ class SupabaseStorage:
                 print("Supabase Storage Error: SUPABASE_URL or SUPABASE_KEY missing in .env")
                 return None
                 
-            if "your_supabase" in key:
-                print("Supabase Storage Warning: Using placeholder SUPABASE_KEY. Please update your .env file with your actual service_role key.")
-                return None
-                
             try:
-                print(f"Connecting to Supabase Storage at {url}...")
                 cls._client = create_client(url, key)
-                print("Supabase Client initialized successfully.")
             except Exception as e:
                 print(f"Supabase Client Error: {str(e)}")
                 return None
@@ -33,19 +27,15 @@ class SupabaseStorage:
     def upload_file(cls, file, folder="options", target_bucket=None):
         client = cls.get_client()
         if not client:
-            print("Supabase Storage: Upload skipped - Client not initialized.")
             return None
 
-        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
+        # Use target_bucket, then DOCUMENT_BUCKET, then fallback to trip-images
+        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
         
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
-        
-        # If writing to a dedicated bucket like 'receipts', we don't necessarily need a folder prefix
-        # but we'll preserve it if folder is provided so it matches previous patterns
         filename = f"{folder}/{uuid.uuid4().hex}.{ext}" if folder else f"{uuid.uuid4().hex}.{ext}"
         
         try:
-            print(f"Uploading file '{file.filename}' to Supabase bucket '{bucket_name}' as '{filename}'...")
             file_content = file.read()
             file.seek(0)
             
@@ -56,7 +46,6 @@ class SupabaseStorage:
             )
             
             res = client.storage.from_(bucket_name).get_public_url(filename)
-            print(f"Upload successful. Public URL: {res}")
             return {
                 "filename": filename,
                 "url": res
@@ -71,7 +60,7 @@ class SupabaseStorage:
         if not client:
             return None
 
-        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
         try:
             res = client.storage.from_(bucket_name).create_signed_url(filename, expires_in)
             if isinstance(res, dict) and "signedURL" in res:
@@ -87,7 +76,7 @@ class SupabaseStorage:
         if not client:
             return None
 
-        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
         try:
             return client.storage.from_(bucket_name).download(filename)
         except Exception as e:
@@ -100,7 +89,7 @@ class SupabaseStorage:
         if not client:
             return False
 
-        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET", "trip-images")
+        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
         try:
             client.storage.from_(bucket_name).remove([filename])
             return True

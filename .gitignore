@@ -13,4 +13,5 @@ test_*.py
 seed_budget.py
 .env.example
 landing.html
+/files
 

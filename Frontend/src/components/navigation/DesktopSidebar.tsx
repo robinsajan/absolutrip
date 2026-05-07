@@ -134,6 +134,18 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
               </span>
             )}
           </Link>
+          <Link
+            href={`/trip/${tripId}/docs`}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium",
+              pathname.includes("/docs")
+                ? "bg-primary/10 text-primary font-bold shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary"
+            )}
+          >
+            <span className="material-symbols-outlined">description</span>
+            <span>Docs</span>
+          </Link>
         </nav>
 
         {/* Bottom Nav */}
