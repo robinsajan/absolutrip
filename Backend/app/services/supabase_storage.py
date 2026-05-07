@@ -29,13 +29,15 @@ class SupabaseStorage:
         if not client:
             return None
 
-        # Use target_bucket, then DOCUMENT_BUCKET, then fallback to trip-images
-        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
+        # Use target_bucket, then SUPABASE_BUCKET, then DOCUMENT_BUCKET, then fallback to trip-images
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET") or os.environ.get("DOCUMENT_BUCKET") or "trip-images"
+        print(f"Supabase Attempting upload to bucket: '{bucket_name}' for folder: '{folder}'")
         
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
         filename = f"{folder}/{uuid.uuid4().hex}.{ext}" if folder else f"{uuid.uuid4().hex}.{ext}"
         
         try:
+            file.seek(0)
             file_content = file.read()
             file.seek(0)
             
@@ -60,7 +62,7 @@ class SupabaseStorage:
         if not client:
             return None
 
-        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET") or os.environ.get("DOCUMENT_BUCKET") or "trip-images"
         try:
             res = client.storage.from_(bucket_name).create_signed_url(filename, expires_in)
             if isinstance(res, dict) and "signedURL" in res:
@@ -76,7 +78,7 @@ class SupabaseStorage:
         if not client:
             return None
 
-        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET") or os.environ.get("DOCUMENT_BUCKET") or "trip-images"
         try:
             return client.storage.from_(bucket_name).download(filename)
         except Exception as e:
@@ -89,7 +91,7 @@ class SupabaseStorage:
         if not client:
             return False
 
-        bucket_name = target_bucket or os.environ.get("DOCUMENT_BUCKET") or os.environ.get("SUPABASE_BUCKET") or "trip-images"
+        bucket_name = target_bucket or os.environ.get("SUPABASE_BUCKET") or os.environ.get("DOCUMENT_BUCKET") or "trip-images"
         try:
             client.storage.from_(bucket_name).remove([filename])
             return True

@@ -19,6 +19,7 @@ import type {
   PollOptionType,
   PollVote,
   Document,
+  Poll,
 } from '@/types';
 
 export const auth = {
