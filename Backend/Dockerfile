@@ -1,24 +1,42 @@
-FROM mcr.microsoft.com/playwright/python:v1.59.0-jammy
+FROM python:3.11-slim-bullseye
 
 WORKDIR /app
 
+# Install ALL chromium system dependencies explicitly
 RUN apt-get update && apt-get install -y \
+    chromium \
+    chromium-driver \
     postgresql-client \
     libpq-dev \
     gcc \
+    libglib2.0-0 \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libx11-6 \
+    libxext6 \
+    libxfixes3 \
     && rm -rf /var/lib/apt/lists/*
-
-# Force python3.11 as default (already exists in base image, just set the symlink)
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Force correct playwright version and use fixed browser path
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN pip install playwright==1.59.0 --force-reinstall
+# Tell Playwright to use the system's chromium instead of downloading its own
+ENV PLAYWRIGHT_BROWSERS_PATH=/usr/bin
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+
 RUN playwright install chromium --with-deps
 
 COPY . .
