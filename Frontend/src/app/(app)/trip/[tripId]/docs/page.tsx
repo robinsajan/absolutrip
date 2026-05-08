@@ -14,6 +14,7 @@ import {
   Files
 } from "lucide-react";
 import { documents as documentsApi } from "@/lib/api/endpoints";
+import { useAuth } from "@/lib/hooks";
 import { DocumentUploadModal } from "@/components/docs/DocumentUploadModal";
 import { DocumentCard } from "@/components/docs/DocumentCard";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { toast } from "sonner";
 export default function DocsPage() {
   const params = useParams();
   const tripId = params.tripId as string;
+  const { user } = useAuth();
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,6 +169,7 @@ export default function DocsPage() {
             <DocumentCard 
               key={doc.id} 
               document={doc} 
+              currentUserId={user?.id}
               onDelete={handleDelete}
               isDeleting={deletingId === doc.id}
             />
