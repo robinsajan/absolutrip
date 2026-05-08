@@ -1,6 +1,6 @@
 # Use Playwright's official Python image as base
 # This image comes pre-installed with all system dependencies for Playwright
-FROM mcr.microsoft.com/playwright/python:v1.51.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.59.0-jammy
 
 
 # Set working directory
