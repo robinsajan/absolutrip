@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, ChevronsRight } from "lucide-react";
+import { Users, ChevronsRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +122,10 @@ export function ExpenseFeed({ expenses, currentUserId, onDelete, onEdit, memberC
         isOpen={isDetailsOpen}
         currentUserId={currentUserId}
         onDelete={onDelete}
+        onEdit={(expense) => {
+          setIsDetailsOpen(false);
+          if (onEdit) onEdit(expense);
+        }}
         onClose={() => {
           setIsDetailsOpen(false);
           setSelectedExpense(null);

@@ -86,15 +86,15 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
               <button
                 className={cn(
                   "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-                  pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary")
+                  pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary") || pathname.includes("/docs")
                     ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
                     : "text-slate-500 hover:text-primary"
                 )}
               >
-                <span className={cn("material-symbols-outlined text-[13px]", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary")) ? "material-symbols-filled" : "outline-icon")}>
-                  settings
+                <span className={cn("material-symbols-outlined text-[13px]", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/announcements") || pathname.includes("/itinerary") || pathname.includes("/docs")) ? "material-symbols-filled" : "outline-icon")}>
+                  layers
                 </span>
-                Settings
+                More
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900" align="center">
@@ -122,6 +122,14 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
                 >
                   <span className="material-symbols-outlined text-base">campaign</span>
                   Announcements
+                </Link>
+                <Link
+                  href={`/trip/${tripId}/docs`}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-base">description</span>
+                  Docs
                 </Link>
                 <Link
                   href={`/trip/${tripId}/settings`}

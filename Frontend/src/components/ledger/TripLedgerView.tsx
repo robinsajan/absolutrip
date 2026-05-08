@@ -489,34 +489,6 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
 
                               <td className="px-6 py-4">
                                 <div className="flex items-center justify-end gap-2">
-
-                                  {showActions && (
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                      <button
-                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setEditingExpense(expense);
-                                          setShowAddExpense(true);
-                                        }}
-                                        title="Edit"
-                                      >
-                                        <Pencil className="size-4" />
-                                      </button>
-                                      <button
-                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (window.confirm("Delete this expense?")) {
-                                            handleDeleteExpense(expense.id);
-                                          }
-                                        }}
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="size-4" />
-                                      </button>
-                                    </div>
-                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -777,6 +749,11 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
             isOpen={isDetailsOpen}
             currentUserId={currentUserId}
             onDelete={handleDeleteExpense}
+            onEdit={(expense) => {
+              setIsDetailsOpen(false);
+              setEditingExpense(expense);
+              setShowAddExpense(true);
+            }}
             onClose={() => {
               setIsDetailsOpen(false);
               setSelectedExpense(null);

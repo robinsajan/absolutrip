@@ -59,16 +59,16 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
             <button
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-95",
-                pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements")
+                pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements") || pathname.includes("/docs")
                   ? "text-primary font-black scale-105"
                   : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               )}
             >
               <div className={cn(
                 "p-1.5 rounded-xl transition-all",
-                (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements")) ? "bg-primary/10" : ""
+                (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements") || pathname.includes("/docs")) ? "bg-primary/10" : ""
               )}>
-                <Layers className={cn("h-5 w-5", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements")) && "stroke-[2.5px]")} />
+                <Layers className={cn("h-5 w-5", (pathname.includes("/members") || pathname.includes("/settings") || pathname.includes("/itinerary") || pathname.includes("/announcements") || pathname.includes("/docs")) && "stroke-[2.5px]")} />
               </div>
               <span className="text-[8px] mt-1 font-bold">More</span>
             </button>

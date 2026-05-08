@@ -19,6 +19,7 @@ import {
     Wallet,
     Users,
     Trash2,
+    Pencil,
     X
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
@@ -48,11 +49,12 @@ interface ExpenseDetailsProps {
     currentUserId?: number;
     onClose: () => void;
     onDelete?: (expenseId: number) => void;
+    onEdit?: (expense: Expense) => void;
     urlKey?: string;
     urlValue?: string;
 }
 
-export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDelete, urlKey, urlValue }: ExpenseDetailsProps) {
+export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDelete, onEdit, urlKey, urlValue }: ExpenseDetailsProps) {
     const [comments, setComments] = useState<ExpenseComment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -128,20 +130,7 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
             >
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 opacity-40 z-50 px-8" />
                 <DialogHeader className="p-8 pb-8 border-b relative pt-[calc(2.5rem+env(safe-area-inset-top,0px))]">
-
-                    {expense.paid_by === currentUserId && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-16 top-[calc(1.5rem+env(safe-area-inset-top,0px))] h-8 w-8 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/30 transition-all shadow-sm z-50 p-0"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    )}
-
-                    <div className="mb-4 pr-16">
+                    <div className="mb-4">
                         <Badge variant="outline" className="gap-1.5 capitalize font-black text-[10px] tracking-widest text-primary border-primary/20 bg-primary/5">
                             {splitTypeIcons[expense.split_type as keyof typeof splitTypeIcons] || <Hash className="h-3 w-3" />}
                             {expense.split_type} split
@@ -149,9 +138,33 @@ export function ExpenseDetails({ expense, isOpen, onClose, currentUserId, onDele
                     </div>
 
                     <div className="flex items-start justify-between gap-4">
-                        <DialogTitle className="text-3xl font-black italic tracking-tight text-slate-900 dark:text-white leading-tight">
+                        <DialogTitle className="text-3xl font-black italic tracking-tight text-slate-900 dark:text-white leading-tight pr-12">
                             {expense.description}
                         </DialogTitle>
+
+                        {expense.paid_by === currentUserId && (
+                            <div className="flex gap-2 shrink-0">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm"
+                                    onClick={() => {
+                                        if (onEdit && expense) onEdit(expense);
+                                    }}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-rose-500/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/30 transition-all shadow-sm"
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     <DialogDescription className="sr-only">
