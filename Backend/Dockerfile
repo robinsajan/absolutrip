@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Ensure Playwright chromium browser is installed and ready
-RUN playwright install chromium
+RUN playwright install chromium --with-deps
 
 # Copy the rest of the application code
 COPY . .
