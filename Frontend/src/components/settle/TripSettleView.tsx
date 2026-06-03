@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ExpenseForm } from "@/components/ledger/ExpenseForm";
+import { useAppStore } from "@/lib/store";
 
 function money(n: number) {
   return `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -46,12 +48,15 @@ export function TripSettleView({ tripId }: { tripId: string }) {
   const { balances, settlements, isLoading, mutate: mutateSettle } = useSettlement(tripId);
   const { expenses, mutate: mutateExpenses } = useExpenses(tripId);
 
+  const { activeTrip } = useAppStore();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [fromUserId, setFromUserId] = useState<number | null>(null);
   const [toUserId, setToUserId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
 
   // Sync state with URL
   useEffect(() => {
@@ -108,6 +113,19 @@ export function TripSettleView({ tripId }: { tripId: string }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleAddExpense = async (data: any) => {
+    await expensesApi.create(tripId, data);
+    await Promise.all([mutateExpenses(), mutateSettle()]);
+    toast.success("Expense added");
+  };
+
+  const handleUpdateExpense = async (expenseId: number, data: any) => {
+    await expensesApi.update(tripId, expenseId, data);
+    await Promise.all([mutateExpenses(), mutateSettle()]);
+    setEditingExpense(null);
+    toast.success("Expense updated");
   };
 
   const getFontSize = (amt: number) => {
@@ -275,71 +293,88 @@ export function TripSettleView({ tripId }: { tripId: string }) {
           )}
         </div>
 
-        {/* Bottom Actions Fixed Bar - Raised above mobile nav bar */}
-        <div className="fixed md:bottom-0 bottom-[calc(env(safe-area-inset-bottom,0)+4.5rem)] left-0 right-0 p-4 md:p-6 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50">
-          <div className="max-w-2xl mx-auto px-2">
-            <Button
-              className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90 shadow-xl shadow-black/10 transition-all active:scale-95"
-              onClick={() => {
-                if (owedByMe.length > 0) {
-                  const first = owedByMe[0];
-                  setFromUserId(first.from_user_id);
-                  setToUserId(first.to_user_id);
-                  setAmount(first.amount.toString());
-                  setOpen(true);
-                } else {
-                  setOpen(true);
-                }
-              }}
-            >
-              Settle Up
-            </Button>
-          </div>
-        </div>
       </main>
+
+      {/* Add Expense FAB */}
+      <button
+        onClick={() => {
+          setEditingExpense(null);
+          setShowAddExpense(true);
+        }}
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+        className="fixed right-4  bg-black dark:bg-white dark:text-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90 animate-in fade-in zoom-in duration-500"
+        aria-label="Add expense"
+      >
+        <span className="material-symbols-outlined text-3xl">add</span>
+      </button>
 
       <Dialog open={open} onOpenChange={setOpen} urlKey="modal" urlValue="record-settlement">
         <DialogContent className="max-w-md bg-white dark:bg-gray-900 rounded-[3rem] p-0 border-none shadow-2xl z-[300] overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-accent-lime/30 via-accent-lime to-accent-lime/30 opacity-50 z-50" />
           <div className="p-10 pt-[calc(3rem+env(safe-area-inset-top,0px))] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
-          <DialogHeader className="pb-8">
-            <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic animate-in fade-in slide-in-from-top-4 duration-500">record settlement</DialogTitle>
-          </DialogHeader>
+            <DialogHeader className="pb-8">
+              <DialogTitle className="text-4xl font-black tracking-tighter lowercase italic animate-in fade-in slide-in-from-top-4 duration-500">record settlement</DialogTitle>
+            </DialogHeader>
 
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-              <div className="flex items-center justify-between mb-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 mx-auto shadow-sm">
-                    <span className="text-xs font-black">{getInitials(members?.find(m => m.user_id === fromUserId)?.user_name || "")}</span>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 mx-auto shadow-sm">
+                      <span className="text-xs font-black">{getInitials(members?.find(m => m.user_id === fromUserId)?.user_name || "")}</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Payer</p>
                   </div>
-                  <p className="text-[10px] font-black uppercase text-gray-400">Payer</p>
+                  <span className="material-symbols-outlined text-gray-200">arrow_forward</span>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 mx-auto shadow-sm">
+                      <span className="text-xs font-black">{getInitials(members?.find(m => m.user_id === toUserId)?.user_name || "")}</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Receiver</p>
+                  </div>
                 </div>
-                <span className="material-symbols-outlined text-gray-200">arrow_forward</span>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 mx-auto shadow-sm">
-                    <span className="text-xs font-black">{getInitials(members?.find(m => m.user_id === toUserId)?.user_name || "")}</span>
-                  </div>
-                  <p className="text-[10px] font-black uppercase text-gray-400">Receiver</p>
+                <div className="text-center pt-4">
+                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Confirm Amount</p>
+                  <h3 className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">₹{amount}</h3>
                 </div>
               </div>
-              <div className="text-center pt-4">
-                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Confirm Amount</p>
-                <h3 className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white">₹{amount}</h3>
-              </div>
+
+              <Button
+                className="w-full h-16 rounded-[1.5rem] bg-accent-lime text-black font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-accent-lime/10"
+                onClick={() => handleRecordSettlement()}
+                disabled={submitting}
+              >
+                {submitting ? "Processing..." : "Confirm & Settle"}
+              </Button>
             </div>
-
-            <Button
-              className="w-full h-16 rounded-[1.5rem] bg-accent-lime text-black font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-accent-lime/10"
-              onClick={() => handleRecordSettlement()}
-              disabled={submitting}
-            >
-              {submitting ? "Processing..." : "Confirm & Settle"}
-            </Button>
-          </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      <ExpenseForm
+        tripId={tripId}
+        members={members}
+        currentUserId={user?.id}
+        onSubmit={async (data) => {
+          setShowAddExpense(false);
+          try {
+            await handleAddExpense(data);
+          } catch {
+            setShowAddExpense(true);
+          }
+        }}
+        onUpdate={handleUpdateExpense}
+        editExpense={editingExpense}
+        onCancelEdit={() => setEditingExpense(null)}
+        tripStartDate={activeTrip?.start_date}
+        tripEndDate={activeTrip?.end_date}
+        open={showAddExpense}
+        onOpenChange={(open) => {
+          setShowAddExpense(open);
+          if (!open) setEditingExpense(null);
+        }}
+        showTrigger={false}
+      />
     </div>
   );
 }

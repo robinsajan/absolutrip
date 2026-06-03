@@ -45,7 +45,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-export function TripLedgerView({ tripId }: { tripId: string }) {
+export function TripLedgerView({ tripId, onSettleUpClick }: { tripId: string; onSettleUpClick?: () => void }) {
   const router = useRouter();
   const { user } = useAuth();
   const { activeTrip } = useAppStore();
@@ -305,12 +305,7 @@ export function TripLedgerView({ tripId }: { tripId: string }) {
               </div>
             </div>
 
-            <Button
-              className="w-full sm:w-auto h-16 px-12 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-black/10"
-              onClick={() => router.push(`/trip/${tripId}/settle`)}
-            >
-              Settle Up
-            </Button>
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">

@@ -58,10 +58,10 @@ export function TripHeader({ trip, title }: TripHeaderProps) {
           {[
             { name: "Compare", href: `explore`, icon: "dashboard_customize" },
             { name: "Budget", href: `budget`, icon: "receipt_long" },
-            { name: "Expense", href: `ledger`, icon: "payments" },
+            { name: "Expense", href: `ledger`, icon: "payments", query: "tab=settle" },
           ].map((tab) => {
-            const fullHref = `/trip/${tripId}/${tab.href}`;
-            const isActive = pathname === fullHref || pathname.startsWith(fullHref + "/");
+            const fullHref = `/trip/${tripId}/${tab.href}${tab.query ? `?${tab.query}` : ""}`;
+            const isActive = pathname === `/trip/${tripId}/${tab.href}` || pathname.startsWith(`/trip/${tripId}/${tab.href}/`);
             return (
               <Link
                 key={tab.name}

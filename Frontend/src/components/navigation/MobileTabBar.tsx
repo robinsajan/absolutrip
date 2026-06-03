@@ -18,7 +18,7 @@ interface MobileTabBarProps {
 const tabs = [
   { name: "Explore", href: "explore", icon: Compass },
   { name: "Budget", href: "budget", icon: Calculator },
-  { name: "Expense", href: "ledger", icon: Receipt },
+  { name: "Expense", href: "ledger", icon: Receipt, query: "tab=settle" },
 ];
 
 export function MobileTabBar({ tripId }: MobileTabBarProps) {
@@ -35,7 +35,7 @@ export function MobileTabBar({ tripId }: MobileTabBarProps) {
           return (
             <Link
               key={tab.href}
-              href={`/trip/${tripId}/${tab.href}`}
+              href={`/trip/${tripId}/${tab.href}${tab.query ? `?${tab.query}` : ""}`}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-95",
                 isActive

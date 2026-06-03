@@ -103,7 +103,7 @@ function ItineraryGroup({ group }: { group: any }) {
                 <div key={day.dateStr} className="space-y-3 relative before:absolute before:-left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50 dark:before:bg-slate-800/50">
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 -ml-[19px] z-10" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{format(day.date, "EEEE")}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{format(day.date, "MMM d, EEEE")}</span>
                   </div>
 
                   {day.activities.length > 0 ? (
@@ -178,7 +178,7 @@ export default function ItineraryPage() {
         return currentDate >= checkIn && currentDate < checkOut;
       });
 
-      const activities = dayOptions.filter(opt => opt.category === 'activity');
+      const activities = dayOptions.filter(opt => opt.category === 'activity' && opt.is_finalized);
 
       allDays.push({
         dayNumber: i + 1,

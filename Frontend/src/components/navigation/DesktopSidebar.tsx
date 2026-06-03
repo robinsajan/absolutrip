@@ -102,7 +102,7 @@ export function DesktopSidebar({ tripId, trip }: DesktopSidebarProps) {
             </Link>
             <div className="pl-6 flex flex-col gap-1">
               <Link
-                href={`/trip/${tripId}/ledger`}
+                href={`/trip/${tripId}/ledger?tab=settle`}
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors rounded-md",
                   pathname.includes("/ledger")
