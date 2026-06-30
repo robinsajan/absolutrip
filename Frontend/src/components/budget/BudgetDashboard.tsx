@@ -703,7 +703,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
               <ScenarioPlanner
                 options={filteredOptions}
                 memberCount={memberCount}
-                currentExpenses={baseTotal + activityScenarioTotal}
+                currentExpenses={userShare + activityScenarioTotal}
                 onScenarioChange={() => { }}
                 title={selectedDate ? `Pinned Stays: ${format(selectedDate, "MMM d")}` : "Scenario Planner: Stays"}
                 description={selectedDate ? "Your current selection for this date." : "Build your hypothetical trip itinerary."}
@@ -738,7 +738,7 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
               <ScenarioPlanner
                 options={filteredActivityOptions}
                 memberCount={memberCount}
-                currentExpenses={baseTotal + stayScenarioTotal}
+                currentExpenses={userShare + stayScenarioTotal}
                 onScenarioChange={() => { }}
                 title={selectedDate ? `Pinned Activities: ${format(selectedDate, "MMM d")}` : "Scenario Planner: Activities"}
                 description={selectedDate ? "Your current selections for this date." : "Build your hypothetical trip itinerary."}
