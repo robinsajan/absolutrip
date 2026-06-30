@@ -37,6 +37,7 @@ export default function SettingsPage() {
 
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("");
+  const [editBudget, setEditBudget] = useState("");
   const [editDateRange, setEditDateRange] = useState<DateRange | undefined>(undefined);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -44,6 +45,7 @@ export default function SettingsPage() {
     if (activeTrip) {
       setEditName(activeTrip.name || "");
       setEditLocation(activeTrip.google_maps_url || "");
+      setEditBudget(activeTrip.budget ? activeTrip.budget.toString() : "");
       setEditDateRange({
         from: activeTrip.start_date ? new Date(activeTrip.start_date) : undefined,
         to: activeTrip.end_date ? new Date(activeTrip.end_date) : undefined
@@ -97,6 +99,7 @@ export default function SettingsPage() {
         google_maps_url: editLocation,
         start_date: startStr,
         end_date: endStr,
+        budget: editBudget ? parseFloat(editBudget) : null,
       });
 
       toast.success("Trip updated successfully!");
@@ -195,6 +198,16 @@ export default function SettingsPage() {
                   onChange={(e) => setEditLocation(e.target.value)}
                   className="h-11 rounded-xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
                   placeholder="https://maps.google.com/..."
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Per-Person Budget Target (₹)</Label>
+                <Input
+                  type="number"
+                  value={editBudget}
+                  onChange={(e) => setEditBudget(e.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 dark:border-slate-800 focus:border-primary transition-all font-bold"
+                  placeholder="E.g. 15000"
                 />
               </div>
               <div className="space-y-1">

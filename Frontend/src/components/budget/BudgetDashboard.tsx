@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { BudgetHeader, ScenarioPlanner, ExpenseBreakdown } from "@/components/budget";
-import { useBudget, useRankedOptions, useSettlement, useAuth, useTrip } from "@/lib/hooks";
+import { useBudget, useRankedOptions, useSettlement, useAuth, useTrip, useExpenses } from "@/lib/hooks";
 import { RankedOption } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -43,9 +43,9 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
   const { rankedOptions, isLoading: optionsLoading } = useRankedOptions(tripId);
   const { balances, isLoading: settlementLoading } = useSettlement(tripId);
   const { trip } = useTrip(tripId);
+  const { expenses } = useExpenses(tripId);
 
   const memberCount = budget?.member_count ?? 1;
-  const baseTotal = (budget?.total_expenses ?? 0) / memberCount;
 
   const personalBalance = useMemo(() => {
     if (!user) return undefined;
@@ -340,7 +340,29 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
     setSelectedActivityOptionIds(prev => [...prev, id]);
   };
 
-  const displayPerPerson = baseTotal + stayScenarioTotal + activityScenarioTotal;
+  const userBalance = useMemo(() => {
+    if (!user) return undefined;
+    return balances.find((b) => b.user_id === user.id);
+  }, [balances, user]);
+
+  const userPaid = userBalance?.total_paid ?? 0;
+
+  // Calculate personal share by summing splits in expenses
+  const userShare = useMemo(() => {
+    let total = 0;
+    expenses.forEach((expense) => {
+      if (expense.category === "settlement") return;
+      const userSplit = user
+        ? expense.splits?.find((s) => s.user_id === user.id)?.amount
+        : undefined;
+      if (userSplit !== undefined) {
+        total += userSplit;
+      }
+    });
+    return total;
+  }, [expenses, user]);
+
+  const displayPerPerson = userShare + stayScenarioTotal + activityScenarioTotal;
   const displayGroupTotal = displayPerPerson * memberCount;
 
   interface BreakdownItem {
@@ -490,9 +512,8 @@ export function BudgetDashboard({ tripId }: BudgetDashboardProps) {
               perPersonAverage={displayPerPerson}
               memberCount={memberCount}
               expenseCount={budget.expense_count}
-              personalBalance={personalBalance}
               expectedPrice={combinedAdminPickPerPerson}
-              whoShouldPayNext={budget.who_should_pay_next}
+              userShare={userShare}
             />
 
             {/* Mobile Breakdown Trigger */}

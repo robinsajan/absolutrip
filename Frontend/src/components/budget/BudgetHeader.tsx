@@ -22,6 +22,8 @@ interface BudgetHeaderProps {
     amount_owed: number;
     suggestion: string;
   };
+  userPaid?: number;
+  userShare?: number;
 }
 
 export function BudgetHeader({
@@ -29,41 +31,15 @@ export function BudgetHeader({
   perPersonAverage,
   memberCount,
   expenseCount,
-  personalBalance,
   expectedPrice,
-  whoShouldPayNext,
+  userShare = 0,
 }: BudgetHeaderProps) {
   return (
     <Card className="bg-[#ccff00] text-black shadow-2xl shadow-[#ccff00]/20 border-none">
       <CardContent className="p-6">
-        <div className="flex flex-col items-center gap-3 mb-6">
-          {personalBalance !== undefined && (
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 backdrop-blur-md border ${personalBalance > 0.01
-              ? "bg-green-900/10 border-green-900/20 text-green-900"
-              : personalBalance < -0.01
-                ? "bg-red-900/10 border-red-900/20 text-red-900"
-                : "bg-black/5 border-black/10 text-black/70"
-              }`}>
-              {personalBalance > 0.01 ? (
-                <>Others owe you ₹{personalBalance.toFixed(2)}</>
-              ) : personalBalance < -0.01 ? (
-                <>You owe others ₹{Math.abs(personalBalance).toFixed(2)}</>
-              ) : (
-                <>You're all settled up!</>
-              )}
-            </div>
-          )}
-
-          {whoShouldPayNext && (
-            <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-black/5 border border-black/10 text-black animate-pulse">
-              💡 Suggestion: {whoShouldPayNext.user_name} should pay next
-            </div>
-          )}
-        </div>
-
-        <div className="text-center">
+        <div className="text-center pt-2">
           <div className="flex items-center justify-center gap-2">
-            <p className="text-sm opacity-90 font-medium">Your Personal Share</p>
+            <p className="text-xs font-black uppercase tracking-wider opacity-85">My Share (Spent So Far)</p>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -73,13 +49,22 @@ export function BudgetHeader({
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs bg-white text-slate-900 border-none shadow-xl">
                   <p className="text-sm">
-                    This is your individual share of the trip cost. It increases as you select more expensive options in the Scenario Planner.
+                    This is your individual share of the trip's actual expenses. It represents the sum of your splits, regardless of who paid for the expense.
                   </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <p className="text-5xl font-black mt-1 tracking-tight">
+          <p className="text-4xl font-black mt-1 tracking-tight">
+            ₹{userShare.toFixed(2)}
+          </p>
+        </div>
+
+        <div className="text-center pt-4 border-t border-black/5 mt-6">
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-[10px] font-black uppercase tracking-wider opacity-70">Your Forecasted Share (with Scenario Choices)</p>
+          </div>
+          <p className="text-2xl font-black mt-1 tracking-tight opacity-95">
             ₹{perPersonAverage.toFixed(2)}
           </p>
         </div>

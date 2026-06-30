@@ -81,7 +81,7 @@ export const trips = {
     return res.data;
   },
 
-  update: async (tripId: string, data: Partial<{ name: string; start_date: string; end_date: string; google_maps_url: string }>) => {
+  update: async (tripId: string, data: Partial<{ name: string; start_date: string; end_date: string; google_maps_url: string; budget: number | null }>) => {
     const res = await api.put<{ message: string; trip: Trip }>(`/trips/${tripId}`, data);
     return res.data;
   },
