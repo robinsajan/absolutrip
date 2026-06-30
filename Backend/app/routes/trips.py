@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from flasgger import swag_from
@@ -181,6 +181,13 @@ def update_trip(trip_id, trip, membership):
 
     if 'google_maps_url' in data:
         trip.google_maps_url = data['google_maps_url']
+        
+    if 'budget' in data:
+        try:
+            val = data['budget']
+            trip.budget = float(val) if val is not None else None
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid budget format. Must be a number.'}), 400
 
     db.session.commit()
 
